@@ -1,0 +1,21 @@
+{
+    "name": "openemr/oe-module-institutional",
+    "description": "OpenEMR Institutional Module for E.R. and hospital settings",
+    "type": "openemr-module",
+    "license": "GPL-3.0",
+    "authors": [
+        {
+            "name": "Jerry Padgett",
+            "email": "sjpadgett@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "OpenEMR\\Modules\\Institutional\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=8.1"
+    }
+}

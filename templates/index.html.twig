@@ -1,0 +1,18 @@
+{#
+  templates/index.html.twig
+  Intended for use with OpenEMR's Twig rendering engine once
+  InstitutionalController::index() is wired up to return rendered output.
+  See src/Controller/InstitutionalController.php.
+#}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ 'Institutional Module'|xlt }}</title>
+</head>
+<body>
+<div class="container-fluid institutional-container">
+    <h2 class="institutional-header">{{ 'Institutional Module'|xlt }}</h2>
+    <p>{{ 'Institutional settings for E.R. and hospital environments.'|xlt }}</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Composer dependencies
+/vendor/
+
+# IDE files
+/.idea/
+/.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.log
