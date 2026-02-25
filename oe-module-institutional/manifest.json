@@ -34,7 +34,8 @@
         "obs_billing": true,
         "multi_facility": true,
         "command_center": true,
-        "diversion": true
+        "diversion": true,
+        "downtime": true
     },
     "ui": {
         "bootstrap5_mode": "cdn"
@@ -42,7 +43,8 @@
     "migrations": [
         "table.sql",
         "sql/context.sql",
-        "sql/diversion.sql"
+        "sql/diversion.sql",
+        "sql/downtime.sql"
     ],
     "menus": {
         "top_label": "Institutional",
@@ -263,6 +265,13 @@
                 "feature": "diversion",
                 "group": "Operations",
                 "sort": 115
+            },
+            {
+                "label": "Downtime Mode",
+                "url": "/public/downtime.php",
+                "feature": "downtime",
+                "group": "Admin",
+                "sort": 8
             }
         ]
     }

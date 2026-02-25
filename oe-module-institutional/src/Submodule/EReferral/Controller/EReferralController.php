@@ -99,15 +99,26 @@ final class EReferralController
             exit;
         }
 
-        // ── GET — auto-draft if needed ────────────────────────────────────────
+        // ── GET — auto-draft if needed, then refresh MAR on all DRAFT referrals ──
         $referral    = $this->repo->getByEpisode($episodeId);
         $disposition = $this->dispositionRepo->getByEpisode($episodeId);
 
         if (!$referral && $disposition) {
+            // First visit after disposition is set — create the draft
             $triage    = $this->fetchLatestTriage($episodeId);
             $marOrders = $this->marOrderRepo->listActiveByEpisode($episodeId);
             $this->service->draftFromDisposition($episode, $disposition, $triage, $userId, $marOrders);
             $referral = $this->repo->getByEpisode($episodeId);
+        } elseif ($referral && ($referral['status'] ?? '') === 'DRAFT') {
+            // Referral already exists as DRAFT — always refresh medications_summary
+            // from current active MAR orders so orders placed after the initial draft
+            // are not silently omitted.
+            $marOrders    = $this->marOrderRepo->listActiveByEpisode($episodeId);
+            $medsSummary  = $this->service->buildMedsSummaryPublic($marOrders);
+            if ($medsSummary !== null) {
+                $this->repo->patchMedicationsSummary($episodeId, $medsSummary);
+                $referral = $this->repo->getByEpisode($episodeId);
+            }
         }
 
         $directory = $this->directoryRepo->listActive($facilityId);

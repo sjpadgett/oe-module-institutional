@@ -139,7 +139,9 @@ final class EReferralService
             'reason_for_referral'      => trim((string)($post['reason_for_referral']  ?? '')) ?: null,
             'clinical_summary'         => trim((string)($post['clinical_summary']     ?? '')) ?: null,
             'services_requested'       => trim((string)($post['services_requested']   ?? '')) ?: null,
-            'medications_summary'      => trim((string)($post['medications_summary']  ?? '')) ?: null,
+            'medications_summary'      => trim((string)($post['medications_summary'] ?? '')) !== ''
+                ? trim((string)($post['medications_summary'] ?? ''))
+                : ($post['_existing_medications_summary'] ?? null),  // preserve when form field blank
             'followup_instructions'    => trim((string)($post['followup_instructions'] ?? '')) ?: null,
         ];
 
@@ -272,6 +274,17 @@ final class EReferralService
      *
      * @param array<int,array<string,mixed>> $orders
      */
+    /**
+     * Public accessor so the controller can refresh medications_summary on
+     * existing DRAFT referrals without re-drafting the whole referral.
+     *
+     * @param array<int,array<string,mixed>> $orders
+     */
+    public function buildMedsSummaryPublic(array $orders): ?string
+    {
+        return $this->buildMedicationsSummary($orders);
+    }
+
     private function buildMedicationsSummary(array $orders): ?string
     {
         if (empty($orders)) {

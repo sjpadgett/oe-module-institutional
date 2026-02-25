@@ -23,7 +23,8 @@ namespace OpenEMR\Modules\Institutional\Core\Domain;
  *   Protocols : obs_protocols, obs_episodes, obs_billing
  *   Reporting : cms_quality
  *   Admin     : context_manager, bed_mgmt, adt_lite,
- *               facility_directory, hl7_adt, admin_exports, settings
+ *               facility_directory, hl7_adt, admin_exports, settings,
+ *               diversion, downtime
  *
  *   Diversion : diversion
  *
@@ -38,7 +39,7 @@ final class CareContext
     public const OPERATIONS = 'OPERATIONS';
     public const FULL       = 'FULL';
 
-    public const DEFAULT_CONTEXT = self::ED_ACUTE;
+    public const DEFAULT_CONTEXT = self::FULL;
 
     private const VALID = [
         self::ED_ACUTE,
@@ -173,7 +174,7 @@ final class CareContext
                     'cms_quality',
                     // Admin group — full admin toolset
                     'bed_mgmt', 'adt_lite', 'facility_directory',
-                    'hl7_adt', 'admin_exports', 'settings', 'diversion',
+                    'hl7_adt', 'admin_exports', 'settings', 'diversion', 'downtime',
                 ],
                 'menu_groups' => ['Tracking', 'Operations', 'Protocols', 'Reporting', 'Admin'],
                 'badge_color' => 'warning',

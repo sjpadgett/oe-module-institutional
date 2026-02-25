@@ -103,7 +103,24 @@ function institutional_human_elapsed(string $start): string
 
 if ($manifest->featureEnabled('context_manager')) {
     $facilityId = $_oei_facilityId;   // use the early-resolved value for the bar
-    require_once __DIR__ . '/../src/Core/Ui/partials/context_bar.php';
+    
+// ── Downtime Mode: Service Worker registration ────────────────────────────
+// Only inject when the feature is enabled and we're in a page context
+// (not when called from a JSON API endpoint).
+if ($manifest->featureEnabled('downtime') && !defined('OEI_NO_SW')) {
+    $facilityId = $_oei_facilityId ?? 1;
+    $swBase = '/interface/modules/custom_modules/oe-module-institutional/public/';
+    echo <<<HTML
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('{$swBase}sw.js', { scope: '{$swBase}' })
+        .catch(function(e) { console.warn('[OEI] SW reg failed:', e); });
+}
+</script>
+HTML;
+}
+
+require_once __DIR__ . '/../src/Core/Ui/partials/context_bar.php';
 }
 
 // Clean up temporaries

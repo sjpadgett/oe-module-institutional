@@ -288,6 +288,7 @@ $featureLabels = [
     'adt_lite'          => 'ADT',
     'obs_start_picker'  => 'OBS Start',
     'diversion'         => 'Diversion',
+    'downtime'          => 'Downtime',
 ];
 
 $pills = [];

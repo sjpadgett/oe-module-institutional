@@ -384,7 +384,11 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
                           <?= $isSent ? 'disabled' : '' ?>><?= htmlspecialchars((string)($referral['clinical_summary'] ?? '')) ?></textarea>
               </div>
               <div class="col-md-6">
-                <label class="form-label"><?= xlt("Current Medications") ?></label>
+                <label class="form-label"><?= xlt("Current Medications") ?>
+                  <span class="text-muted ms-1" style="font-size:11px"><?= xlt("(auto-populated from active MAR)") ?></span>
+                </label>
+                <input type="hidden" name="_existing_medications_summary"
+                       value="<?= htmlspecialchars((string)($referral['medications_summary'] ?? '')) ?>">
                 <textarea name="medications_summary" rows="3"
                           class="form-control form-control-sm"
                           placeholder="<?= xla("List key discharge medications") ?>"
