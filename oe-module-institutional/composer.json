@@ -1,0 +1,16 @@
+{
+  "name": "openemr/oe-module-institutional",
+  "description": "Institutional module (Rural ED + Observation + BH safety foundation) for OpenEMR",
+  "type": "openemr-module",
+  "license": "GPL-3.0-or-later",
+  "require": {
+    "php": ">=8.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "OpenEMR\\Modules\\Institutional\\": "src/"
+    }
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

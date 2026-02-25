@@ -1,0 +1,12 @@
+{
+    "name": "Institutional",
+    "namespace": "OpenEMR\\Modules\\Institutional",
+    "description": "Institutional workflows (ED/Observation/BH safety) with manifest-driven submodules.",
+    "version": "0.3.0",
+    "author": "OpenEMR Community",
+    "license": "GPL-3.0-or-later",
+    "type": "module",
+    "settings": {
+        "facility_default_id": 1
+    }
+}
