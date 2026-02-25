@@ -1,0 +1,269 @@
+{
+    "module_id": "oe-module-institutional",
+    "version": "0.10.0",
+    "features": {
+        "context_manager": true,
+        "edt_board": true,
+        "adt_lite": true,
+        "bed_mgmt": true,
+        "intake": true,
+        "triage": true,
+        "tasks": true,
+        "obs_stay": true,
+        "obs_protocols": true,
+        "obs_start_picker": true,
+        "obs_episodes": true,
+        "bh_safety": true,
+        "bh_boarding": true,
+        "transfer_tracking": true,
+        "disposition": true,
+        "throughput": true,
+        "scorecard": true,
+        "alerts": true,
+        "settings": true,
+        "facility_directory": true,
+        "hl7_adt": true,
+        "admin_exports": true,
+        "episode_documents": true,
+        "mar": true,
+        "ereferral": true,
+        "timeline": true,
+        "assignment": true,
+        "handoff": true,
+        "cms_quality": true,
+        "obs_billing": true,
+        "multi_facility": true,
+        "command_center": true,
+        "diversion": true
+    },
+    "ui": {
+        "bootstrap5_mode": "cdn"
+    },
+    "migrations": [
+        "table.sql",
+        "sql/context.sql",
+        "sql/diversion.sql"
+    ],
+    "menus": {
+        "top_label": "Institutional",
+        "items": [
+            {
+                "label": "ED Tracking Board",
+                "url": "/public/ed_board.php",
+                "feature": "edt_board",
+                "group": "Tracking",
+                "sort": 10
+            },
+            {
+                "label": "Alerts Dashboard",
+                "url": "/public/alerts.php",
+                "feature": "alerts",
+                "group": "Tracking",
+                "sort": 20
+            },
+            {
+                "label": "Throughput",
+                "url": "/public/throughput.php",
+                "feature": "throughput",
+                "group": "Tracking",
+                "sort": 30
+            },
+            {
+                "label": "Provider Scorecard",
+                "url": "/public/scorecard.php",
+                "feature": "scorecard",
+                "group": "Tracking",
+                "sort": 40
+            },
+            {
+                "label": "Episode Timeline",
+                "url": "/public/timeline.php",
+                "feature": "timeline",
+                "group": "Tracking",
+                "sort": 50
+            },
+            {
+                "label": "Shift Handoff",
+                "url": "/public/handoff.php",
+                "feature": "handoff",
+                "group": "Tracking",
+                "sort": 60
+            },
+            {
+                "label": "Health System",
+                "url": "/public/multi_facility.php",
+                "feature": "multi_facility",
+                "group": "Tracking",
+                "sort": 70
+            },
+            {
+                "label": "Episode Intake",
+                "url": "/public/intake.php",
+                "feature": "intake",
+                "group": "Operations",
+                "sort": 10
+            },
+            {
+                "label": "Triage / Vitals",
+                "url": "/public/triage.php",
+                "feature": "triage",
+                "group": "Operations",
+                "sort": 20
+            },
+            {
+                "label": "Tasks",
+                "url": "/public/tasks.php",
+                "feature": "tasks",
+                "group": "Operations",
+                "sort": 30
+            },
+            {
+                "label": "MAR",
+                "url": "/public/mar.php",
+                "feature": "mar",
+                "group": "Operations",
+                "sort": 40
+            },
+            {
+                "label": "Disposition",
+                "url": "/public/disposition.php",
+                "feature": "disposition",
+                "group": "Operations",
+                "sort": 50
+            },
+            {
+                "label": "E-Referral",
+                "url": "/public/ereferral.php",
+                "feature": "ereferral",
+                "group": "Operations",
+                "sort": 60
+            },
+            {
+                "label": "Episode Documents",
+                "url": "/public/episode_documents.php",
+                "feature": "episode_documents",
+                "group": "Operations",
+                "sort": 70
+            },
+            {
+                "label": "Staff Assignments",
+                "url": "/public/assignments.php",
+                "feature": "assignment",
+                "group": "Operations",
+                "sort": 80
+            },
+            {
+                "label": "BH Safety",
+                "url": "/public/bh_safety.php",
+                "feature": "bh_safety",
+                "group": "Operations",
+                "sort": 90
+            },
+            {
+                "label": "BH Boarding",
+                "url": "/public/bh_boarding.php",
+                "feature": "bh_boarding",
+                "group": "Operations",
+                "sort": 100
+            },
+            {
+                "label": "Transfer Tracking",
+                "url": "/public/transfers.php",
+                "feature": "transfer_tracking",
+                "group": "Operations",
+                "sort": 110
+            },
+            {
+                "label": "Command Center",
+                "url": "/public/command_center.php",
+                "feature": "command_center",
+                "group": "Operations",
+                "sort": 120
+            },
+            {
+                "label": "Obs Protocols",
+                "url": "/public/obs_protocols.php",
+                "feature": "obs_protocols",
+                "group": "Protocols",
+                "sort": 10
+            },
+            {
+                "label": "Obs Episodes",
+                "url": "/public/obs_episodes.php",
+                "feature": "obs_episodes",
+                "group": "Protocols",
+                "sort": 20
+            },
+            {
+                "label": "OBS Billing Flags",
+                "url": "/public/obs_billing.php",
+                "feature": "obs_billing",
+                "group": "Protocols",
+                "sort": 30
+            },
+            {
+                "label": "CMS Quality Measures",
+                "url": "/public/cms_quality.php",
+                "feature": "cms_quality",
+                "group": "Reporting",
+                "sort": 10
+            },
+            {
+                "label": "Care Context",
+                "url": "/public/context_manager.php",
+                "feature": "context_manager",
+                "group": "Admin",
+                "sort": 5
+            },
+            {
+                "label": "Bed Board",
+                "url": "/public/bed_board.php",
+                "feature": "bed_mgmt",
+                "group": "Admin",
+                "sort": 10
+            },
+            {
+                "label": "Locations",
+                "url": "/public/locations.php",
+                "feature": "adt_lite",
+                "group": "Admin",
+                "sort": 20
+            },
+            {
+                "label": "Facility Directory",
+                "url": "/public/facility_directory.php",
+                "feature": "facility_directory",
+                "group": "Admin",
+                "sort": 30
+            },
+            {
+                "label": "HL7 ADT Log",
+                "url": "/public/hl7_log.php",
+                "feature": "hl7_adt",
+                "group": "Admin",
+                "sort": 40
+            },
+            {
+                "label": "Exports",
+                "url": "/public/exports.php",
+                "feature": "admin_exports",
+                "group": "Admin",
+                "sort": 50
+            },
+            {
+                "label": "Settings",
+                "url": "/public/settings.php",
+                "feature": "settings",
+                "group": "Admin",
+                "sort": 60
+            },
+            {
+                "label": "Diversion Status",
+                "url": "/public/diversion.php",
+                "feature": "diversion",
+                "group": "Operations",
+                "sort": 115
+            }
+        ]
+    }
+}
