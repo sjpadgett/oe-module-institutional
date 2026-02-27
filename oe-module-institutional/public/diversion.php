@@ -88,13 +88,13 @@ $worstBadge = $statusBadge[$worst] ?? $statusBadge['OPEN'];
   <!-- Service Line Cards -->
   <div class="row g-3 mb-4">
     <?php foreach ($serviceLines as $line):
-        $row    = $statusMap[$line] ?? null;
-        $status = $row ? strtoupper((string)($row['status'] ?? 'OPEN')) : 'OPEN';
-        $reason = $row ? (string)($row['reason'] ?? '') : '';
-        $badge  = $statusBadge[$status] ?? $statusBadge['OPEN'];
-        $since  = $row ? (string)($row['updated_datetime'] ?? '') : '';
-        $isDiverted = ($status !== 'OPEN');
-        ?>
+      $row    = $statusMap[$line] ?? null;
+      $status = $row ? strtoupper((string)($row['status'] ?? 'OPEN')) : 'OPEN';
+      $reason = $row ? (string)($row['reason'] ?? '') : '';
+      $badge  = $statusBadge[$status] ?? $statusBadge['OPEN'];
+      $since  = $row ? (string)($row['updated_datetime'] ?? '') : '';
+      $isDiverted = ($status !== 'OPEN');
+    ?>
     <div class="col-sm-6 col-lg-4 col-xl-3">
       <div class="card shadow-sm h-100 <?= $isDiverted ? 'border-' . $badge['class'] . ' border-2' : '' ?>">
         <div class="card-body">
@@ -110,7 +110,7 @@ $worstBadge = $statusBadge[$worst] ?? $statusBadge['OPEN'];
           <?php endif; ?>
           <?php if ($since): ?>
             <p class="card-text text-muted" style="font-size:11px">
-                <?= xlt('Updated') ?>: <?= htmlspecialchars($since) ?>
+              <?= xlt('Updated') ?>: <?= htmlspecialchars($since) ?>
             </p>
           <?php endif; ?>
           <!-- Set Status Form -->
@@ -141,7 +141,7 @@ $worstBadge = $statusBadge[$worst] ?? $statusBadge['OPEN'];
                       onclick="document.querySelector('input[name=action][form]').value='lift'"
                       formaction="diversion.php?facility_id=<?= $facilityId ?>"
                       class="btn btn-sm btn-outline-success">
-                    <?= xlt('Lift') ?>
+                <?= xlt('Lift') ?>
               </button>
               <?php endif; ?>
             </div>
@@ -175,9 +175,9 @@ $worstBadge = $statusBadge[$worst] ?? $statusBadge['OPEN'];
             <?php if (empty($history)): ?>
             <tr><td colspan="6" class="text-center text-muted py-3"><?= xlt('No history yet') ?></td></tr>
             <?php else: ?>
-                <?php foreach ($history as $h):
-                    $hBadge = $statusBadge[strtoupper((string)($h['new_status'] ?? 'OPEN'))] ?? $statusBadge['OPEN'];
-                    ?>
+            <?php foreach ($history as $h):
+              $hBadge = $statusBadge[strtoupper((string)($h['new_status'] ?? 'OPEN'))] ?? $statusBadge['OPEN'];
+            ?>
             <tr>
               <td class="text-nowrap small"><?= htmlspecialchars((string)($h['changed_datetime'] ?? '')) ?></td>
               <td><span class="badge text-bg-secondary"><?= htmlspecialchars((string)($h['service_line'] ?? '')) ?></span></td>

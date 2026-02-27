@@ -23,7 +23,10 @@ namespace OpenEMR\Modules\Institutional\Core\Domain;
  *   Protocols : obs_protocols, obs_episodes, obs_billing
  *   Reporting : cms_quality
  *   Admin     : context_manager, bed_mgmt, adt_lite,
- *               facility_directory, hl7_adt, admin_exports, settings
+ *               facility_directory, hl7_adt, admin_exports, settings,
+ *               diversion, downtime
+ *
+ *   Diversion : diversion
  *
  * Context resolution order: session cache → DB → DEFAULT_CONTEXT
  */
@@ -84,7 +87,7 @@ final class CareContext
                     'ereferral', 'episode_documents', 'assignment',
                     'bh_safety', 'transfer_tracking',
                     // Admin group items surfaced (bed/location management)
-                    'bed_mgmt', 'adt_lite',
+                    'bed_mgmt', 'adt_lite', 'diversion',
                 ],
                 'menu_groups' => ['Tracking', 'Operations', 'Admin'],
                 'badge_color' => 'danger',
@@ -171,7 +174,7 @@ final class CareContext
                     'cms_quality',
                     // Admin group — full admin toolset
                     'bed_mgmt', 'adt_lite', 'facility_directory',
-                    'hl7_adt', 'admin_exports', 'settings',
+                    'hl7_adt', 'admin_exports', 'settings', 'diversion', 'downtime',
                 ],
                 'menu_groups' => ['Tracking', 'Operations', 'Protocols', 'Reporting', 'Admin'],
                 'badge_color' => 'warning',
@@ -251,5 +254,3 @@ final class CareContext
         return self::VALID;
     }
 }
-
-

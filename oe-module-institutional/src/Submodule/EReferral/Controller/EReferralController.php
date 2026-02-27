@@ -10,6 +10,7 @@ use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\DispositionRe
 use OpenEMR\Modules\Institutional\Submodule\EReferral\Repository\EReferralRepository;
 use OpenEMR\Modules\Institutional\Submodule\EReferral\Service\EReferralService;
 use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
+use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarOrderRepository;
 
 /**
  * E-Referral Controller.
@@ -24,11 +25,12 @@ use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\Facilit
 final class EReferralController
 {
     public function __construct(
-        private readonly EReferralRepository $repo,
-        private readonly EReferralService $service,
-        private readonly EpisodeRepository $episodeRepo,
-        private readonly DispositionRepository $dispositionRepo,
-        private readonly FacilityDirectoryRepository $directoryRepo
+        private readonly EReferralRepository       $repo,
+        private readonly EReferralService          $service,
+        private readonly EpisodeRepository         $episodeRepo,
+        private readonly DispositionRepository     $dispositionRepo,
+        private readonly FacilityDirectoryRepository $directoryRepo,
+        private readonly MarOrderRepository        $marOrderRepo
     ) {}
 
     /**
@@ -97,14 +99,26 @@ final class EReferralController
             exit;
         }
 
-        // ── GET — auto-draft if needed ────────────────────────────────────────
+        // ── GET — auto-draft if needed, then refresh MAR on all DRAFT referrals ──
         $referral    = $this->repo->getByEpisode($episodeId);
         $disposition = $this->dispositionRepo->getByEpisode($episodeId);
 
         if (!$referral && $disposition) {
-            $triage = $this->fetchLatestTriage($episodeId);
-            $this->service->draftFromDisposition($episode, $disposition, $triage, $userId);
+            // First visit after disposition is set — create the draft
+            $triage    = $this->fetchLatestTriage($episodeId);
+            $marOrders = $this->marOrderRepo->listActiveByEpisode($episodeId);
+            $this->service->draftFromDisposition($episode, $disposition, $triage, $userId, $marOrders);
             $referral = $this->repo->getByEpisode($episodeId);
+        } elseif ($referral && ($referral['status'] ?? '') === 'DRAFT') {
+            // Referral already exists as DRAFT — always refresh medications_summary
+            // from current active MAR orders so orders placed after the initial draft
+            // are not silently omitted.
+            $marOrders    = $this->marOrderRepo->listActiveByEpisode($episodeId);
+            $medsSummary  = $this->service->buildMedsSummaryPublic($marOrders);
+            if ($medsSummary !== null) {
+                $this->repo->patchMedicationsSummary($episodeId, $medsSummary);
+                $referral = $this->repo->getByEpisode($episodeId);
+            }
         }
 
         $directory = $this->directoryRepo->listActive($facilityId);
@@ -146,5 +160,3 @@ final class EReferralController
         return $row ?: null;
     }
 }
-
-

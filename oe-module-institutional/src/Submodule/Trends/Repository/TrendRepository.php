@@ -280,5 +280,3 @@ final class TrendRepository
         return $rows;
     }
 }
-
-

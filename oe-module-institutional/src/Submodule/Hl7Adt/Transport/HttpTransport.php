@@ -87,5 +87,3 @@ final class HttpTransport
         return $response;
     }
 }
-
-

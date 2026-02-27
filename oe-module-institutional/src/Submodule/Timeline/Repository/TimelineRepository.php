@@ -364,5 +364,3 @@ final class TimelineRepository
         return (int)($row['c'] ?? 0) > 0;
     }
 }
-
-

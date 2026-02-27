@@ -136,5 +136,3 @@ final class AssignmentRepository
         return ['nurses' => $nurses, 'providers' => $providers];
     }
 }
-
-

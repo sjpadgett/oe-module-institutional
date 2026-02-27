@@ -235,15 +235,15 @@ $syncUrl     = "downtime_sync.php?facility_id={$facilityId}";
             <?php if (empty($queueRows)): ?>
               <tr><td colspan="6" class="text-center text-muted py-3"><?= xlt('No queue entries') ?></td></tr>
             <?php else: ?>
-                <?php foreach ($queueRows as $qr):
-                    $qStatus = (string)($qr['status'] ?? 'PENDING');
-                    $badgeClass = match($qStatus) {
-                        'SYNCED'  => 'success',
-                        'FAILED'  => 'danger',
-                        'SKIPPED' => 'secondary',
-                        default   => 'warning',
-                    };
-    ?>
+              <?php foreach ($queueRows as $qr):
+                $qStatus = (string)($qr['status'] ?? 'PENDING');
+                $badgeClass = match($qStatus) {
+                    'SYNCED'  => 'success',
+                    'FAILED'  => 'danger',
+                    'SKIPPED' => 'secondary',
+                    default   => 'warning',
+                };
+              ?>
               <tr>
                 <td class="small text-nowrap"><?= htmlspecialchars((string)($qr['queued_datetime'] ?? '')) ?></td>
                 <td class="small text-nowrap"><?= htmlspecialchars((string)($qr['captured_client']  ?? '')) ?></td>

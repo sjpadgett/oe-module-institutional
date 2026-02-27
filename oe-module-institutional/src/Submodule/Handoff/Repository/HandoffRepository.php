@@ -131,5 +131,3 @@ final class HandoffRepository
         return $rows;
     }
 }
-
-

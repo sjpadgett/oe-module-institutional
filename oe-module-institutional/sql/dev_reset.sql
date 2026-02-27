@@ -25,5 +25,3 @@ DROP TABLE IF EXISTS
     `oei_transfer`,
     `oei_triage`;
 SET FOREIGN_KEY_CHECKS = 1;
-
-

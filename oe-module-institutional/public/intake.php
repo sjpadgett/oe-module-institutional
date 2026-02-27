@@ -166,5 +166,3 @@ $href = institutional_bootstrap5_href($manifest);
 </div>
 </body>
 </html>
-
-

@@ -51,22 +51,6 @@ if ($activeContext !== CareContext::FULL && $manifest->featureEnabled('context_m
     $manifest = new ContextManifest($manifest, $activeContext);
 }
 
-// ── Triage standard resolution ─────────────────────────────────────────────
-// Exposes $triageStandard to every page. When mts_triage is disabled
-// (the default), always returns ESI — identical to existing hardcoded behavior.
-if ($manifest->featureEnabled('mts_triage')) {
-    $_oei_tsRepo = new \OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository();
-    $_oei_tsCode = $_oei_tsRepo->get($_oei_facilityId, 'triage_standard');
-    $triageStandard = \OpenEMR\Modules\Institutional\Core\Domain\TriageStandard::fromCode(
-        $_oei_tsCode ?: \OpenEMR\Modules\Institutional\Core\Domain\TriageStandard::ESI
-    );
-    unset($_oei_tsRepo, $_oei_tsCode);
-} else {
-    $triageStandard = \OpenEMR\Modules\Institutional\Core\Domain\TriageStandard::fromCode(
-        \OpenEMR\Modules\Institutional\Core\Domain\TriageStandard::ESI
-    );
-}
-
 // ── Helper functions ────────────────────────────────────────────────────────
 
 function institutional_bootstrap5_href($manifest): string
@@ -119,10 +103,25 @@ function institutional_human_elapsed(string $start): string
 
 if ($manifest->featureEnabled('context_manager')) {
     $facilityId = $_oei_facilityId;   // use the early-resolved value for the bar
-    require_once __DIR__ . '/../src/Core/Ui/partials/context_bar.php';
+    
+// ── Downtime Mode: Service Worker registration ────────────────────────────
+// Only inject when the feature is enabled and we're in a page context
+// (not when called from a JSON API endpoint).
+if ($manifest->featureEnabled('downtime') && !defined('OEI_NO_SW')) {
+    $facilityId = $_oei_facilityId ?? 1;
+    $swBase = '/interface/modules/custom_modules/oe-module-institutional/public/';
+    echo <<<HTML
+<script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('{$swBase}sw.js', { scope: '{$swBase}' })
+        .catch(function(e) { console.warn('[OEI] SW reg failed:', e); });
+}
+</script>
+HTML;
+}
+
+require_once __DIR__ . '/../src/Core/Ui/partials/context_bar.php';
 }
 
 // Clean up temporaries
 unset($_oei_userId, $_oei_facilityId);
-
-

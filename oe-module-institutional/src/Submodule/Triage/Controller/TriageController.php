@@ -99,5 +99,3 @@ final class TriageController
         return ($v !== '' && is_numeric($v)) ? (float)$v : null;
     }
 }
-
-

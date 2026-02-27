@@ -527,7 +527,7 @@ CREATE TABLE IF NOT EXISTS `oei_triage`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci COMMENT ='Triage vitals sets; multiple per episode for re-triage support';
 
--- ============================================================
+- ============================================================
 -- oei_user_context  —  per-user care context preference
 -- Created by oe-module-institutional v0.9.7
 --
@@ -555,81 +555,16 @@ CREATE TABLE IF NOT EXISTS `oei_user_context`
 /*!40101 SET COLLATION_CONNECTION = @OLD_COLLATION_CONNECTION */;
 
 
--- Offline write queue: captures new arrivals / vitals / status notes
--- entered while the network was unavailable.
--- Each row is processed once and then status set to SYNCED or FAILED.
-CREATE TABLE IF NOT EXISTS `oei_downtime_sync_queue`
-(
-    `id`                   bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `facility_id`          bigint(20) UNSIGNED NOT NULL,
-    `entry_type`           varchar(30)         NOT NULL
-        COMMENT 'ARRIVAL | VITALS | STATUS_NOTE | TASK_NOTE',
-    `payload_json`         mediumtext          NOT NULL
-        COMMENT 'Raw JSON captured by browser',
-    `captured_client`      datetime            NOT NULL
-        COMMENT 'Client-side timestamp from the browser',
-    `queued_datetime`      datetime            NOT NULL
-        COMMENT 'Server-receipt datetime on sync POST',
-    `synced_datetime`      datetime                     DEFAULT NULL,
-    `status`               varchar(20)         NOT NULL DEFAULT 'PENDING'
-        COMMENT 'PENDING | SYNCED | FAILED | SKIPPED',
-    `result_note`          varchar(255)                 DEFAULT NULL
-        COMMENT 'Error message or resultant ID on success',
-    `submitted_by_user_id` bigint(20) UNSIGNED          DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `idx_oei_dt_queue_facility` (`facility_id`, `status`, `queued_datetime`),
-    KEY `idx_oei_dt_queue_type` (`entry_type`, `status`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-    COMMENT = 'Offline write queue — rows written by browser during network outage';
+-- ============================================================
+-- SEED DATA
+-- Default settings applied per facility at install time.
+-- Uses INSERT IGNORE so re-runs don't overwrite custom values.
+-- ============================================================
 
--- Current diversion status per facility × service line
--- One row per (facility_id, service_line) — updated in-place, history preserved below.
-CREATE TABLE IF NOT EXISTS `oei_diversion`
-(
-    `id`                 bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `facility_id`        bigint(20) UNSIGNED NOT NULL,
-    `service_line`       varchar(40)         NOT NULL DEFAULT 'ED'
-        COMMENT 'ED | ICU | OBS | PSYCH | TRAUMA | PEDS | BURN',
-    `status`             varchar(20)         NOT NULL DEFAULT 'OPEN'
-        COMMENT 'OPEN | DIVERSION | LIMITED | BYPASS',
-    `reason`             varchar(255)                 DEFAULT NULL
-        COMMENT 'Free-text reason shown in facility directory',
-    `diversion_start`    datetime                     DEFAULT NULL,
-    `diversion_end`      datetime                     DEFAULT NULL,
-    `updated_by_user_id` bigint(20) UNSIGNED          DEFAULT NULL,
-    `updated_datetime`   datetime            NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uniq_oei_diversion_service` (`facility_id`, `service_line`),
-    KEY `idx_oei_diversion_facility` (`facility_id`, `status`, `updated_datetime`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-    COMMENT = 'Current diversion status per facility and service line';
-
--- Full audit trail — every status change is appended here.
-CREATE TABLE IF NOT EXISTS `oei_diversion_history`
-(
-    `id`                 bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `facility_id`        bigint(20) UNSIGNED NOT NULL,
-    `service_line`       varchar(40)         NOT NULL,
-    `previous_status`    varchar(20)         DEFAULT NULL,
-    `new_status`         varchar(20)         NOT NULL,
-    `reason`             varchar(255)        DEFAULT NULL,
-    `diversion_start`    datetime            DEFAULT NULL,
-    `diversion_end`      datetime            DEFAULT NULL,
-    `changed_by_user_id` bigint(20) UNSIGNED DEFAULT NULL,
-    `changed_datetime`   datetime            NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `idx_oei_div_hist_facility` (`facility_id`, `service_line`, `changed_datetime`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-    COMMENT = 'Audit log of all diversion status changes';
-
-ALTER TABLE `oei_mar_administration`
-    ADD COLUMN IF NOT EXISTS `hold_reason` varchar(60) DEFAULT NULL
-        COMMENT 'Structured HELD reason code — see MarService::HOLD_REASONS'
-        AFTER `lot_number`;
-
+-- Facility 1 defaults (adjust facility_id if needed)
+INSERT IGNORE INTO `oei_settings` (facility_id, setting_key, setting_value, updated_by_user_id, updated_datetime)
+VALUES (1, 'vitals_interval_ed_min', '120', NULL, NOW()),
+       (1, 'vitals_interval_obs_min', '240', NULL, NOW()),
+       (1, 'vitals_window_hours', '12', NULL, NOW()),
+       (1, 'hl7_enabled', '0', NULL, NOW()),
+       (1, 'hl7_processing_id', 'T', NULL, NOW());

@@ -198,28 +198,28 @@ $featureMeta = [
     <div class="row g-3 mb-3" role="radiogroup" aria-label="<?= xla('Care context') ?>">
 
       <?php foreach ($allContexts as $key => $meta):
-            $isSelected   = ($key === $activeContext);
-            $isFullAccess = ($key === CareContext::FULL);
-            $ctxFeatures  = (array)($meta['features'] ?? []);
-            $isWildcard   = in_array('*', $ctxFeatures, true);
+        $isSelected   = ($key === $activeContext);
+        $isFullAccess = ($key === CareContext::FULL);
+        $ctxFeatures  = (array)($meta['features'] ?? []);
+        $isWildcard   = in_array('*', $ctxFeatures, true);
 
         // Build feature tag list
-            $tags = [];
-            if (!$isWildcard) {
-                foreach ($ctxFeatures as $f) {
-                    if (isset($featureMeta[$f]) && $manifest->featureEnabled($f)) {
-                        $tags[] = $featureMeta[$f];
-                    }
+        $tags = [];
+        if (!$isWildcard) {
+            foreach ($ctxFeatures as $f) {
+                if (isset($featureMeta[$f]) && $manifest->featureEnabled($f)) {
+                    $tags[] = $featureMeta[$f];
                 }
             }
-            $tagsDisplay = array_slice($tags, 0, 9);
-            $hiddenCount = count($tags) - count($tagsDisplay);
+        }
+        $tagsDisplay = array_slice($tags, 0, 9);
+        $hiddenCount = count($tags) - count($tagsDisplay);
 
-            $colClass  = $isFullAccess ? 'col-12' : 'col-12 col-md-6 col-xl-3';
-            $cardClass = 'ctx-card'
+        $colClass  = $isFullAccess ? 'col-12' : 'col-12 col-md-6 col-xl-3';
+        $cardClass = 'ctx-card'
             . ($isSelected   ? ' ctx-selected' : '')
             . ($isFullAccess ? ' ctx-full-card' : '');
-            ?>
+      ?>
 
       <div class="<?= $colClass ?>">
         <label class="<?= $cardClass ?>"
@@ -230,12 +230,12 @@ $featureMeta = [
           <input type="radio" class="d-none" name="_ctx_radio" value="<?= htmlspecialchars($key) ?>"
                  <?= $isSelected ? 'checked' : '' ?>>
 
-            <?php if ($isFullAccess): ?>
+          <?php if ($isFullAccess): ?>
 
           <!-- Full Access — horizontal layout -->
           <div class="ctx-card-body">
             <span style="font-size:1.4rem;line-height:1;">
-                <?= htmlspecialchars((string)($meta['icon'] ?? '')) ?>
+              <?= htmlspecialchars((string)($meta['icon'] ?? '')) ?>
             </span>
             <div class="flex-grow-1">
               <div class="d-flex align-items-center gap-2 mb-1">
@@ -276,17 +276,17 @@ $featureMeta = [
               <i class="bi bi-people me-1"></i><?= htmlspecialchars((string)($meta['audience'] ?? '')) ?>
             </div>
 
-              <?php if (!empty($tagsDisplay)): ?>
+            <?php if (!empty($tagsDisplay)): ?>
             <div class="border-top pt-2 mt-auto">
               <div class="text-uppercase text-muted mb-1"
                    style="font-size:.63rem;letter-spacing:.06em;"><?= xlt('Surfaces') ?></div>
               <div class="d-flex flex-wrap ctx-tags">
-                    <?php foreach ($tagsDisplay as $tag): ?>
+                <?php foreach ($tagsDisplay as $tag): ?>
                   <span class="badge text-bg-<?= htmlspecialchars($tag['color']) ?> ctx-tag">
-                        <?= htmlspecialchars($tag['label']) ?>
+                    <?= htmlspecialchars($tag['label']) ?>
                   </span>
                 <?php endforeach; ?>
-                    <?php if ($hiddenCount > 0): ?>
+                <?php if ($hiddenCount > 0): ?>
                   <span class="badge text-bg-light border ctx-tag">+<?= $hiddenCount ?> more</span>
                 <?php endif; ?>
               </div>
@@ -339,9 +339,9 @@ $featureMeta = [
 
     var ctxLabels = {
         <?php foreach ($allContexts as $key => $meta): ?>
-            <?= json_encode($key) ?>: <?= json_encode(
+        <?= json_encode($key) ?>: <?= json_encode(
             (string)($meta['icon'] ?? '') . ' ' . (string)($meta['label'] ?? $key)
-            ) ?>,
+        ) ?>,
         <?php endforeach; ?>
     };
 
@@ -393,5 +393,3 @@ $featureMeta = [
 </script>
 </body>
 </html>
-
-

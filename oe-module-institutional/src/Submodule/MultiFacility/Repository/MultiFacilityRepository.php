@@ -321,5 +321,3 @@ final class MultiFacilityRepository
         return $result;
     }
 }
-
-

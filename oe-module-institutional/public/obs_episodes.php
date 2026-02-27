@@ -97,9 +97,9 @@ function obs_elapsed_hours(string $start): string {
             </td>
             <td>
               <?php if (!empty($r['episode_id']) && function_exists('sqlQuery')): ?>
-                    <?php $row = sqlQuery("SELECT COUNT(*) AS c FROM oei_task WHERE episode_id = ? AND status = 'OPEN' AND due_datetime < ?", [(int)$r['episode_id'], date('Y-m-d H:i:s')]); ?>
-                    <?php $c = (int)($row['c'] ?? 0); ?>
-                    <?php if ($c > 0): ?><span class="badge text-bg-danger"><?= htmlspecialchars((string)$c) ?></span><?php endif; ?>
+                <?php $row = sqlQuery("SELECT COUNT(*) AS c FROM oei_task WHERE episode_id = ? AND status = 'OPEN' AND due_datetime < ?", [(int)$r['episode_id'], date('Y-m-d H:i:s')]); ?>
+                <?php $c = (int)($row['c'] ?? 0); ?>
+                <?php if ($c > 0): ?><span class="badge text-bg-danger"><?= htmlspecialchars((string)$c) ?></span><?php endif; ?>
               <?php endif; ?>
             </td>
           </tr>
@@ -114,5 +114,3 @@ function obs_elapsed_hours(string $start): string {
 </div>
 </body>
 </html>
-
-

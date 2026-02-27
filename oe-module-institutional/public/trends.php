@@ -247,7 +247,7 @@ function trend_arrow(float|int|null $curr, float|int|null $prev, bool $lowerBett
 
   <?php if (empty($series)): ?>
     <div class="chart-card text-center text-muted py-5">
-        <?= xlt('No episode data found in this date range. Run demo_seed.sql or create episodes to populate trends.') ?>
+      <?= xlt('No episode data found in this date range. Run demo_seed.sql or create episodes to populate trends.') ?>
     </div>
   <?php else: ?>
 
@@ -332,33 +332,33 @@ function trend_arrow(float|int|null $curr, float|int|null $prev, bool $lowerBett
         <?php foreach ($dayNames as $dow => $dayName): ?>
         <tr>
           <td class="heatmap-row-label"><?= $dayName ?></td>
-            <?php for ($h = 0; $h <= 23; $h++):
-                $count = $matrix[$dow][$h];
-                $intensity = $maxCell > 0 ? $count / $maxCell : 0;
+          <?php for ($h = 0; $h <= 23; $h++):
+            $count = $matrix[$dow][$h];
+            $intensity = $maxCell > 0 ? $count / $maxCell : 0;
             // Navy → teal → cyan gradient
-                if ($intensity === 0) {
-                    $bg = '#f0f4f8';
-                    $color = '#ccc';
+            if ($intensity === 0) {
+                $bg = '#f0f4f8';
+                $color = '#ccc';
+            } else {
+                // Lerp: low = navy #1B3A6B, mid = teal #2E8B8B, high = cyan #00d4ff
+                if ($intensity < 0.5) {
+                    $t = $intensity * 2;
+                    $r = (int)(0x1B + ($t) * (0x2E - 0x1B));
+                    $g = (int)(0x3A + ($t) * (0x8B - 0x3A));
+                    $b = (int)(0x6B + ($t) * (0x8B - 0x6B));
                 } else {
-                    // Lerp: low = navy #1B3A6B, mid = teal #2E8B8B, high = cyan #00d4ff
-                    if ($intensity < 0.5) {
-                        $t = $intensity * 2;
-                        $r = (int)(0x1B + ($t) * (0x2E - 0x1B));
-                        $g = (int)(0x3A + ($t) * (0x8B - 0x3A));
-                        $b = (int)(0x6B + ($t) * (0x8B - 0x6B));
-                    } else {
-                        $t = ($intensity - 0.5) * 2;
-                        $r = (int)(0x2E + ($t) * (0x00 - 0x2E));
-                        $g = (int)(0x8B + ($t) * (0xD4 - 0x8B));
-                        $b = (int)(0x8B + ($t) * (0xFF - 0x8B));
-                    }
-                    $bg    = sprintf('rgb(%d,%d,%d)', $r, $g, $b);
-                    $color = $intensity > 0.5 ? '#fff' : 'rgba(255,255,255,.8)';
+                    $t = ($intensity - 0.5) * 2;
+                    $r = (int)(0x2E + ($t) * (0x00 - 0x2E));
+                    $g = (int)(0x8B + ($t) * (0xD4 - 0x8B));
+                    $b = (int)(0x8B + ($t) * (0xFF - 0x8B));
                 }
-                ?>
+                $bg    = sprintf('rgb(%d,%d,%d)', $r, $g, $b);
+                $color = $intensity > 0.5 ? '#fff' : 'rgba(255,255,255,.8)';
+            }
+          ?>
             <td style="background:<?= $bg ?>;color:<?= $color ?>;"
                 title="<?= $dayName ?> <?= str_pad((string)$h, 2, '0', STR_PAD_LEFT) ?>:00 — <?= $count ?> arrivals">
-                <?= $count > 0 ? $count : '' ?>
+              <?= $count > 0 ? $count : '' ?>
             </td>
           <?php endfor; ?>
         </tr>
@@ -367,16 +367,16 @@ function trend_arrow(float|int|null $curr, float|int|null $prev, bool $lowerBett
     </table>
     <div class="heatmap-legend">
       <span>Low</span>
-        <?php
+      <?php
         $swatches = [0.1, 0.25, 0.5, 0.75, 1.0];
         foreach ($swatches as $s):
-            if ($s < 0.5) {
-                $t=$s*2; $r=intval(0x1B+$t*(0x2E-0x1B)); $g=intval(0x3A+$t*(0x8B-0x3A)); $b=intval(0x6B+$t*(0x8B-0x6B));
-            } else {
-                $t=($s-.5)*2; $r=intval(0x2E+$t*(0x00-0x2E)); $g=intval(0x8B+$t*(0xD4-0x8B)); $b=intval(0x8B+$t*(0xFF-0x8B));
-            }
-            $sc = sprintf('rgb(%d,%d,%d)',$r,$g,$b);
-            ?>
+          if ($s < 0.5) {
+            $t=$s*2; $r=intval(0x1B+$t*(0x2E-0x1B)); $g=intval(0x3A+$t*(0x8B-0x3A)); $b=intval(0x6B+$t*(0x8B-0x6B));
+          } else {
+            $t=($s-.5)*2; $r=intval(0x2E+$t*(0x00-0x2E)); $g=intval(0x8B+$t*(0xD4-0x8B)); $b=intval(0x8B+$t*(0xFF-0x8B));
+          }
+          $sc = sprintf('rgb(%d,%d,%d)',$r,$g,$b);
+      ?>
         <span class="heatmap-legend-swatch" style="background:<?= $sc ?>;"></span>
       <?php endforeach; ?>
       <span>High (<?= $maxCell ?> arrivals)</span>
@@ -505,5 +505,3 @@ lineChart('chartObs', obsRateData, AMBER, true);
 </script>
 </body>
 </html>
-
-

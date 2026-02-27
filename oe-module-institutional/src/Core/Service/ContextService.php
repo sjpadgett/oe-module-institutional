@@ -125,5 +125,3 @@ final class ContextService
         $_SESSION[self::SESSION_KEY][$cacheKey] = $contextKey;
     }
 }
-
-

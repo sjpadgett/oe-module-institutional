@@ -287,6 +287,8 @@ $featureLabels = [
     'obs_episodes'      => 'OBS Episodes',
     'adt_lite'          => 'ADT',
     'obs_start_picker'  => 'OBS Start',
+    'diversion'         => 'Diversion',
+    'downtime'          => 'Downtime',
 ];
 
 $pills = [];
@@ -395,5 +397,3 @@ $allContexts = \OpenEMR\Modules\Institutional\Core\Domain\CareContext::all();
     });
 }());
 </script>
-
-

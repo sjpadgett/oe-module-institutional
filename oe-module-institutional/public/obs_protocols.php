@@ -156,5 +156,3 @@ $defaultJson = json_encode([
 </div>
 </body>
 </html>
-
-

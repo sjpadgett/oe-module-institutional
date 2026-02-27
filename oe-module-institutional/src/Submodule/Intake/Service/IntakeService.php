@@ -14,5 +14,3 @@ final class IntakeService
         return $this->repo->create($pid, $facilityId, $arrivalMode, $esi, $chiefComplaint, $triageNote, $userId);
     }
 }
-
-

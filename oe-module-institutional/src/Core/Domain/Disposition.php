@@ -17,5 +17,3 @@ final class Disposition
         return [self::DISCHARGE, self::TRANSFER, self::ADMIT, self::LWBS, self::ELOPE, self::EXPIRE];
     }
 }
-
-

@@ -61,5 +61,3 @@ final class TaskRepository
         return $rows;
     }
 }
-
-

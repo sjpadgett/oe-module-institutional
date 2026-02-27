@@ -191,7 +191,7 @@ $href = institutional_bootstrap5_href($manifest);
             <th><?= xlt("Throughput") ?></th>
             <th><?= xlt("Elapsed") ?></th>
             <th><?= xlt("Chief Complaint") ?></th>
-            <th><?= htmlspecialchars($triageStandard->columnLabel()) ?></th>
+            <th><?= xlt("ESI") ?></th>
             <th><?= xlt("Location") ?></th>
             <th><?= xlt("Workflow") ?></th>
             <th><?= xlt("BH") ?></th>
@@ -203,9 +203,9 @@ $href = institutional_bootstrap5_href($manifest);
         </thead>
         <tbody>
         <?php foreach ($data['rows'] as $r):
-            $eId = (int)$r['id'];
-            $assign = $assignmentsByEpisode[$eId] ?? [];
-            ?>
+          $eId = (int)$r['id'];
+          $assign = $assignmentsByEpisode[$eId] ?? [];
+        ?>
           <tr>
             <td>
               <?= htmlspecialchars((string)$r['id']) ?>
@@ -241,9 +241,9 @@ $href = institutional_bootstrap5_href($manifest);
                     <input type="hidden" name="extend_hours" value="6">
                     <select name="protocol_key" class="form-select form-select-sm d-inline-block" style="width: 170px;">
                       <?php foreach ($protocolOptions as $popt): ?>
-                            <?php $k = (string)($popt['protocol_key'] ?? ''); ?>
+                        <?php $k = (string)($popt['protocol_key'] ?? ''); ?>
                         <option value="<?= htmlspecialchars($k) ?>" <?= ($k === (string)$r['obs_protocol_key']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars((string)($popt['label'] ?? $k)) ?>
+                          <?= htmlspecialchars((string)($popt['label'] ?? $k)) ?>
                         </option>
                       <?php endforeach; ?>
                     </select>
@@ -254,31 +254,25 @@ $href = institutional_bootstrap5_href($manifest);
               </div>
             <?php endif; ?></td>
             <td><?php if (!empty($r['next_task_due'])): ?>
-                <?php $isOverdue = (strtotime((string)$r['next_task_due']) ?: 0) < time(); ?>
+              <?php $isOverdue = (strtotime((string)$r['next_task_due']) ?: 0) < time(); ?>
               <span class="<?= $isOverdue ? 'text-danger' : 'text-muted' ?> small"><?= htmlspecialchars((string)$r['next_task_due']) ?></span>
               <span class="badge <?= $isOverdue ? 'text-bg-danger' : 'text-bg-light border' ?>"><?= htmlspecialchars((string)$r['next_task_type']) ?></span>
             <?php endif; ?></td>
             <td><?= htmlspecialchars(institutional_human_elapsed((string)$r['start_datetime'])) ?></td>
             <td><?= htmlspecialchars((string)($r['chief_complaint'] ?? '')) ?></td>
-            <td><?php $__esi = (int)($r['acuity_esi'] ?? 0); ?>
-              <?php if ($__esi): ?>
-              <span class="badge <?= htmlspecialchars($triageStandard->badgeClass($__esi)) ?>">
-                    <?= htmlspecialchars($triageStandard->shortLabel($__esi)) ?>
-              </span>
-              <?php else: ?>—<?php endif; ?>
-            </td>
+            <td><?= htmlspecialchars((string)($r['acuity_esi'] ?? '')) ?></td>
             <td><?= htmlspecialchars((string)($r['location_name'] ?? '')) ?></td>
             <td><span class="badge text-bg-light border"><?= htmlspecialchars((string)($r['workflow_status'] ?? '')) ?></span></td>
             <td><?php if (!empty($r['bh_observation_level']) && (string)$r['bh_observation_level'] !== 'NONE'): ?><span class="badge text-bg-warning"><?= htmlspecialchars((string)$r['bh_observation_level']) ?></span><?php endif; ?></td>
 
             <?php if ($manifest->featureEnabled('assignment')): ?>
             <td style="min-width:160px;">
-                <?php if (!empty($assign['nurse_id'])): ?>
+              <?php if (!empty($assign['nurse_id'])): ?>
                 <div class="small"><span class="badge text-bg-primary"><i class="bi bi-person-fill"></i> <?= htmlspecialchars(trim((string)$assign['nurse_name'])) ?></span></div>
               <?php else: ?>
                 <div class="small text-muted fst-italic"><?= xlt('No nurse') ?></div>
               <?php endif; ?>
-                <?php if (!empty($assign['provider_id'])): ?>
+              <?php if (!empty($assign['provider_id'])): ?>
                 <div class="small mt-1"><span class="badge text-bg-success"><i class="bi bi-person-badge-fill"></i> <?= htmlspecialchars(trim((string)$assign['provider_name'])) ?></span></div>
               <?php else: ?>
                 <div class="small text-muted fst-italic"><?= xlt('No provider') ?></div>
@@ -315,7 +309,7 @@ $href = institutional_bootstrap5_href($manifest);
                 </form>
                 <?php endif; ?>
 
-            <?php if ($manifest->featureEnabled('bh_safety') && !$manifest->featureEnabled('bh_boarding')): ?>
+<?php if ($manifest->featureEnabled('bh_safety') && !$manifest->featureEnabled('bh_boarding')): ?>
 <form method="post" action="bh_safety_set.php" class="d-flex gap-2">
   <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($data['csrf']) ?>">
   <input type="hidden" name="episode_id" value="<?= htmlspecialchars((string)$r['id']) ?>">
@@ -331,7 +325,7 @@ $href = institutional_bootstrap5_href($manifest);
   </select>
   <button class="btn btn-sm btn-outline-warning"><?= xlt("BH Safety") ?></button>
 </form>
-            <?php endif; ?>
+<?php endif; ?>
 
                 <form method="post" class="d-flex gap-2">
                   <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($data['csrf']) ?>">
@@ -353,12 +347,12 @@ $href = institutional_bootstrap5_href($manifest);
                   <input type="hidden" name="pid" value="<?= htmlspecialchars((string)$r['pid']) ?>">
                   <input type="hidden" name="eid" value="<?= htmlspecialchars((string)($r['eid'] ?? '')) ?>">
 
-                    <?php if ($manifest->featureEnabled('obs_start_picker') && !empty($protocolOptions)): ?>
+            <?php if ($manifest->featureEnabled('obs_start_picker') && !empty($protocolOptions)): ?>
               <select name="protocol_key" class="form-select form-select-sm d-inline-block" style="width: 170px;">
-                        <?php foreach ($protocolOptions as $popt): ?>
-                            <?php $k = (string)($popt['protocol_key'] ?? ''); ?>
+                <?php foreach ($protocolOptions as $popt): ?>
+                  <?php $k = (string)($popt['protocol_key'] ?? ''); ?>
                   <option value="<?= htmlspecialchars($k) ?>" <?= ($k === 'GENERAL_OBS') ? 'selected' : '' ?>>
-                            <?= htmlspecialchars((string)($popt['label'] ?? $k)) ?>
+                    <?= htmlspecialchars((string)($popt['label'] ?? $k)) ?>
                   </option>
                 <?php endforeach; ?>
               </select>
@@ -370,7 +364,7 @@ $href = institutional_bootstrap5_href($manifest);
                 </form>
                 <?php endif; ?>
 
-            <?php if ($manifest->featureEnabled('bh_safety') && !$manifest->featureEnabled('bh_boarding')): ?>
+<?php if ($manifest->featureEnabled('bh_safety') && !$manifest->featureEnabled('bh_boarding')): ?>
 <form method="post" action="bh_safety_set.php" class="d-flex gap-2">
   <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($data['csrf']) ?>">
   <input type="hidden" name="episode_id" value="<?= htmlspecialchars((string)$r['id']) ?>">
@@ -386,7 +380,7 @@ $href = institutional_bootstrap5_href($manifest);
   </select>
   <button class="btn btn-sm btn-outline-warning"><?= xlt("BH Safety") ?></button>
 </form>
-            <?php endif; ?>
+<?php endif; ?>
 
                 <form method="post" class="d-flex gap-2">
                   <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($data['csrf']) ?>">
@@ -469,5 +463,3 @@ $href = institutional_bootstrap5_href($manifest);
 
 </body>
 </html>
-
-

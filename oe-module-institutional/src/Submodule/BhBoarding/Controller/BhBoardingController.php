@@ -71,5 +71,3 @@ final class BhBoardingController
         ];
     }
 }
-
-

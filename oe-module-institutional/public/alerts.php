@@ -139,7 +139,7 @@ foreach ($alerts as $a) {
       <span class="badge text-bg-success" id="badgeAllClear"><?= xlt('All Clear') ?></span>
     <?php endif; ?>
     <?php foreach ($summary['by_group'] as $grp => $cnt):
-        $gm = groupMeta($grp); ?>
+      $gm = groupMeta($grp); ?>
       <span class="badge <?= $gm['cls'] ?>"><?= htmlspecialchars($gm['label']) ?> <?= (int)$cnt ?></span>
     <?php endforeach; ?>
   </div>
@@ -170,9 +170,9 @@ foreach ($alerts as $a) {
     <div class="col-12 col-xl-8">
       <div id="alertList">
         <?php foreach ($grouped as $grp => $rows):
-            $gm = groupMeta($grp);
-            if (empty($rows)) continue;
-            ?>
+          $gm = groupMeta($grp);
+          if (empty($rows)) continue;
+        ?>
           <div class="card mb-3 shadow-sm">
             <div class="group-header d-flex align-items-center gap-2">
               <span class="badge <?= $gm['cls'] ?>"><?= htmlspecialchars($gm['label']) ?></span>
@@ -191,9 +191,9 @@ foreach ($alerts as $a) {
                 </thead>
                 <tbody>
                 <?php foreach ($rows as $a):
-                    $eid = (int)$a['episode_id'];
-                    $key = AlertAckRepository::key((string)$a['type'], $eid);
-                    ?>
+                  $eid = (int)$a['episode_id'];
+                  $key = AlertAckRepository::key((string)$a['type'], $eid);
+                ?>
                   <tr class="<?= rowClass((string)$a['severity']) ?>">
                     <td>
                       <span class="badge <?= severityBadge((string)$a['severity']) ?>">
@@ -250,21 +250,21 @@ foreach ($alerts as $a) {
         <div class="card-header small"><?= xlt('Active Patients') ?> (<?= count($data['boardRows']) ?>)</div>
         <div class="list-group list-group-flush" style="max-height:80vh; overflow-y:auto; font-size:.82rem;">
           <?php
-            $epAlertCount = [];
-            foreach ($alerts as $a) {
-                $epAlertCount[(int)$a['episode_id']] = ($epAlertCount[(int)$a['episode_id']] ?? 0) + 1;
-            }
-            $epCritical = [];
-            foreach ($alerts as $a) {
-                if ($a['severity'] === 'CRITICAL') {
-                    $epCritical[(int)$a['episode_id']] = true;
-                }
-            }
-            foreach ($data['boardRows'] as $e):
-                $eid    = (int)$e['id'];
-                $aCnt   = $epAlertCount[$eid] ?? 0;
-                $isCrit = !empty($epCritical[$eid]);
-                ?>
+          $epAlertCount = [];
+          foreach ($alerts as $a) {
+              $epAlertCount[(int)$a['episode_id']] = ($epAlertCount[(int)$a['episode_id']] ?? 0) + 1;
+          }
+          $epCritical = [];
+          foreach ($alerts as $a) {
+              if ($a['severity'] === 'CRITICAL') {
+                  $epCritical[(int)$a['episode_id']] = true;
+              }
+          }
+          foreach ($data['boardRows'] as $e):
+            $eid    = (int)$e['id'];
+            $aCnt   = $epAlertCount[$eid] ?? 0;
+            $isCrit = !empty($epCritical[$eid]);
+          ?>
           <a class="list-group-item list-group-item-action py-2"
              href="triage.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= $eid ?>"
              style="background:<?= $isCrit ? 'rgba(220,53,69,.15)' : 'transparent' ?>; color:#e8eaed;">
@@ -277,31 +277,31 @@ foreach ($alerts as $a) {
                   </div>
                 <?php endif; ?>
               </div>
-                <?php if ($aCnt > 0): ?>
+              <?php if ($aCnt > 0): ?>
                 <span class="badge <?= $isCrit ? 'text-bg-danger' : 'text-bg-warning text-dark' ?>">
-                    <?= $aCnt ?>
+                  <?= $aCnt ?>
                 </span>
               <?php endif; ?>
             </div>
-                <?php
-                $loc     = $e['location_name'] ?? null;
-                $elapsed = institutional_human_elapsed((string)($e['start_datetime'] ?? ''));
-                ?>
+            <?php
+            $loc     = $e['location_name'] ?? null;
+            $elapsed = institutional_human_elapsed((string)($e['start_datetime'] ?? ''));
+            ?>
             <div class="d-flex gap-2 mt-1 flex-wrap">
-                <?php if ($loc): ?>
+              <?php if ($loc): ?>
                 <span class="badge text-bg-info"><?= htmlspecialchars((string)$loc) ?></span>
               <?php else: ?>
                 <span class="badge text-bg-secondary"><?= xlt('No room') ?></span>
               <?php endif; ?>
-                <?php if ($elapsed): ?>
+              <?php if ($elapsed): ?>
                 <span class="text-muted"><?= htmlspecialchars($elapsed) ?></span>
               <?php endif; ?>
-                <?php if (!empty($e['acuity_esi'])): ?>
+              <?php if (!empty($e['acuity_esi'])): ?>
                 <span class="badge text-bg-dark">ESI <?= htmlspecialchars((string)$e['acuity_esi']) ?></span>
               <?php endif; ?>
             </div>
           </a>
-            <?php endforeach; ?>
+          <?php endforeach; ?>
           <?php if (empty($data['boardRows'])): ?>
             <div class="list-group-item text-muted"><?= xlt('No active episodes') ?></div>
           <?php endif; ?>
@@ -388,5 +388,3 @@ function refreshNow() {
 </script>
 </body>
 </html>
-
-

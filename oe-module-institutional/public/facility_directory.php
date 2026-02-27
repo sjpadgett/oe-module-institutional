@@ -169,5 +169,3 @@ $serviceTypes = [
 </div>
 </body>
 </html>
-
-

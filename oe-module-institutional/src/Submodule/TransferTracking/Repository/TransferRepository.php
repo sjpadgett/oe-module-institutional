@@ -64,5 +64,3 @@ final class TransferRepository
         return $rows;
     }
 }
-
-

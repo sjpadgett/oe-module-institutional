@@ -228,5 +228,3 @@ final class ScorecardRepository
         return count($vals) > 0 ? round(array_sum($vals) / count($vals), 1) : null;
     }
 }
-
-

@@ -97,5 +97,3 @@ final class AlertsController
         ];
     }
 }
-
-

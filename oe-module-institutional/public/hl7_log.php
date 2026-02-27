@@ -124,9 +124,9 @@ $hlEndpoint  = $hlTransport === 'HTTP'
         </thead>
         <tbody>
         <?php foreach ($rows as $r):
-            $st = strtolower((string)($r['status'] ?? ''));
-            $badgeCls = match ($st) { 'sent' => 'badge-sent', 'nack' => 'badge-nack', default => 'badge-error' };
-            ?>
+          $st = strtolower((string)($r['status'] ?? ''));
+          $badgeCls = match ($st) { 'sent' => 'badge-sent', 'nack' => 'badge-nack', default => 'badge-error' };
+        ?>
           <tr>
             <td class="text-nowrap small"><?= htmlspecialchars((string)$r['sent_datetime']) ?></td>
             <td><code><?= htmlspecialchars((string)$r['event_type']) ?></code></td>
@@ -169,9 +169,6 @@ $hlEndpoint  = $hlTransport === 'HTTP'
   </div>
 </div>
 
-<?php if ($href): ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<?php endif; ?>
 <script>
 function showRaw(logId, facilityId) {
     const modal = new bootstrap.Modal(document.getElementById('rawModal'));
@@ -185,8 +182,3 @@ function showRaw(logId, facilityId) {
 </script>
 </body>
 </html>
-
-
-
-
-

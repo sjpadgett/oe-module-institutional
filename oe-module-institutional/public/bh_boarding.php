@@ -125,7 +125,7 @@ $risks = [
         <div class="card-header"><?= xlt("Active Episodes") ?></div>
         <div class="list-group list-group-flush">
           <?php foreach ($episodes as $e): ?>
-                <?php $active = ((int)$e['id'] === $episodeId); ?>
+            <?php $active = ((int)$e['id'] === $episodeId); ?>
             <a class="list-group-item list-group-item-action <?= $active ? 'active' : '' ?>"
                href="bh_boarding.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$e['id']) ?>">
               <div class="d-flex justify-content-between">
@@ -294,5 +294,3 @@ $risks = [
 </div>
 </body>
 </html>
-
-

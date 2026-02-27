@@ -4,7 +4,6 @@ require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
 use OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
 use OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService;
 use OpenEMR\Modules\Institutional\Submodule\Triage\Controller\TriageController;
 
@@ -13,12 +12,6 @@ if (!$manifest->featureEnabled('triage')) {
 }
 
 $facilityId = (int)($_GET['facility_id'] ?? ($GLOBALS['facility_default_id'] ?? 1));
-$settingsRepo = new SettingsRepository();
-$facilitySettings = $settingsRepo->all($facilityId);
-if (isset($triageStandard) && method_exists($triageStandard, 'applyColorOverridesFromSettings')) {
-    $triageStandard->applyColorOverridesFromSettings($facilitySettings);
-}
-
 $episodeId  = isset($_GET['episode_id']) && is_numeric($_GET['episode_id'])
     ? (int)$_GET['episode_id']
     : null;
@@ -77,7 +70,6 @@ $latest    = $data['latest'];
     .set-row-critical { background: #fff0f0 !important; }
     .set-row-warning  { background: #fffbe6 !important; }
     .trend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0 1px; }
-    <?= $triageStandard->cssRules() ?>
   </style>
 </head>
 <body class="bg-light">
@@ -111,11 +103,11 @@ $latest    = $data['latest'];
         <div class="card-header"><?= xlt('Active Episodes') ?></div>
         <div class="list-group list-group-flush" style="max-height: 75vh; overflow-y: auto;">
           <?php foreach ($data['boardRows'] as $e):
-                $eId   = (int)$e['id'];
-                $isAct = ($eId === $episodeId);
+            $eId   = (int)$e['id'];
+            $isAct = ($eId === $episodeId);
             // Grab latest vitals badge for sidebar indicator
-                $evRow = null; // loaded below per-episode would be N+1; skip for now
-                ?>
+            $evRow = null; // loaded below per-episode would be N+1; skip for now
+          ?>
             <a class="list-group-item list-group-item-action py-2 <?= $isAct ? 'active' : '' ?>"
                href="triage.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$eId) ?>">
               <div class="d-flex justify-content-between align-items-start">
@@ -128,7 +120,7 @@ $latest    = $data['latest'];
                 <div class="text-end small">
                   <span class="badge text-bg-secondary"><?= htmlspecialchars((string)($e['type'] ?? '')) ?></span>
                   <?php if (!empty($e['acuity_esi'])): ?>
-                    <span class="badge <?= htmlspecialchars($triageStandard->badgeClass((int)($e['acuity_esi'] ?? 0))) ?>"><?= htmlspecialchars($triageStandard->shortLabel((int)($e['acuity_esi'] ?? 0))) ?></span>
+                    <span class="badge text-bg-info">ESI <?= htmlspecialchars((string)$e['acuity_esi']) ?></span>
                   <?php endif; ?>
                 </div>
               </div>
@@ -149,16 +141,16 @@ $latest    = $data['latest'];
       <?php else: ?>
 
       <!-- Latest vitals summary banner -->
-          <?php if ($latest): ?>
-                <?php $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($latest); ?>
+      <?php if ($latest): ?>
+        <?php $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($latest); ?>
         <div class="alert <?= $sev === 'danger' ? 'alert-danger' : ($sev === 'warning' ? 'alert-warning' : 'alert-secondary') ?> py-2 mb-3 d-flex align-items-center gap-3 flex-wrap">
           <strong><?= xlt('Latest') ?>:</strong>
           <span><?= \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::formatForBoard($latest) ?></span>
-                <?php if (!empty($latest['pain_score'])): ?>
+          <?php if (!empty($latest['pain_score'])): ?>
             <span class="badge text-bg-secondary"><?= xlt('Pain') ?> <?= htmlspecialchars((string)$latest['pain_score']) ?>/10</span>
           <?php endif; ?>
-                <?php if (!empty($latest['esi_suggested'])): ?>
-            <span class="badge text-bg-warning"><?= htmlspecialchars($triageStandard->columnLabel()) ?> <?= xlt('suggest') ?> <?= htmlspecialchars((string)$latest['esi_suggested']) ?></span>
+          <?php if (!empty($latest['esi_suggested'])): ?>
+            <span class="badge text-bg-warning"><?= xlt('ESI suggest') ?> <?= htmlspecialchars((string)$latest['esi_suggested']) ?></span>
           <?php endif; ?>
           <span class="text-muted small ms-auto"><?= htmlspecialchars(institutional_human_elapsed((string)$latest['noted_datetime'])) ?> <?= xlt('ago') ?></span>
         </div>
@@ -281,7 +273,7 @@ $latest    = $data['latest'];
 
             <div class="col-12">
               <div class="form-text">
-                <?= sprintf(xlt('%s acuity will be suggested from vitals automatically. Leave fields blank if not measured.'), htmlspecialchars($triageStandard->columnLabel())) ?>
+                <?= xlt('ESI will be suggested from vitals automatically. Leave fields blank if not measured.') ?>
               </div>
             </div>
           </form>
@@ -309,39 +301,39 @@ $latest    = $data['latest'];
                 <th class="vital-cell"><?= xlt('GCS') ?></th>
                 <th class="vital-cell"><?= xlt('Pain') ?></th>
                 <th class="vital-cell"><?= xlt('Wt kg') ?></th>
-                <th><?= htmlspecialchars($triageStandard->columnLabel()) ?>?</th>
+                <th><?= xlt('ESI?') ?></th>
                 <th><?= xlt('Notes') ?></th>
               </tr>
             </thead>
             <tbody>
             <?php foreach (array_reverse($history) as $row):
-                $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($row);
-                $trClass = $sev === 'danger' ? 'set-row-critical' : ($sev === 'warning' ? 'set-row-warning' : '');
-                ?>
+              $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($row);
+              $trClass = $sev === 'danger' ? 'set-row-critical' : ($sev === 'warning' ? 'set-row-warning' : '');
+            ?>
               <tr class="<?= $trClass ?>">
                 <td><span class="badge <?= vitalsBadge($row) ?>"><?= htmlspecialchars((string)$row['set_number']) ?></span></td>
                 <td class="text-nowrap small"><?= htmlspecialchars((string)$row['noted_datetime']) ?></td>
                 <td class="vital-cell">
                   <?php if (!empty($row['bp_systolic']) && !empty($row['bp_diastolic'])): ?>
-                        <?= htmlspecialchars((string)$row['bp_systolic']) ?>/<?= htmlspecialchars((string)$row['bp_diastolic']) ?>
+                    <?= htmlspecialchars((string)$row['bp_systolic']) ?>/<?= htmlspecialchars((string)$row['bp_diastolic']) ?>
                   <?php else: ?><span class="text-muted">—</span><?php endif; ?>
                 </td>
                 <td class="vital-cell"><?= tv($row['hr'] ?? null) ?></td>
                 <td class="vital-cell"><?= tv($row['rr'] ?? null) ?></td>
                 <td class="vital-cell"><?php
                   $s = $row['spo2'] ?? null;
-                if ($s !== null && $s !== '') {
-                    $cls = (int)$s < 90 ? 'text-danger fw-bold' : ((int)$s < 94 ? 'text-warning fw-semibold' : '');
-                    echo '<span class="' . $cls . '">' . htmlspecialchars((string)$s) . '%</span>';
-                } else { echo '<span class="text-muted">—</span>'; }
+                  if ($s !== null && $s !== '') {
+                      $cls = (int)$s < 90 ? 'text-danger fw-bold' : ((int)$s < 94 ? 'text-warning fw-semibold' : '');
+                      echo '<span class="' . $cls . '">' . htmlspecialchars((string)$s) . '%</span>';
+                  } else { echo '<span class="text-muted">—</span>'; }
                 ?></td>
                 <td class="vital-cell"><?= tv($row['temp_f'] ?? null) ?></td>
                 <td class="vital-cell"><?php
                   $g = $row['gcs'] ?? null;
-                if ($g !== null && $g !== '') {
-                    $gcsCls = (int)$g <= 8 ? 'text-danger fw-bold' : ((int)$g < 13 ? 'text-warning' : '');
-                    echo '<span class="' . $gcsCls . '">' . htmlspecialchars((string)$g) . '</span>';
-                } else { echo '<span class="text-muted">—</span>'; }
+                  if ($g !== null && $g !== '') {
+                      $gcsCls = (int)$g <= 8 ? 'text-danger fw-bold' : ((int)$g < 13 ? 'text-warning' : '');
+                      echo '<span class="' . $gcsCls . '">' . htmlspecialchars((string)$g) . '</span>';
+                  } else { echo '<span class="text-muted">—</span>'; }
                 ?></td>
                 <td class="vital-cell"><?= tv($row['pain_score'] ?? null) ?></td>
                 <td class="vital-cell"><?= tv($row['weight_kg'] ?? null) ?></td>
@@ -359,26 +351,26 @@ $latest    = $data['latest'];
         </div>
 
         <!-- Simple trending mini-chart using CSS dots for SpO2/HR -->
-          <?php if (count($history) >= 2):
-                $hrSeries  = array_map(fn($r) => (int)($r['hr']   ?? 0), $history);
-                $spo2Series = array_map(fn($r) => (int)($r['spo2'] ?? 0), $history);
-                $maxHr = max(array_filter($hrSeries)) ?: 1;
-                $minSpo2 = min(array_filter($spo2Series)) ?: 100;
-                ?>
+        <?php if (count($history) >= 2):
+          $hrSeries  = array_map(fn($r) => (int)($r['hr']   ?? 0), $history);
+          $spo2Series = array_map(fn($r) => (int)($r['spo2'] ?? 0), $history);
+          $maxHr = max(array_filter($hrSeries)) ?: 1;
+          $minSpo2 = min(array_filter($spo2Series)) ?: 100;
+        ?>
         <div class="card-body border-top py-2">
           <div class="d-flex flex-wrap gap-4 align-items-center">
             <div class="small text-muted">
               <strong><?= xlt('HR trend') ?>:</strong>
-                <?php foreach ($hrSeries as $v): ?>
-                    <?php $cls = ($v > 130 || ($v > 0 && $v < 50)) ? 'bg-danger' : ($v > 110 ? 'bg-warning' : 'bg-success'); ?>
-                    <?php if ($v > 0): ?><span class="trend-dot <?= $cls ?>" title="<?= $v ?>"></span><?php endif; ?>
+              <?php foreach ($hrSeries as $v): ?>
+                <?php $cls = ($v > 130 || ($v > 0 && $v < 50)) ? 'bg-danger' : ($v > 110 ? 'bg-warning' : 'bg-success'); ?>
+                <?php if ($v > 0): ?><span class="trend-dot <?= $cls ?>" title="<?= $v ?>"></span><?php endif; ?>
               <?php endforeach; ?>
             </div>
             <div class="small text-muted">
               <strong><?= xlt('SpO₂ trend') ?>:</strong>
-                <?php foreach ($spo2Series as $v): ?>
-                    <?php $cls = ($v > 0 && $v < 90) ? 'bg-danger' : ($v < 94 && $v > 0 ? 'bg-warning' : 'bg-success'); ?>
-                    <?php if ($v > 0): ?><span class="trend-dot <?= $cls ?>" title="<?= $v ?>%"></span><?php endif; ?>
+              <?php foreach ($spo2Series as $v): ?>
+                <?php $cls = ($v > 0 && $v < 90) ? 'bg-danger' : ($v < 94 && $v > 0 ? 'bg-warning' : 'bg-success'); ?>
+                <?php if ($v > 0): ?><span class="trend-dot <?= $cls ?>" title="<?= $v ?>%"></span><?php endif; ?>
               <?php endforeach; ?>
             </div>
             <div class="text-muted small ms-auto"><?= xlt('● Critical &nbsp; ● Warning &nbsp; ● Normal') ?></div>
@@ -395,5 +387,3 @@ $latest    = $data['latest'];
 </div>
 </body>
 </html>
-
-

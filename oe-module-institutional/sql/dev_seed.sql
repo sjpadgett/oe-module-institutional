@@ -24,5 +24,3 @@ ON DUPLICATE KEY UPDATE
   service_type = VALUES(service_type),
   is_active = VALUES(is_active),
   sort_order = VALUES(sort_order);
-
-

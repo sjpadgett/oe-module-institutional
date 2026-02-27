@@ -53,5 +53,3 @@ final class ObsPlanRepository
         return $rows;
     }
 }
-
-

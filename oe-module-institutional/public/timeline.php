@@ -129,9 +129,9 @@ function tl_elapsed(string $dt1, string $dt2): string {
         <div class="card-header"><?= xlt('Active Episodes') ?></div>
         <div class="list-group list-group-flush" style="max-height:75vh;overflow-y:auto;">
           <?php foreach ($data['boardRows'] as $e):
-                $eId  = (int)$e['id'];
-                $isAct = ($eId === $data['episodeId']);
-                ?>
+            $eId  = (int)$e['id'];
+            $isAct = ($eId === $data['episodeId']);
+          ?>
           <a class="list-group-item list-group-item-action py-2 <?= $isAct ? 'active' : '' ?>"
              href="timeline.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$eId) ?>">
             <div class="d-flex justify-content-between align-items-start">
@@ -165,13 +165,13 @@ function tl_elapsed(string $dt1, string $dt2): string {
         <div class="alert alert-secondary"><?= xlt('No events recorded for this episode yet.') ?></div>
       <?php else: ?>
 
-          <?php
-            $entries   = $data['entries'];
-            $userNames = $data['userNames'];
-            $selected  = $data['selected'];
-            $firstTs   = $entries[0]['ts'] ?? 0;
-            $prevDt    = null;
-            ?>
+      <?php
+        $entries   = $data['entries'];
+        $userNames = $data['userNames'];
+        $selected  = $data['selected'];
+        $firstTs   = $entries[0]['ts'] ?? 0;
+        $prevDt    = null;
+      ?>
 
       <!-- Episode header card -->
       <div class="card shadow-sm mb-3">
@@ -193,7 +193,7 @@ function tl_elapsed(string $dt1, string $dt2): string {
           <?php endif; ?>
           <?php if (!empty($selected['start_datetime'])): ?>
           <div class="ms-auto text-muted small">
-                <?= xlt('Arrived') ?>: <?= htmlspecialchars((string)$selected['start_datetime']) ?>
+            <?= xlt('Arrived') ?>: <?= htmlspecialchars((string)$selected['start_datetime']) ?>
           </div>
           <?php endif; ?>
         </div>
@@ -207,21 +207,21 @@ function tl_elapsed(string $dt1, string $dt2): string {
         </div>
         <div class="card-body py-3 px-3">
 
-          <?php foreach ($entries as $i => $e):
-                $sev   = (string)($e['severity'] ?? '');
-                $dotCls = tl_dot_class($sev);
-                $icon  = (string)($e['icon'] ?? tl_icon((string)$e['source']));
-                $userId = $e['user_id'] ?? null;
-                $userName = $userId ? ($userNames[$userId] ?? "User #{$userId}") : null;
+        <?php foreach ($entries as $i => $e):
+          $sev   = (string)($e['severity'] ?? '');
+          $dotCls = tl_dot_class($sev);
+          $icon  = (string)($e['icon'] ?? tl_icon((string)$e['source']));
+          $userId = $e['user_id'] ?? null;
+          $userName = $userId ? ($userNames[$userId] ?? "User #{$userId}") : null;
 
           // Gap annotation between entries
-                $gap = '';
-                if ($prevDt && $e['ts'] - strtotime($prevDt) > 600) {
-                    $gap = tl_elapsed($prevDt, (string)$e['datetime']);
-                }
-                $prevDt = (string)$e['datetime'];
-                ?>
-                <?php if ($gap): ?>
+          $gap = '';
+          if ($prevDt && $e['ts'] - strtotime($prevDt) > 600) {
+              $gap = tl_elapsed($prevDt, (string)$e['datetime']);
+          }
+          $prevDt = (string)$e['datetime'];
+        ?>
+          <?php if ($gap): ?>
           <div class="tl-gap">
             <i class="bi bi-clock me-1"></i><?= htmlspecialchars($gap) ?> <?= xlt('elapsed') ?>
           </div>
@@ -268,5 +268,3 @@ function tl_elapsed(string $dt1, string $dt2): string {
 </div>
 </body>
 </html>
-
-

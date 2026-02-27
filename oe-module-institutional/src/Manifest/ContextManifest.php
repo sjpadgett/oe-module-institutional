@@ -33,21 +33,20 @@ final class ContextManifest
     // Expose same public properties as Manifest so code that reads
     // $manifest->ui['bootstrap5_mode'] etc. continues to work.
     public readonly string $moduleId;
-    public readonly array $features;
-    public readonly array $ui;
-    public readonly array $migrations;
-    public readonly array $menus;
+    public readonly array  $features;
+    public readonly array  $ui;
+    public readonly array  $migrations;
+    public readonly array  $menus;
 
     public function __construct(
         private readonly Manifest $inner,
-        private readonly string $contextKey
-    )
-    {
-        $this->moduleId = $inner->moduleId;
-        $this->features = $inner->features;
-        $this->ui = $inner->ui;
+        private readonly string   $contextKey
+    ) {
+        $this->moduleId   = $inner->moduleId;
+        $this->features   = $inner->features;
+        $this->ui         = $inner->ui;
         $this->migrations = $inner->migrations;
-        $this->menus = $inner->menus;
+        $this->menus      = $inner->menus;
     }
 
     // ── Core filtering API ────────────────────────────────────────────────
@@ -95,7 +94,7 @@ final class ContextManifest
 
         return array_values(array_filter($items, function (array $item): bool {
             $feature = (string)($item['feature'] ?? '');
-            $group = (string)($item['group'] ?? '');
+            $group   = (string)($item['group']   ?? '');
 
             // Context manager always shown
             if ($feature === 'context_manager') {
@@ -123,5 +122,3 @@ final class ContextManifest
         return $this->inner->menusTopLabel();
     }
 }
-
-

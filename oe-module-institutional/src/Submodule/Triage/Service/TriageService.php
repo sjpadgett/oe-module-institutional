@@ -144,5 +144,3 @@ final class TriageService
         return $flags;
     }
 }
-
-

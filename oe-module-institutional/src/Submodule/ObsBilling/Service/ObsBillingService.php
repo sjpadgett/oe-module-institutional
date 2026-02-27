@@ -233,5 +233,3 @@ final class ObsBillingService
         return max(0.0, self::H_CONVERSION - $elapsedHours);
     }
 }
-
-

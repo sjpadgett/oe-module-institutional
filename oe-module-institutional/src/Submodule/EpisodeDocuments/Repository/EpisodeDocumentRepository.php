@@ -162,5 +162,3 @@ final class EpisodeDocumentRepository
         return $out;
     }
 }
-
-

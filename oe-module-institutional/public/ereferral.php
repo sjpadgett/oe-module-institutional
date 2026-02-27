@@ -10,6 +10,7 @@ use OpenEMR\Modules\Institutional\Submodule\EReferral\Controller\EReferralContro
 use OpenEMR\Modules\Institutional\Submodule\EReferral\Repository\EReferralRepository;
 use OpenEMR\Modules\Institutional\Submodule\EReferral\Service\EReferralService;
 use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
+use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarOrderRepository;
 
 if (!$manifest->featureEnabled('ereferral')) {
     die(xlt("Institutional E-Referral is disabled by manifest"));
@@ -44,7 +45,8 @@ $controller = new EReferralController(
     new EReferralService(new EReferralRepository(), new FacilityDirectoryRepository()),
     $episodeRepo,
     new DispositionRepository(),
-    new FacilityDirectoryRepository()
+    new FacilityDirectoryRepository(),
+    new MarOrderRepository()
 );
 
 $data = $controller->handle($facilityId, $episodeId, $userId);
@@ -121,7 +123,7 @@ if ($isPrint) {
   <h2><?= xlt('Clinical Summary') ?></h2>
   <pre><?= htmlspecialchars((string)($referral['clinical_summary'] ?? '')) ?></pre>
 
-    <?php if (!empty($referral['medications_summary'])): ?>
+  <?php if (!empty($referral['medications_summary'])): ?>
   <h2><?= xlt('Current Medications') ?></h2>
   <pre><?= htmlspecialchars((string)$referral['medications_summary']) ?></pre>
   <?php endif; ?>
@@ -129,7 +131,7 @@ if ($isPrint) {
   <h2><?= xlt('Services Requested') ?></h2>
   <pre><?= htmlspecialchars((string)($referral['services_requested'] ?? '')) ?></pre>
 
-    <?php if (!empty($referral['followup_instructions'])): ?>
+  <?php if (!empty($referral['followup_instructions'])): ?>
   <h2><?= xlt('Follow-up Instructions') ?></h2>
   <pre><?= htmlspecialchars((string)$referral['followup_instructions']) ?></pre>
   <?php endif; ?>
@@ -225,8 +227,8 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
         <div class="card-header small fw-semibold"><?= xlt("Active Episodes") ?></div>
         <div class="list-group list-group-flush" style="max-height:420px;overflow-y:auto;">
           <?php foreach ($episodes as $e):
-                $active = ((int)$e['id'] === $episodeId);
-                ?>
+            $active = ((int)$e['id'] === $episodeId);
+          ?>
             <a class="list-group-item list-group-item-action py-2 <?= $active ? 'active' : '' ?>"
                href="ereferral.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$e['id']) ?>">
               <div class="d-flex justify-content-between align-items-start">
@@ -275,13 +277,13 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
           </span>
           <?php if (!empty($referral['sent_datetime'])): ?>
             <span class="text-muted small">
-                <?= xlt("Sent") ?>: <?= htmlspecialchars((string)$referral['sent_datetime']) ?>
+              <?= xlt("Sent") ?>: <?= htmlspecialchars((string)$referral['sent_datetime']) ?>
             </span>
           <?php endif; ?>
           <?php if (!empty($referral['response_datetime'])): ?>
             <span class="text-muted small">
-                <?= xlt("Response") ?>: <?= htmlspecialchars((string)$referral['response_datetime']) ?>
-                <?= !empty($referral['response_by_name']) ? '— ' . htmlspecialchars((string)$referral['response_by_name']) : '' ?>
+              <?= xlt("Response") ?>: <?= htmlspecialchars((string)$referral['response_datetime']) ?>
+              <?= !empty($referral['response_by_name']) ? '— ' . htmlspecialchars((string)$referral['response_by_name']) : '' ?>
             </span>
           <?php endif; ?>
         </div>
@@ -304,8 +306,8 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
                 <select name="referral_type" class="form-select form-select-sm" <?= $isSent ? 'disabled' : '' ?>>
                   <?php foreach (['DISCHARGE' => xlt('Discharge'), 'TRANSFER' => xlt('Transfer'), 'BH_PLACEMENT' => xlt('BH Placement')] as $v => $lbl): ?>
                     <option value="<?= htmlspecialchars($v) ?>"
-                        <?= ((string)($referral['referral_type'] ?? 'DISCHARGE') === $v) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars((string)$lbl) ?>
+                      <?= ((string)($referral['referral_type'] ?? 'DISCHARGE') === $v) ? 'selected' : '' ?>>
+                      <?= htmlspecialchars((string)$lbl) ?>
                     </option>
                   <?php endforeach; ?>
                 </select>
@@ -316,8 +318,8 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
                 <select name="priority" class="form-select form-select-sm" <?= $isSent ? 'disabled' : '' ?>>
                   <?php foreach (['ROUTINE' => xlt('Routine'), 'URGENT' => xlt('Urgent'), 'EMERGENT' => xlt('Emergent')] as $v => $lbl): ?>
                     <option value="<?= htmlspecialchars($v) ?>"
-                        <?= ((string)($referral['priority'] ?? 'ROUTINE') === $v) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars((string)$lbl) ?>
+                      <?= ((string)($referral['priority'] ?? 'ROUTINE') === $v) ? 'selected' : '' ?>>
+                      <?= htmlspecialchars((string)$lbl) ?>
                     </option>
                   <?php endforeach; ?>
                 </select>
@@ -329,11 +331,11 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
                 <label class="form-label"><?= xlt("Destination (Facility Directory)") ?></label>
                 <select name="destination_directory_id" class="form-select form-select-sm" <?= $isSent ? 'disabled' : '' ?>>
                   <option value=""><?= xlt("— Manual entry below —") ?></option>
-                    <?php foreach ($directory as $dir): ?>
+                  <?php foreach ($directory as $dir): ?>
                     <option value="<?= htmlspecialchars((string)$dir['id']) ?>"
-                        <?= ((int)($referral['destination_directory_id'] ?? 0) === (int)$dir['id']) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars((string)$dir['name']) ?>
-                        <?php if (!empty($dir['service_type'])): ?>
+                      <?= ((int)($referral['destination_directory_id'] ?? 0) === (int)$dir['id']) ? 'selected' : '' ?>>
+                      <?= htmlspecialchars((string)$dir['name']) ?>
+                      <?php if (!empty($dir['service_type'])): ?>
                         (<?= htmlspecialchars((string)$dir['service_type']) ?>)
                       <?php endif; ?>
                     </option>
@@ -382,7 +384,11 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
                           <?= $isSent ? 'disabled' : '' ?>><?= htmlspecialchars((string)($referral['clinical_summary'] ?? '')) ?></textarea>
               </div>
               <div class="col-md-6">
-                <label class="form-label"><?= xlt("Current Medications") ?></label>
+                <label class="form-label"><?= xlt("Current Medications") ?>
+                  <span class="text-muted ms-1" style="font-size:11px"><?= xlt("(auto-populated from active MAR)") ?></span>
+                </label>
+                <input type="hidden" name="_existing_medications_summary"
+                       value="<?= htmlspecialchars((string)($referral['medications_summary'] ?? '')) ?>">
                 <textarea name="medications_summary" rows="3"
                           class="form-control form-control-sm"
                           placeholder="<?= xla("List key discharge medications") ?>"
@@ -406,7 +412,7 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
               <?php if ($isDraft): ?>
               <div class="col-12 d-flex gap-2 flex-wrap">
                 <button type="submit" name="action" value="save" class="btn btn-outline-secondary">
-                    <?= xlt("Save Draft") ?>
+                  <?= xlt("Save Draft") ?>
                 </button>
                 <details class="d-inline">
                   <summary><span class="btn btn-primary"><?= xlt("Mark as Sent") ?></span></summary>
@@ -432,7 +438,7 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
       </div>
 
       <!-- ── Response tracking (visible once sent) ── -->
-          <?php if ($referralStatus === 'SENT'): ?>
+      <?php if ($referralStatus === 'SENT'): ?>
       <div class="card shadow-sm">
         <div class="card-header"><?= xlt("Record Response") ?></div>
         <div class="card-body">
@@ -462,9 +468,9 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
               <button class="btn btn-primary btn-sm w-100"><?= xlt("Save Response") ?></button>
             </div>
           </form>
-                <?php if (!empty($referral['response_notes'])): ?>
+          <?php if (!empty($referral['response_notes'])): ?>
             <div class="mt-2 small text-muted">
-                    <?= xlt("Last response notes") ?>: <?= htmlspecialchars((string)$referral['response_notes']) ?>
+              <?= xlt("Last response notes") ?>: <?= htmlspecialchars((string)$referral['response_notes']) ?>
             </div>
           <?php endif; ?>
         </div>
@@ -478,5 +484,3 @@ $isSent           = in_array($referralStatus, ['SENT', 'ACCEPTED', 'DECLINED', '
 </div>
 </body>
 </html>
-
-

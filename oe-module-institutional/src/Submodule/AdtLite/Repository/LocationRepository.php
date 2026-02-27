@@ -83,5 +83,3 @@ final class LocationRepository
         return $slug . sprintf('%03d', random_int(0, 999));
     }
 }
-
-

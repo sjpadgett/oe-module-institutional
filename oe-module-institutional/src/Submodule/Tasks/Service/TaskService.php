@@ -68,5 +68,3 @@ final class TaskService
         $this->scheduleFromDefinition($episodeId, $pid, $eid, $facilityId, $def, 4, $userId);
     }
 }
-
-

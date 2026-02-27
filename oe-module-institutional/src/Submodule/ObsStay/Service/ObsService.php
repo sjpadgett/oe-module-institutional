@@ -82,5 +82,3 @@ final class ObsService
         return false;
     }
 }
-
-

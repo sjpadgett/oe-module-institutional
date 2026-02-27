@@ -224,5 +224,3 @@ $href = institutional_bootstrap5_href($manifest);
 </script>
 </body>
 </html>
-
-

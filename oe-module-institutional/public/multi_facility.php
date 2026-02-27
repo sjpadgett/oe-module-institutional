@@ -102,7 +102,7 @@ function fmt_d2r(?int $min): string
         [xlt('MAR Overdue'),        $totalMar,       'text-danger',   $totalMar   > 0 ? 'border-danger' : null],
     ];
     foreach ($kpis as [$lbl, $val, $valCls, $borderCls]):
-        ?>
+    ?>
     <div class="col-6 col-sm-4 col-md-2">
       <div class="card shadow-sm text-center h-100 <?= $borderCls ?? '' ?>">
         <div class="card-body py-2">
@@ -123,14 +123,14 @@ function fmt_d2r(?int $min): string
     </div>
   <?php else: ?>
   <div class="row g-3">
-      <?php foreach ($rows as $fac):
-            $hasCritical = ($fac['sepsis_risk_count'] > 0 || $fac['bh_boarding_count'] > 0 || $fac['pending_mar_count'] > 0);
-            $hasWarning  = ($fac['lwbs_count'] > 0);
-            $cardCls     = $hasCritical ? 'has-critical' : ($hasWarning ? 'has-warning' : '');
-            $occ         = occ_pct($fac['beds_occupied'], $fac['beds_total']);
-            $occBar      = occ_bar_cls($occ);
-            $fid         = (int)$fac['facility_id'];
-            ?>
+    <?php foreach ($rows as $fac):
+      $hasCritical = ($fac['sepsis_risk_count'] > 0 || $fac['bh_boarding_count'] > 0 || $fac['pending_mar_count'] > 0);
+      $hasWarning  = ($fac['lwbs_count'] > 0);
+      $cardCls     = $hasCritical ? 'has-critical' : ($hasWarning ? 'has-warning' : '');
+      $occ         = occ_pct($fac['beds_occupied'], $fac['beds_total']);
+      $occBar      = occ_bar_cls($occ);
+      $fid         = (int)$fac['facility_id'];
+    ?>
     <div class="col-12 col-md-6 col-xl-4">
       <div class="card shadow-sm fac-card h-100 border <?= $cardCls ?>">
         <div class="card-header d-flex align-items-center justify-content-between py-2">
@@ -163,7 +163,7 @@ function fmt_d2r(?int $min): string
           </div>
 
           <!-- Occupancy bar -->
-            <?php if ($fac['beds_total'] > 0): ?>
+          <?php if ($fac['beds_total'] > 0): ?>
           <div class="progress occ-bar mb-3">
             <div class="progress-bar <?= $occBar ?>"
                  style="width:<?= (int)($occ ?? 0) ?>%"
@@ -240,5 +240,3 @@ function fmt_d2r(?int $min): string
 </script>
 </body>
 </html>
-
-

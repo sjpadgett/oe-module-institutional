@@ -17,5 +17,3 @@ final class ObsEpisodesController
         return ['rows' => $this->plans->listActive($facilityId)];
     }
 }
-
-

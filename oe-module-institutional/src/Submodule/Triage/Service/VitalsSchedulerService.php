@@ -146,6 +146,3 @@ final class VitalsSchedulerService
         return $created;
     }
 }
-
-
-

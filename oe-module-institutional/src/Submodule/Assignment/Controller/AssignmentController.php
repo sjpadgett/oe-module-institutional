@@ -99,5 +99,3 @@ final class AssignmentController
         exit;
     }
 }
-
-
