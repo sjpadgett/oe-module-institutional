@@ -92,21 +92,14 @@ final class AdtNotificationService
 
         $pid = (int)($episode['pid'] ?? 0);
         $eid = (int)($episode['id'] ?? 0);
-
-        // A09 (diversion) is facility-level — patient context is not required
-        $requiresPatient = ($eventCode !== 'A09');
-
-        if ($requiresPatient && ($pid <= 0 || $eid <= 0)) {
+        if ($pid <= 0 || $eid <= 0) {
             return;
         }
 
         try {
-            $patient = [];
-            if ($requiresPatient) {
-                $patient = $this->fetchPatient($pid);
-                if ($patient === null) {
-                    return;
-                }
+            $patient = $this->fetchPatient($pid);
+            if ($patient === null) {
+                return;
             }
 
             $builder = $this->makeBuilder($facilityId);
@@ -116,7 +109,6 @@ final class AdtNotificationService
                 'A03' => $builder->buildA03($episode, $patient, $location),
                 'A04' => $builder->buildA04($episode, $patient, $location),
                 'A08' => $builder->buildA08($episode, $patient, $location),
-                'A09' => $builder->buildA09($episode, $patient),
                 default => throw new \InvalidArgumentException("Unknown event code: {$eventCode}"),
             };
 
@@ -199,20 +191,6 @@ final class AdtNotificationService
         );
     }
 
-    /**
-     * A09 — facility diversion notification.
-     * Call from DiversionService::fireAdtA09().
-     *
-     * Unlike other ADT events this is facility-level, not episode-level.
-     * The $episode array may be synthetic (id=0, pid=0).
-     *
-     * @param array<string,mixed> $episode  Synthetic or real episode
-     */
-    public function notifyDiversion(array $episode, int $facilityId): void
-    {
-        $this->dispatch('A09', $episode, $facilityId);
-    }
-
     /** @return array<string,mixed>|null */
     private function fetchPatient(int $pid): ?array
     {
@@ -229,3 +207,5 @@ final class AdtNotificationService
         return $row ?: null;
     }
 }
+
+

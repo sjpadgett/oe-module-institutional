@@ -7,3 +7,5 @@ if (!isset($pageTitle) || $pageTitle === '') {
 <div class="d-flex align-items-center justify-content-between my-2">
   <h3 class="m-0"><?= htmlspecialchars((string)$pageTitle) ?></h3>
 </div>
+
+

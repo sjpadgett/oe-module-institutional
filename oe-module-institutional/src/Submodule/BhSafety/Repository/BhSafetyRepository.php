@@ -47,3 +47,5 @@ final class BhSafetyRepository
         return $rows;
     }
 }
+
+

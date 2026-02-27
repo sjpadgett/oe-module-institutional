@@ -168,7 +168,7 @@ function midnight_pips(int $count): string
                 'APPROACHING_1'             => 'bg-warning',
                 default                     => 'bg-success',
             };
-        ?>
+            ?>
           <tr class="<?= billing_row_class($r['status']) ?>">
             <td>
               <a href="obs_episode.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= (int)$r['episode_id'] ?>">
@@ -221,3 +221,5 @@ function midnight_pips(int $count): string
 </div>
 </body>
 </html>
+
+

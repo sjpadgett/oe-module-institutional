@@ -118,7 +118,7 @@ final class MarOrderRepository
                 $orderedByUserId, $rxId, $instructions, $now, $now,
             ]
         );
-        return (int)sqlLastInsertId();
+        return (int)($GLOBALS['lastidado'] > 0 ? $GLOBALS['lastidado'] : $GLOBALS['adodb']['db']->Insert_ID());
     }
 
     /**
@@ -141,3 +141,7 @@ final class MarOrderRepository
         );
     }
 }
+
+
+
+

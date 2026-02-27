@@ -17,11 +17,11 @@ use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
  * Handles three distinct views/actions:
  *   GET  mar.php?episode_id=N        — MAR grid for one episode
  *   GET  mar.php?facility_id=N       — Facility-wide pending / overdue list
- *   POST mar.php                     — Record administration / place order / discontinue
+ *   GET  mar.php?episode_id=N&print=1 — Printable MAR for episode
+ *   POST mar.php                     — Record administration / place order /
+ *                                      discontinue / amend / extend window
  *
  * Allergy checking (AllergyService) is injected optionally.
- * When present it computes warnings on the episode GET view so the nurse
- * sees allergy matches before recording any dose.
  */
 final class MarController
 {
@@ -37,7 +37,7 @@ final class MarController
     }
 
     /**
-     * Main entry point.  Returns a view-model array for the public page.
+     * Main entry point. Returns a view-model array for the public page.
      *
      * @return array<string,mixed>
      */
@@ -54,7 +54,8 @@ final class MarController
 
         // GET — build view model
         if ($episodeId !== null && $episodeId > 0) {
-            return $this->buildEpisodeView($episodeId, $facilityId);
+            $print = isset($_GET['print']) && $_GET['print'] === '1';
+            return $this->buildEpisodeView($episodeId, $facilityId, $print);
         }
 
         return $this->buildFacilityView($facilityId);
@@ -87,8 +88,20 @@ final class MarController
                 }
                 break;
 
+            case 'extend_window':
+                $orderId = (int)($_POST['order_id'] ?? 0);
+                $hours   = max(1, min(72, (int)($_POST['extend_hours'] ?? 24)));
+                if ($orderId > 0) {
+                    $this->service->extendOrderSlots($orderId, $hours, $userId);
+                }
+                break;
+
             case 'record_admin':
                 $this->actionRecordAdmin($userId);
+                break;
+
+            case 'amend_admin':
+                $this->actionAmendAdmin($userId);
                 break;
 
             case 'give_prn':
@@ -115,8 +128,9 @@ final class MarController
         $episode = $this->episodeRepo->fetchOne($episodeId);
         $startDt = (string)($episode['start_datetime'] ?? date('Y-m-d H:i:s'));
 
-        $frequency = strtoupper(trim((string)($_POST['frequency'] ?? '')));
-        $isPrn     = ($frequency === 'PRN' || (bool)($_POST['is_prn'] ?? false));
+        $frequency         = strtoupper(trim((string)($_POST['frequency'] ?? '')));
+        $isPrn             = ($frequency === 'PRN' || (bool)($_POST['is_prn'] ?? false));
+        $isHighAlertOverride = (bool)($_POST['is_high_alert'] ?? false);
 
         $this->service->placeOrder(
             $episodeId, $pid, $facilityId,
@@ -126,6 +140,7 @@ final class MarController
             (string)($_POST['route']        ?? ''),
             $frequency,
             $isPrn,
+            $isHighAlertOverride,
             $userId,
             ($_POST['instructions'] ?? null) ?: null,
             $startDt,
@@ -141,14 +156,37 @@ final class MarController
         }
         $this->service->recordAdministration(
             $adminId,
-            (string)($_POST['outcome']    ?? 'GIVEN'),
-            ($_POST['dose_given']  ?? null) ?: null,
-            ($_POST['unit_given']  ?? null) ?: null,
-            ($_POST['route_given'] ?? null) ?: null,
-            ($_POST['site']        ?? null) ?: null,
-            ($_POST['lot_number']  ?? null) ?: null,
+            (string)($_POST['outcome']             ?? 'GIVEN'),
+            ($_POST['administered_datetime']        ?? null) ?: null,
+            ($_POST['dose_given']                   ?? null) ?: null,
+            ($_POST['unit_given']                   ?? null) ?: null,
+            ($_POST['route_given']                  ?? null) ?: null,
+            ($_POST['site']                         ?? null) ?: null,
+            ($_POST['lot_number']                   ?? null) ?: null,
             $userId,
-            ($_POST['note']        ?? null) ?: null
+            ($_POST['hold_reason']                  ?? null) ?: null,
+            ($_POST['note']                         ?? null) ?: null
+        );
+    }
+
+    private function actionAmendAdmin(?int $userId): void
+    {
+        $adminId = (int)($_POST['admin_id'] ?? 0);
+        if ($adminId <= 0) {
+            return;
+        }
+        $this->service->amendAdministration(
+            $adminId,
+            (string)($_POST['outcome']             ?? 'GIVEN'),
+            ($_POST['administered_datetime']        ?? null) ?: null,
+            ($_POST['dose_given']                   ?? null) ?: null,
+            ($_POST['unit_given']                   ?? null) ?: null,
+            ($_POST['route_given']                  ?? null) ?: null,
+            ($_POST['site']                         ?? null) ?: null,
+            ($_POST['lot_number']                   ?? null) ?: null,
+            $userId,
+            ($_POST['hold_reason']                  ?? null) ?: null,
+            ($_POST['note']                         ?? null) ?: null
         );
     }
 
@@ -161,13 +199,16 @@ final class MarController
         }
         $this->service->givePrn(
             $orderId, $episodeId, $pid, $facilityId,
-            (string)($_POST['drug_name']   ?? ''),
-            ($_POST['dose_given']  ?? null) ?: null,
-            ($_POST['unit_given']  ?? null) ?: null,
-            ($_POST['route_given'] ?? null) ?: null,
-            ($_POST['site']        ?? null) ?: null,
+            (string)($_POST['drug_name']           ?? ''),
+            (bool)($_POST['is_high_alert']          ?? false),
+            ($_POST['dose_given']                   ?? null) ?: null,
+            ($_POST['unit_given']                   ?? null) ?: null,
+            ($_POST['route_given']                  ?? null) ?: null,
+            ($_POST['site']                         ?? null) ?: null,
+            ($_POST['lot_number']                   ?? null) ?: null,
             $userId,
-            ($_POST['note']        ?? null) ?: null
+            ($_POST['administered_datetime']        ?? null) ?: null,
+            ($_POST['note']                         ?? null) ?: null
         );
     }
 
@@ -176,7 +217,7 @@ final class MarController
     /**
      * @return array<string,mixed>
      */
-    private function buildEpisodeView(int $episodeId, int $facilityId): array
+    private function buildEpisodeView(int $episodeId, int $facilityId, bool $print = false): array
     {
         $episode = $this->episodeRepo->fetchOne($episodeId);
         $grid    = $this->service->buildMarGrid($episodeId);
@@ -197,11 +238,13 @@ final class MarController
 
         return [
             'view'             => 'episode',
+            'print'            => $print,
             'episode'          => $episode,
             'episode_id'       => $episodeId,
             'facility_id'      => $facilityId,
             'grid'             => $grid,
             'allergy_warnings' => $allergyWarnings,
+            'hold_reasons'     => MarService::HOLD_REASONS,
             'csrf'             => CsrfUtils::collectCsrfToken(),
         ];
     }
@@ -218,6 +261,7 @@ final class MarController
             'facility_id'      => $facilityId,
             'overdue'          => $overdue,
             'allergy_warnings' => [],
+            'hold_reasons'     => MarService::HOLD_REASONS,
             'csrf'             => CsrfUtils::collectCsrfToken(),
         ];
     }

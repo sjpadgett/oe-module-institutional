@@ -14,7 +14,7 @@ final class MarAdministrationRepository
 
     /**
      * All administration rows for an episode, used to render the MAR grid.
-     * Joined with order to get drug_name on same row.
+     * Joined with order to get drug_name, and with users to get nurse name.
      *
      * @return array<int,array<string,mixed>>
      */
@@ -27,11 +27,14 @@ final class MarAdministrationRepository
             "SELECT a.id, a.mar_order_id, a.episode_id, a.pid,
                     a.scheduled_datetime, a.administered_datetime,
                     a.outcome, a.dose_given, a.unit_given, a.route_given,
-                    a.site, a.administered_by_user_id, a.note, a.is_high_alert,
+                    a.site, a.lot_number, a.administered_by_user_id,
+                    a.hold_reason, a.note, a.is_high_alert,
                     o.drug_name, o.dose AS ordered_dose, o.unit AS ordered_unit,
-                    o.route AS ordered_route, o.frequency, o.is_prn
+                    o.route AS ordered_route, o.frequency, o.is_prn,
+                    CONCAT_WS(' ', u.fname, u.lname) AS nurse_name
              FROM oei_mar_administration a
              JOIN oei_mar_order o ON o.id = a.mar_order_id
+             LEFT JOIN users u ON u.id = a.administered_by_user_id
              WHERE a.episode_id = ?
              ORDER BY a.scheduled_datetime ASC, o.drug_name ASC",
             [$episodeId]
@@ -101,6 +104,23 @@ final class MarAdministrationRepository
     }
 
     /**
+     * Latest scheduled datetime for a given order (used to extend the window).
+     */
+    public function latestScheduledDatetime(int $marOrderId): ?string
+    {
+        if (!function_exists('sqlQuery')) {
+            return null;
+        }
+        $row = sqlQuery(
+            "SELECT MAX(scheduled_datetime) AS latest
+             FROM oei_mar_administration
+             WHERE mar_order_id = ?",
+            [$marOrderId]
+        );
+        return ($row['latest'] ?? null) ?: null;
+    }
+
+    /**
      * @return array<string,mixed>|null
      */
     public function getById(int $id): ?array
@@ -142,7 +162,7 @@ final class MarAdministrationRepository
             [$marOrderId, $episodeId, $pid, $facilityId,
              $scheduledDatetime, (int)$isHighAlert, $now, $now]
         );
-        return (int)sqlLastInsertId();
+        return (int)($GLOBALS['lastidado'] > 0 ? $GLOBALS['lastidado'] : $GLOBALS['adodb']['db']->Insert_ID());
     }
 
     /**
@@ -164,17 +184,18 @@ final class MarAdministrationRepository
             "INSERT INTO oei_mar_administration
                (mar_order_id, episode_id, pid, facility_id,
                 outcome, is_high_alert, created_datetime, updated_datetime)
-             VALUES (?,?,?,?,'PENDING',?,?,?)",
+             VALUES (?,?,?,'PENDING',?,?,?)",
             [$marOrderId, $episodeId, $pid, $facilityId,
              (int)$isHighAlert, $now, $now]
         );
-        return (int)sqlLastInsertId();
+        return (int)($GLOBALS['lastidado'] > 0 ? $GLOBALS['lastidado'] : $GLOBALS['adodb']['db']->Insert_ID());
     }
 
     /**
      * Record the outcome of an administration slot (nurse documents the dose).
      *
-     * @param string $outcome  GIVEN | HELD | REFUSED | NOT_AVAILABLE | MISSED
+     * @param string      $outcome              GIVEN | HELD | REFUSED | NOT_AVAILABLE | MISSED
+     * @param string|null $administeredDatetime Nurse-supplied or server time; always set for all non-PENDING outcomes
      */
     public function record(
         int $adminId,
@@ -186,6 +207,7 @@ final class MarAdministrationRepository
         ?string $site,
         ?string $lotNumber,
         ?int $administeredByUserId,
+        ?string $holdReason,
         ?string $note
     ): void {
         if (!function_exists('sqlStatement')) {
@@ -196,6 +218,8 @@ final class MarAdministrationRepository
             return;
         }
         $now = date('Y-m-d H:i:s');
+        // Always record a timestamp — when the nurse made the clinical decision
+        $administeredDatetime = $administeredDatetime ?: $now;
         sqlStatement(
             "UPDATE oei_mar_administration
              SET outcome = ?,
@@ -206,6 +230,7 @@ final class MarAdministrationRepository
                  site = ?,
                  lot_number = ?,
                  administered_by_user_id = ?,
+                 hold_reason = ?,
                  note = ?,
                  updated_datetime = ?
              WHERE id = ?",
@@ -213,7 +238,56 @@ final class MarAdministrationRepository
                 $outcome, $administeredDatetime,
                 $doseGiven, $unitGiven, $routeGiven,
                 $site, $lotNumber, $administeredByUserId,
-                $note, $now, $adminId,
+                $holdReason, $note, $now, $adminId,
+            ]
+        );
+    }
+
+    /**
+     * Amend a completed (non-PENDING) administration row.
+     * Records who amended and when via the note field prefix.
+     */
+    public function amend(
+        int $adminId,
+        string $outcome,
+        ?string $administeredDatetime,
+        ?string $doseGiven,
+        ?string $unitGiven,
+        ?string $routeGiven,
+        ?string $site,
+        ?string $lotNumber,
+        ?int $amendedByUserId,
+        ?string $holdReason,
+        ?string $note
+    ): void {
+        if (!function_exists('sqlStatement')) {
+            return;
+        }
+        $allowed = ['GIVEN', 'HELD', 'REFUSED', 'NOT_AVAILABLE', 'MISSED'];
+        if (!in_array($outcome, $allowed, true)) {
+            return;
+        }
+        $now       = date('Y-m-d H:i:s');
+        $amendNote = '[Amended ' . $now . ' by user ' . ($amendedByUserId ?? '?') . '] ' . ($note ?? '');
+        sqlStatement(
+            "UPDATE oei_mar_administration
+             SET outcome = ?,
+                 administered_datetime = ?,
+                 dose_given = ?,
+                 unit_given = ?,
+                 route_given = ?,
+                 site = ?,
+                 lot_number = ?,
+                 administered_by_user_id = ?,
+                 hold_reason = ?,
+                 note = ?,
+                 updated_datetime = ?
+             WHERE id = ?",
+            [
+                $outcome, $administeredDatetime ?: $now,
+                $doseGiven, $unitGiven, $routeGiven,
+                $site, $lotNumber, $amendedByUserId,
+                $holdReason, $amendNote, $now, $adminId,
             ]
         );
     }

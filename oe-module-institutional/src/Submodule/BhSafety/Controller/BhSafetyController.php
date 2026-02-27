@@ -17,3 +17,5 @@ final class BhSafetyController
         return ['rows' => $this->repo->listRecentByFacility($facilityId)];
     }
 }
+
+

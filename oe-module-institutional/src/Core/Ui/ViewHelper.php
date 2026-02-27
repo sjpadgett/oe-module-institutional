@@ -58,3 +58,5 @@ final class ViewHelper
         $_SESSION['oei_flash'] = ['msg' => $msg, 'type' => $type];
     }
 }
+
+

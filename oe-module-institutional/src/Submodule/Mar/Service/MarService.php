@@ -47,6 +47,22 @@ final class MarService
         'QID'   => 360,
     ];
 
+    /** Structured reasons a nurse may HOLD a medication. */
+    public const HOLD_REASONS = [
+        ''                => '— Select reason —',
+        'NPO'             => 'Patient NPO',
+        'HR_LOW'          => 'HR too low (< threshold)',
+        'BP_LOW'          => 'BP too low (< threshold)',
+        'RR_LOW'          => 'RR too low (< threshold)',
+        'O2_LOW'          => 'SpO2 too low',
+        'LAB_PENDING'     => 'Lab result pending',
+        'LEVEL_HIGH'      => 'Drug level too high',
+        'PATIENT_REFUSED' => 'Patient refused (document separately)',
+        'ORDERED_HOLD'    => 'Physician order to hold',
+        'NOT_AVAILABLE'   => 'Medication not available',
+        'OTHER'           => 'Other (see note)',
+    ];
+
     public function __construct(
         private readonly MarOrderRepository $orders,
         private readonly MarAdministrationRepository $admins
@@ -56,7 +72,7 @@ final class MarService
 
     /**
      * Place a new medication order and immediately generate scheduled slots
-     * for the supplied episode window (episodeStartDatetime → + windowHours).
+     * for the supplied episode window (now → now + windowHours).
      *
      * Returns the new mar_order.id.
      */
@@ -70,6 +86,7 @@ final class MarService
         string $route,
         string $frequency,
         bool $isPrn,
+        bool $isHighAlertOverride,
         ?int $orderedByUserId,
         ?string $instructions,
         string $episodeStartDatetime,
@@ -87,7 +104,8 @@ final class MarService
         if ($orderId > 0 && !$isPrn) {
             $this->generateScheduledSlots(
                 $orderId, $episodeId, $pid, $facilityId,
-                $drugName, $frequency, $now, $windowHours
+                $drugName, $frequency, $now, $windowHours,
+                $isHighAlertOverride
             );
         }
 
@@ -103,27 +121,106 @@ final class MarService
         $this->orders->discontinue($orderId, $userId);
     }
 
+    /**
+     * Extend a scheduled order's slot window by $hours from the last
+     * existing scheduled slot (or now if no slots exist yet).
+     *
+     * Safe to call repeatedly — only adds future slots, never duplicates.
+     */
+    public function extendOrderSlots(int $orderId, int $hours, ?int $userId): bool
+    {
+        $order = $this->orders->getById($orderId);
+        if ($order === null || $order['status'] !== 'ACTIVE' || (bool)$order['is_prn']) {
+            return false;
+        }
+
+        $freqKey = strtoupper(trim((string)$order['frequency']));
+        if (!isset(self::FREQUENCY_MINUTES[$freqKey])) {
+            return false; // unknown frequency, can't auto-schedule
+        }
+
+        // Start from the latest existing slot, or now if none
+        $latestSlot  = $this->admins->latestScheduledDatetime($orderId);
+        $startTs     = $latestSlot ? (strtotime($latestSlot) ?: time()) : time();
+        $endTs       = $startTs + ($hours * 3600);
+        $intervalSecs = self::FREQUENCY_MINUTES[$freqKey] * 60;
+        $isHighAlert  = $this->isHighAlert((string)$order['drug_name']);
+
+        $t = $startTs + $intervalSecs;
+        while ($t <= $endTs) {
+            $this->admins->createScheduled(
+                $orderId,
+                (int)$order['episode_id'],
+                (int)$order['pid'],
+                (int)$order['facility_id'],
+                date('Y-m-d H:i:s', $t),
+                $isHighAlert
+            );
+            $t += $intervalSecs;
+        }
+
+        return true;
+    }
+
     // ----------------------------------------------- administration recording
 
     /**
      * Record a nurse's administration of a scheduled slot.
+     *
+     * $administeredDatetime may be nurse-supplied (after-the-fact documentation)
+     * or null to default to now. Timestamp is always stored for all outcomes.
      */
     public function recordAdministration(
         int $adminId,
         string $outcome,
+        ?string $administeredDatetime,
         ?string $doseGiven,
         ?string $unitGiven,
         ?string $routeGiven,
         ?string $site,
         ?string $lotNumber,
         ?int $nurseUserId,
+        ?string $holdReason,
         ?string $note
     ): void {
-        $administeredDatetime = in_array($outcome, ['GIVEN'], true) ? date('Y-m-d H:i:s') : null;
+        // Normalise nurse-supplied datetime; fall back to now
+        $dt = ($administeredDatetime && strtotime($administeredDatetime))
+            ? date('Y-m-d H:i:s', strtotime($administeredDatetime))
+            : date('Y-m-d H:i:s');
+
         $this->admins->record(
-            $adminId, $outcome, $administeredDatetime,
+            $adminId, $outcome, $dt,
             $doseGiven, $unitGiven, $routeGiven,
-            $site, $lotNumber, $nurseUserId, $note
+            $site, $lotNumber, $nurseUserId,
+            $holdReason ?: null, $note
+        );
+    }
+
+    /**
+     * Amend a previously completed administration row.
+     */
+    public function amendAdministration(
+        int $adminId,
+        string $outcome,
+        ?string $administeredDatetime,
+        ?string $doseGiven,
+        ?string $unitGiven,
+        ?string $routeGiven,
+        ?string $site,
+        ?string $lotNumber,
+        ?int $nurseUserId,
+        ?string $holdReason,
+        ?string $note
+    ): void {
+        $dt = ($administeredDatetime && strtotime($administeredDatetime))
+            ? date('Y-m-d H:i:s', strtotime($administeredDatetime))
+            : date('Y-m-d H:i:s');
+
+        $this->admins->amend(
+            $adminId, $outcome, $dt,
+            $doseGiven, $unitGiven, $routeGiven,
+            $site, $lotNumber, $nurseUserId,
+            $holdReason ?: null, $note
         );
     }
 
@@ -137,20 +234,27 @@ final class MarService
         int $pid,
         int $facilityId,
         string $drugName,
+        bool $isHighAlertOverride,
         ?string $doseGiven,
         ?string $unitGiven,
         ?string $routeGiven,
         ?string $site,
+        ?string $lotNumber,
         ?int $nurseUserId,
+        ?string $administeredDatetime,
         ?string $note
     ): void {
-        $isHighAlert = $this->isHighAlert($drugName);
-        $adminId = $this->admins->createPrn($marOrderId, $episodeId, $pid, $facilityId, $isHighAlert);
+        $isHighAlert = $isHighAlertOverride || $this->isHighAlert($drugName);
+        $adminId     = $this->admins->createPrn($marOrderId, $episodeId, $pid, $facilityId, $isHighAlert);
         if ($adminId > 0) {
+            $dt = ($administeredDatetime && strtotime($administeredDatetime))
+                ? date('Y-m-d H:i:s', strtotime($administeredDatetime))
+                : date('Y-m-d H:i:s');
             $this->admins->record(
-                $adminId, 'GIVEN', date('Y-m-d H:i:s'),
+                $adminId, 'GIVEN', $dt,
                 $doseGiven, $unitGiven, $routeGiven,
-                $site, null, $nurseUserId, $note
+                $site, $lotNumber, $nurseUserId,
+                null, $note
             );
         }
     }
@@ -165,7 +269,7 @@ final class MarService
      */
     public function buildMarGrid(int $episodeId): array
     {
-        $orders = $this->orders->listActiveByEpisode($episodeId);
+        $orders    = $this->orders->listActiveByEpisode($episodeId);
         $allAdmins = $this->admins->listByEpisode($episodeId);
 
         // Index admins by mar_order_id
@@ -185,8 +289,8 @@ final class MarService
     // -------------------------------------------------- internal slot builder
 
     /**
-     * Generate PENDING administration slots from now until now + windowHours
-     * based on the frequency string.
+     * Generate PENDING administration slots from $startDatetime to
+     * $startDatetime + $windowHours based on the frequency string.
      */
     private function generateScheduledSlots(
         int $orderId,
@@ -196,7 +300,8 @@ final class MarService
         string $drugName,
         string $frequency,
         string $startDatetime,
-        int $windowHours
+        int $windowHours,
+        bool $isHighAlertOverride = false
     ): void {
         $freqKey = strtoupper(trim($frequency));
         if (!isset(self::FREQUENCY_MINUTES[$freqKey])) {
@@ -207,9 +312,9 @@ final class MarService
         $intervalSecs = self::FREQUENCY_MINUTES[$freqKey] * 60;
         $startTs      = strtotime($startDatetime) ?: time();
         $endTs        = $startTs + ($windowHours * 3600);
-        $isHighAlert  = $this->isHighAlert($drugName);
+        $isHighAlert  = $isHighAlertOverride || $this->isHighAlert($drugName);
 
-        $t = $startTs + $intervalSecs; // first dose is interval after order
+        $t = $startTs + $intervalSecs; // first dose is one interval after order time
         while ($t <= $endTs) {
             $this->admins->createScheduled(
                 $orderId, $episodeId, $pid, $facilityId,

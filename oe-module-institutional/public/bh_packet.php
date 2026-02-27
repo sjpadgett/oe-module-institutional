@@ -68,7 +68,7 @@ function mimeIconPkt(string $mime): string
       <?php if ($manifest->featureEnabled('episode_documents')): ?>
         <a class="btn btn-sm btn-outline-primary"
            href="episode_documents.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$episodeId) ?>">
-          <?= xlt('Manage Documents') ?>
+            <?= xlt('Manage Documents') ?>
         </a>
       <?php endif; ?>
       <button class="btn btn-sm btn-outline-secondary" onclick="window.print()"><?= xlt('Print') ?></button>
@@ -111,11 +111,11 @@ function mimeIconPkt(string $mime): string
       <span class="fw-semibold"><?= xlt('Attached Documents') ?></span>
       <span class="text-muted small"><?= count($documents) ?> <?= xlt('file(s)') ?></span>
     </div>
-    <?php if (empty($documents)): ?>
+        <?php if (empty($documents)): ?>
       <div class="card-body text-muted small">
-        <?= xlt('No documents attached.') ?>
+            <?= xlt('No documents attached.') ?>
         <a class="no-print" href="episode_documents.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$episodeId) ?>">
-          <?= xlt('Attach documents →') ?>
+            <?= xlt('Attach documents →') ?>
         </a>
       </div>
     <?php else: ?>
@@ -147,3 +147,5 @@ function mimeIconPkt(string $mime): string
 </div>
 </body>
 </html>
+
+

@@ -6,7 +6,6 @@ namespace OpenEMR\Modules\Institutional\Submodule\EReferral\Service;
 
 use OpenEMR\Modules\Institutional\Submodule\EReferral\Repository\EReferralRepository;
 use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
-use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarOrderRepository;
 
 /**
  * E-Referral Service.
@@ -33,21 +32,11 @@ final class EReferralService
      * @param array<string,mixed> $disposition
      * @param array<string,mixed>|null $triage
      */
-    /**
-     * Draft a referral from a recorded disposition.
-     *
-     * @param array<string,mixed>      $episode
-     * @param array<string,mixed>      $disposition
-     * @param array<string,mixed>|null $triage      Latest triage vitals row
-     * @param array<int,array<string,mixed>> $marOrders  Active MAR orders for the episode
-     * @param int|null                 $userId
-     */
     public function draftFromDisposition(
         array $episode,
         array $disposition,
         ?array $triage,
-        ?int $userId,
-        array $marOrders = []
+        ?int $userId
     ): void {
         $dispCode = strtoupper((string)($disposition['disposition_code'] ?? ''));
         if (!in_array($dispCode, self::REFERRAL_DISPOSITIONS, true)) {
@@ -95,7 +84,7 @@ final class EReferralService
             'reason_for_referral'      => $this->buildReason($dispCode, $episode, $disposition),
             'clinical_summary'         => $this->buildClinicalSummary($episode, $triage),
             'services_requested'       => $this->suggestServices($dispCode, $episode),
-            'medications_summary'      => $this->buildMedicationsSummary($marOrders),
+            'medications_summary'      => null,
             'followup_instructions'    => null,
         ];
 
@@ -139,9 +128,7 @@ final class EReferralService
             'reason_for_referral'      => trim((string)($post['reason_for_referral']  ?? '')) ?: null,
             'clinical_summary'         => trim((string)($post['clinical_summary']     ?? '')) ?: null,
             'services_requested'       => trim((string)($post['services_requested']   ?? '')) ?: null,
-            'medications_summary'      => trim((string)($post['medications_summary'] ?? '')) !== ''
-                ? trim((string)($post['medications_summary'] ?? ''))
-                : ($post['_existing_medications_summary'] ?? null),  // preserve when form field blank
+            'medications_summary'      => trim((string)($post['medications_summary']  ?? '')) ?: null,
             'followup_instructions'    => trim((string)($post['followup_instructions'] ?? '')) ?: null,
         ];
 
@@ -263,66 +250,6 @@ final class EReferralService
         );
         return $row ?: null;
     }
-
-    /**
-     * Build a structured medication list string from active MAR orders.
-     *
-     * Format (one line per order):
-     *   Drug Name  Dose unit  Route  Frequency  [PRN]
-     *
-     * Returns null when there are no orders.
-     *
-     * @param array<int,array<string,mixed>> $orders
-     */
-    /**
-     * Public accessor so the controller can refresh medications_summary on
-     * existing DRAFT referrals without re-drafting the whole referral.
-     *
-     * @param array<int,array<string,mixed>> $orders
-     */
-    public function buildMedsSummaryPublic(array $orders): ?string
-    {
-        return $this->buildMedicationsSummary($orders);
-    }
-
-    private function buildMedicationsSummary(array $orders): ?string
-    {
-        if (empty($orders)) {
-            return null;
-        }
-
-        $lines = [];
-        foreach ($orders as $order) {
-            $drug  = trim((string)($order['drug_name']  ?? ''));
-            $dose  = trim((string)($order['dose']       ?? ''));
-            $unit  = trim((string)($order['unit']       ?? ''));
-            $route = trim((string)($order['route']      ?? ''));
-            $freq  = trim((string)($order['frequency']  ?? ''));
-            $isPrn = !empty($order['is_prn']);
-
-            if ($drug === '') {
-                continue;
-            }
-
-            $parts = [$drug];
-            if ($dose !== '' && $unit !== '') {
-                $parts[] = "{$dose} {$unit}";
-            } elseif ($dose !== '') {
-                $parts[] = $dose;
-            }
-            if ($route !== '') {
-                $parts[] = $route;
-            }
-            if ($freq !== '') {
-                $parts[] = $freq;
-            }
-            if ($isPrn) {
-                $parts[] = '(PRN)';
-            }
-            $lines[] = implode('  ', $parts);
-        }
-
-        return empty($lines) ? null : implode("\n", $lines);
-    }
-
 }
+
+

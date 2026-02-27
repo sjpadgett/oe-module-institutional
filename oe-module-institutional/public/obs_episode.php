@@ -221,7 +221,7 @@ $type = (string)($episodeRow['type'] ?? '');
           <?php if ($manifest->featureEnabled('tasks')): ?>
             <hr>
             <div class="mb-2"><strong><?= xlt("Overdue Tasks") ?>:</strong> <?= htmlspecialchars((string)$overdueCount) ?></div>
-            <?php if ($nextTask && !empty($nextTask['due_datetime'])): ?>
+                <?php if ($nextTask && !empty($nextTask['due_datetime'])): ?>
               <div class="mb-2"><strong><?= xlt("Next Due") ?>:</strong> <?= htmlspecialchars((string)$nextTask['due_datetime']) ?></div>
               <div class="mb-0"><strong><?= xlt("Next Task") ?>:</strong> <span class="badge text-bg-light border"><?= htmlspecialchars((string)$nextTask['task_type']) ?></span></div>
             <?php endif; ?>
@@ -244,7 +244,7 @@ $type = (string)($episodeRow['type'] ?? '');
               <label class="form-label"><?= xlt("Protocol") ?></label>
               <select name="protocol_key" class="form-select">
                 <?php foreach ($data['protocolRows'] as $p): ?>
-                  <?php $key = (string)($p['protocol_key'] ?? ''); ?>
+                    <?php $key = (string)($p['protocol_key'] ?? ''); ?>
                   <option value="<?= htmlspecialchars($key) ?>" <?= ($plan && (string)$plan['protocol_key'] === $key) ? 'selected' : '' ?>>
                     <?= htmlspecialchars((string)($p['label'] ?? $key)) ?> (<?= htmlspecialchars($key) ?>)
                   </option>
@@ -285,3 +285,5 @@ $type = (string)($episodeRow['type'] ?? '');
 </div>
 </body>
 </html>
+
+
