@@ -69,3 +69,5 @@ $planRepo->upsert($episodeId, $pid, $eid, $facilityId, (string)$protocolKey, $ta
 
 header("Location: obs_episode.php?facility_id=" . urlencode((string)$facilityId) . "&episode_id=" . urlencode((string)$episodeId) . "&msg=" . urlencode(xlt("Extended runway (generated " . (string)$generated . " tasks)") . ": " . (string)$extendHours . "h"));
 exit;
+
+

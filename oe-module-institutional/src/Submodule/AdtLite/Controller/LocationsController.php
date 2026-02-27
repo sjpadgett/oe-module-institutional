@@ -41,3 +41,5 @@ final class LocationsController
         return ['rows' => $this->repo->listAll($facilityId), 'csrf' => CsrfUtils::collectCsrfToken()];
     }
 }
+
+

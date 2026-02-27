@@ -20,3 +20,5 @@ CREATE TABLE IF NOT EXISTS `oei_user_context`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci
   COMMENT = 'Per-user care context preference per facility';
+
+

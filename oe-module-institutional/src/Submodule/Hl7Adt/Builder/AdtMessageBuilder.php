@@ -83,24 +83,6 @@ final class AdtMessageBuilder
         return $this->build('A04', $episode, $patient, $location);
     }
 
-
-    /**
-     * A09 — Cancel Patient Departing / Facility Diversion Notification.
-     *
-     * Used to notify downstream systems that this facility has changed
-     * diversion status.  When no real episode exists (facility-level event)
-     * pass an empty $patient array — minimal PID/PV1 segments are emitted
-     * with the service line carried in PV1.3 (assigned patient location).
-     *
-     * @param array<string,mixed> $episode  May be synthetic (id=0, pid=0) for facility-level events
-     * @param array<string,mixed> $patient  May be empty for facility-level events
-     * @param array<string,mixed>|null $location
-     */
-    public function buildA09(array $episode, array $patient, ?array $location = null): string
-    {
-        return $this->buildDiversionA09($episode, $patient, $location);
-    }
-
     /** A08 — Update patient information (status change, acuity update). */
     public function buildA08(array $episode, array $patient, ?array $location = null): string
     {
@@ -409,81 +391,6 @@ final class AdtMessageBuilder
         return $npi . '^' . $lname . '^' . $fname . '^^^^^NPI';
     }
 
-
-    // -----------------------------------------------------------------------
-    // A09 — Diversion notification builder
-    // -----------------------------------------------------------------------
-
-    /**
-     * Build A09 message for facility-level diversion notification.
-     *
-     * @param array<string,mixed>      $episode  Synthetic episode (id=0, pid=0) or real episode
-     * @param array<string,mixed>      $patient  Empty array for facility-level events
-     * @param array<string,mixed>|null $location
-     */
-    private function buildDiversionA09(
-        array $episode,
-        array $patient,
-        ?array $location
-    ): string {
-        $now       = date('YmdHis');
-        $msgCtrlId = $this->generateMessageControlId();
-        $eventTs   = $now;
-
-        // For facility-level events, chief_complaint carries the diversion reason
-        $diversionNote = (string)($episode['chief_complaint'] ?? '');
-        $serviceLine   = (string)($episode['type'] ?? 'ED');
-
-        $segments = [
-            $this->msh($now, 'A09', $msgCtrlId),
-            $this->evn('A09', $now, $eventTs),
-        ];
-
-        if (!empty($patient)) {
-            $pid        = (string)($episode['pid'] ?? '');
-            $episodeId  = (string)($episode['id'] ?? '');
-            $segments[] = $this->pid($pid, $patient, $episodeId);
-        } else {
-            // Minimal PID — facility identifier in PID.3
-            $facilityId = (string)($episode['facility_id'] ?? '');
-            $segments[] = implode('|', [
-                'PID',
-                '1',                             // PID.1
-                '',                              // PID.2
-                'FAC-' . $facilityId . '^^^OEI^FI',  // PID.3 facility identifier
-                '',                              // PID.4
-                'FACILITY^DIVERSION',            // PID.5 name placeholder
-            ]);
-        }
-
-        // PV1 — service line in PV1.3 (assigned patient location), reason in PV1.20 (financial class)
-        $segments[] = implode('|', [
-            'PV1',
-            '1',                                 // PV1.1 set ID
-            'N',                                 // PV1.2 patient class (N = not applicable)
-            $this->esc($serviceLine) . '^^^' . $this->esc($this->sendingFacility),
-            '',                                  // PV1.4 admission type
-            '',                                  // PV1.5
-            '',                                  // PV1.6
-            '',                                  // PV1.7 attending doctor
-            '',                                  // PV1.8–19 (empty)
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            $this->esc($diversionNote),          // PV1.20 — diversion reason / note
-        ]);
-
-        return implode(self::SEGMENT_SEP, $segments) . self::SEGMENT_SEP;
-    }
-
     // -----------------------------------------------------------------------
     // Formatting utilities
     // -----------------------------------------------------------------------
@@ -524,3 +431,5 @@ final class AdtMessageBuilder
         return 'OEI' . date('YmdHis') . sprintf('%04d', random_int(0, 9999));
     }
 }
+
+

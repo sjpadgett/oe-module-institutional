@@ -11,3 +11,5 @@ $classLoader->registerNamespaceIfNotExists('OpenEMR\\Modules\\Institutional\\', 
 $eventDispatcher = OEGlobalsBag::getInstance()->get('kernel')->getEventDispatcher();
 $bootstrap = new Bootstrap($eventDispatcher);
 $bootstrap->subscribeToEvents();
+
+

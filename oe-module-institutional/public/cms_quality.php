@@ -166,18 +166,18 @@ function rate_gauge(?float $rate): string
     <div class="col-auto d-flex gap-2">
       <button class="btn btn-primary btn-sm"><?= xlt('Apply') ?></button>
       <?php
-      $quick = [
+        $quick = [
           '7d'  => [date('Y-m-d', strtotime('-7 days')),   date('Y-m-d')],
           '30d' => [date('Y-m-d', strtotime('-30 days')),  date('Y-m-d')],
           '90d' => [date('Y-m-d', strtotime('-90 days')),  date('Y-m-d')],
           'YTD' => [date('Y-01-01'), date('Y-m-d')],
-      ];
-      foreach ($quick as $lbl => [$f, $t]): ?>
+        ];
+        foreach ($quick as $lbl => [$f, $t]): ?>
         <a class="btn btn-outline-secondary btn-sm"
            href="cms_quality.php?facility_id=<?= urlencode((string)$facilityId) ?>&date_from=<?= urlencode($f) ?>&date_to=<?= urlencode($t) ?>">
-          <?= htmlspecialchars($lbl) ?>
+            <?= htmlspecialchars($lbl) ?>
         </a>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
     </div>
     <div class="col-auto ms-auto text-muted small">
       <?= htmlspecialchars($dateFrom) ?> → <?= htmlspecialchars($dateTo) ?>
@@ -187,9 +187,9 @@ function rate_gauge(?float $rate): string
   <!-- CMS measure cards -->
   <div class="row g-3 mb-4">
     <?php foreach ($measures as $key => $m):
-      $tier  = rate_tier($m['rate_pct']);
-      $badge = tier_badge($tier);
-    ?>
+        $tier  = rate_tier($m['rate_pct']);
+        $badge = tier_badge($tier);
+        ?>
     <div class="col-12 col-md-6 col-xl-3">
       <div class="card shadow-sm measure-card h-100">
         <div class="card-body">
@@ -299,3 +299,5 @@ function rate_gauge(?float $rate): string
 </div>
 </body>
 </html>
+
+

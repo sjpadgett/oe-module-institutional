@@ -20,8 +20,7 @@ final class Bootstrap
 
     public function __construct(
         private readonly EventDispatcherInterface $eventDispatcher
-    )
-    {
+    ) {
         $this->logger = new SystemLogger();
         $this->moduleRoot = dirname(__DIR__);
     }
@@ -61,10 +60,10 @@ final class Bootstrap
 
         $top = new stdClass();
         $top->requirement = 0;
-        $top->target = 'mod0';
-        $top->menu_id = 'inst0';
-        $top->label = xlt($manifest->menusTopLabel());
-        $top->children = [];
+        $top->target      = 'mod0';
+        $top->menu_id     = 'inst0';
+        $top->label       = xlt($manifest->menusTopLabel());
+        $top->children    = [];
 
         // Group items by manifest 'group'. Items without group → 'Other'.
         $groups = [];
@@ -90,13 +89,13 @@ final class Bootstrap
 
         foreach ($groups as $groupLabel => $entries) {
             // Header node (non-clickable group separator)
-            $h = new stdClass();
+            $h           = new stdClass();
             $h->requirement = 0;
-            $h->target = preg_replace('/[^a-z0-9_]/i', '_', strtolower($groupLabel));
-            $h->menu_id = 'inst_grp_' . preg_replace('/[^a-z0-9_]/i', '_', strtolower($groupLabel));
-            $h->label = xlt($groupLabel);
+            $h->target   = preg_replace('/[^a-z0-9_]/i', '_', strtolower($groupLabel));
+            $h->menu_id  = 'inst_grp_' . preg_replace('/[^a-z0-9_]/i', '_', strtolower($groupLabel));
+            $h->label    = xlt($groupLabel);
             $h->children = [];
-            $h->acl_req = ["admin", "users"];
+            $h->acl_req  = ["admin", "users"];
             $h->global_req = [];
             $top->children[] = $h;
 
@@ -111,16 +110,16 @@ final class Bootstrap
             });
 
             foreach ($entries as $e) {
-                $idx = $e['idx'];
+                $idx   = $e['idx'];
                 $child = $e['child'];
-                $c = new stdClass();
+                $c             = new stdClass();
                 $c->requirement = 0;
-                $c->target = preg_replace('/[^a-z0-9_]/i', '_', strtolower($groupLabel));
-                $c->menu_id = 'inst_' . (string)($child['menu_id'] ?? ('item' . $idx));
-                $c->label = xlt((string)$child['label']);
-                $c->url = self::MODULE_INSTALLATION_PATH . (string)$child['url'];
-                $c->children = [];
-                $c->acl_req = ["admin", "users"];
+                $c->target     = preg_replace('/[^a-z0-9_]/i', '_', strtolower($groupLabel));
+                $c->menu_id    = 'inst_' . (string)($child['menu_id'] ?? ('item' . $idx));
+                $c->label      = xlt((string)$child['label']);
+                $c->url        = self::MODULE_INSTALLATION_PATH . (string)$child['url'];
+                $c->children   = [];
+                $c->acl_req    = ["admin", "users"];
                 $c->global_req = [];
                 $h->children[] = $c;
             }
@@ -154,7 +153,7 @@ final class Bootstrap
             return CareContext::FULL;
         }
 
-        $userId = (int)($_SESSION['authUserID'] ?? 0);
+        $userId     = (int)($_SESSION['authUserID']        ?? 0);
         $facilityId = (int)($GLOBALS['facility_default_id'] ?? 1);
 
         if ($userId === 0) {
@@ -162,7 +161,7 @@ final class Bootstrap
         }
 
         $cacheKey = $userId . '_' . $facilityId;
-        $key = (string)($_SESSION['oei_context'][$cacheKey] ?? '');
+        $key      = (string)($_SESSION['oei_context'][$cacheKey] ?? '');
 
         if ($key === '' || !CareContext::isValid($key)) {
             return CareContext::DEFAULT_CONTEXT;
@@ -171,3 +170,5 @@ final class Bootstrap
         return $key;
     }
 }
+
+

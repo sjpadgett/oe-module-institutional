@@ -143,7 +143,7 @@ $sortLink = fn(string $col, string $label): string =>
           xlt('90d') => [date('Y-m-d', strtotime('-90 days')), date('Y-m-d')],
         ];
         foreach ($quickLinks as $label => [$f, $t]):
-        ?>
+            ?>
           <a class="btn btn-outline-secondary btn-sm"
              href="scorecard.php?facility_id=<?= urlencode((string)$facilityId) ?>&date_from=<?= urlencode($f) ?>&date_to=<?= urlencode($t) ?>&sort=<?= urlencode($sortBy) ?>">
             <?= $label ?>
@@ -169,7 +169,7 @@ $sortLink = fn(string $col, string $label): string =>
       [xlt('Obs Rate'),   $benchmarks['obs_rate']  . '%', $benchmarks['total_obs']  . ' ' . xlt('episodes')],
     ];
     foreach ($bCards as [$label, $value, $sub]):
-    ?>
+        ?>
     <div class="col-6 col-md-4 col-xl-2">
       <div class="card bench-card h-100 py-2 px-3 text-center">
         <div class="fw-bold fs-5"><?= $value ?></div>
@@ -213,10 +213,10 @@ $sortLink = fn(string $col, string $label): string =>
         <?php endif; ?>
 
         <?php foreach ($providers as $uid => $m):
-          $name = $names[$uid] ?? 'Provider #' . $uid;
-          $esi  = $m['esi_dist'];
-          $maxEsi = max(array_filter($esi)) ?: 1;
-        ?>
+            $name = $names[$uid] ?? 'Provider #' . $uid;
+            $esi  = $m['esi_dist'];
+            $maxEsi = max(array_filter($esi)) ?: 1;
+            ?>
           <tr class="provider-row">
             <td class="fw-semibold"><?= htmlspecialchars($name) ?></td>
             <td class="text-center"><?= (int)$m['volume'] ?></td>
@@ -225,9 +225,9 @@ $sortLink = fn(string $col, string $label): string =>
             <td class="text-center <?= metricClass($m['avg_d2r'], $targets['d2r']) ?>">
               <?= fmtMin($m['avg_d2r']) ?>
               <?php if ($m['avg_d2r'] !== null && $benchmarks['avg_d2r'] !== null): ?>
-                <?php $diff = $m['avg_d2r'] - $benchmarks['avg_d2r']; ?>
+                    <?php $diff = $m['avg_d2r'] - $benchmarks['avg_d2r']; ?>
                 <span class="d-block" style="font-size:.68rem; color:<?= $diff > 0 ? '#dc3545' : '#198754' ?>">
-                  <?= $diff > 0 ? '+' : '' ?><?= round($diff) ?>m vs avg
+                    <?= $diff > 0 ? '+' : '' ?><?= round($diff) ?>m vs avg
                 </span>
               <?php endif; ?>
             </td>
@@ -236,9 +236,9 @@ $sortLink = fn(string $col, string $label): string =>
             <td class="text-center <?= metricClass($m['avg_d2p'], $targets['d2p']) ?>">
               <?= fmtMin($m['avg_d2p']) ?>
               <?php if ($m['avg_d2p'] !== null && $benchmarks['avg_d2p'] !== null): ?>
-                <?php $diff = $m['avg_d2p'] - $benchmarks['avg_d2p']; ?>
+                    <?php $diff = $m['avg_d2p'] - $benchmarks['avg_d2p']; ?>
                 <span class="d-block" style="font-size:.68rem; color:<?= $diff > 0 ? '#dc3545' : '#198754' ?>">
-                  <?= $diff > 0 ? '+' : '' ?><?= round($diff) ?>m vs avg
+                    <?= $diff > 0 ? '+' : '' ?><?= round($diff) ?>m vs avg
                 </span>
               <?php endif; ?>
             </td>
@@ -265,15 +265,15 @@ $sortLink = fn(string $col, string $label): string =>
             <td class="text-center">
               <div class="esi-bar" title="ESI 1:<?= $esi[1] ?> 2:<?= $esi[2] ?> 3:<?= $esi[3] ?> 4:<?= $esi[4] ?> 5:<?= $esi[5] ?>">
                 <?php for ($e = 1; $e <= 5; $e++):
-                  $h = $esi[$e] > 0 ? max(4, (int)round($esi[$e] / $maxEsi * 18)) : 2;
-                ?>
+                    $h = $esi[$e] > 0 ? max(4, (int)round($esi[$e] / $maxEsi * 18)) : 2;
+                    ?>
                   <span class="esi-<?= $e ?>" style="height:<?= $h ?>px;"
                         title="ESI <?= $e ?>: <?= $esi[$e] ?>"></span>
                 <?php endfor; ?>
               </div>
               <div style="font-size:.66rem; color:#6c757d;">
                 <?php for ($e = 1; $e <= 5; $e++): ?>
-                  <?php if ($esi[$e] > 0): ?><span><?= $e ?>:<?= $esi[$e] ?></span> <?php endif; ?>
+                    <?php if ($esi[$e] > 0): ?><span><?= $e ?>:<?= $esi[$e] ?></span> <?php endif; ?>
                 <?php endfor; ?>
               </div>
             </td>
@@ -330,3 +330,5 @@ document.querySelectorAll('canvas.sparkline').forEach(function(canvas) {
 </script>
 </body>
 </html>
+
+

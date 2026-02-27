@@ -39,6 +39,10 @@ final class SettingsRepository
             'hl7_receiving_app'           => '',
             'hl7_receiving_facility'      => '',
             'hl7_processing_id'           => 'T',
+
+            // Triage standard (requires mts_triage feature flag)
+            // Values: ESI | MTS | CTAS
+            'triage_standard'             => 'ESI',
         ];
     }
 
@@ -96,3 +100,5 @@ final class SettingsRepository
         return $result;
     }
 }
+
+
