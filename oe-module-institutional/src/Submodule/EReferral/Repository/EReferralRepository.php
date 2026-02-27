@@ -162,22 +162,6 @@ final class EReferralRepository
             [$outcome, $now, $byName, $notes, $now, $episodeId]
         );
     }
-
-    /**
-     * Update only the medications_summary column on a DRAFT referral.
-     * Called on every page load so the field always reflects current active MAR orders.
-     * Safe to call if no row exists yet (no-op).
-     */
-    public function patchMedicationsSummary(int $episodeId, string $summary): void
-    {
-        if (!function_exists('sqlStatement')) {
-            return;
-        }
-        sqlStatement(
-            "UPDATE oei_ereferral
-             SET medications_summary = ?, updated_datetime = ?
-             WHERE episode_id = ? AND status = 'DRAFT'",
-            [$summary, date('Y-m-d H:i:s'), $episodeId]
-        );
-    }
 }
+
+

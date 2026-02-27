@@ -51,3 +51,5 @@ if ($redirect === 'obs_episode') {
     header("Location: ed_board.php?facility_id=" . urlencode((string)$facilityId));
 }
 exit;
+
+

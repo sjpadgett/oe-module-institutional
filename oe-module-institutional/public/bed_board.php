@@ -161,11 +161,11 @@ $href = institutional_bootstrap5_href($manifest);
             </thead>
             <tbody>
               <?php foreach ($episodes as $e): ?>
-                <?php
-                  $epid = (int)($e['id'] ?? 0);
-                  $cur = $locByEpisode[$epid] ?? null;
-                  $curLabel = $cur ? ((string)($cur['location_code'] ?? '') ?: ('#' . (string)($cur['location_id'] ?? ''))) : '';
-                ?>
+                    <?php
+                    $epid = (int)($e['id'] ?? 0);
+                    $cur = $locByEpisode[$epid] ?? null;
+                    $curLabel = $cur ? ((string)($cur['location_code'] ?? '') ?: ('#' . (string)($cur['location_id'] ?? ''))) : '';
+                    ?>
                 <tr>
                   <td>#<?= htmlspecialchars((string)$epid) ?></td>
                   <td><?= htmlspecialchars((string)($e['pid'] ?? '')) ?></td>
@@ -213,3 +213,5 @@ $href = institutional_bootstrap5_href($manifest);
 </div>
 </body>
 </html>
+
+

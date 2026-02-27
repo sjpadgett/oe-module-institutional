@@ -103,3 +103,5 @@ final class AllergyService
         return $rows;
     }
 }
+
+

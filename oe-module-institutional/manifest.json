@@ -34,17 +34,14 @@
         "obs_billing": true,
         "multi_facility": true,
         "command_center": true,
-        "diversion": true,
-        "downtime": true
+        "mts_triage": true
     },
     "ui": {
         "bootstrap5_mode": "cdn"
     },
     "migrations": [
         "table.sql",
-        "sql/context.sql",
-        "sql/diversion.sql",
-        "sql/downtime.sql"
+        "sql/context.sql"
     ],
     "menus": {
         "top_label": "Institutional",
@@ -57,7 +54,7 @@
                 "sort": 10
             },
             {
-                "label": "Alerts Dashboard",
+                "label": "Charge Nurse Alerts",
                 "url": "/public/alerts.php",
                 "feature": "alerts",
                 "group": "Tracking",
@@ -258,20 +255,6 @@
                 "feature": "settings",
                 "group": "Admin",
                 "sort": 60
-            },
-            {
-                "label": "Diversion Status",
-                "url": "/public/diversion.php",
-                "feature": "diversion",
-                "group": "Operations",
-                "sort": 115
-            },
-            {
-                "label": "Downtime Mode",
-                "url": "/public/downtime.php",
-                "feature": "downtime",
-                "group": "Admin",
-                "sort": 8
             }
         ]
     }

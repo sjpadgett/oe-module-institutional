@@ -611,7 +611,8 @@ function cc_alert_icon(string $type): string {
       animation: pulse-dot 2s ease-in-out infinite;
       margin-right: 4px;
     }
-  </style>
+      <?= $triageStandard->cssBlock() ?>
+    </style>
 </head>
 <body>
 <div class="cc-layout">
@@ -674,7 +675,7 @@ function cc_alert_icon(string $type): string {
         $cmsRates = array_filter(array_column($cmsMeasures, 'rate_pct'), fn($v) => $v !== null);
         $avgRate  = $cmsRates ? round(array_sum($cmsRates) / count($cmsRates), 0) : null;
         $rateCls  = $avgRate === null ? '' : ($avgRate >= 90 ? 'ok' : ($avgRate >= 75 ? 'info' : ($avgRate >= 50 ? 'warning' : 'critical')));
-      ?>
+        ?>
       <div class="cc-kpi-value <?= $rateCls ?>"><?= $avgRate !== null ? $avgRate . '%' : '—' ?></div>
       <div class="cc-kpi-sub">4 measures</div>
     </div>
@@ -697,7 +698,7 @@ function cc_alert_icon(string $type): string {
           </div>
         <?php endif; ?>
         <?php foreach ($activeAlerts as $a): ?>
-          <?php $sev = strtolower($a['severity'] ?? 'warning'); ?>
+            <?php $sev = strtolower($a['severity'] ?? 'warning'); ?>
           <div class="alert-row">
             <div class="alert-dot <?= $sev ?>"></div>
             <div class="alert-body">
@@ -726,7 +727,7 @@ function cc_alert_icon(string $type): string {
         <div class="board-row header-row">
           <span class="board-col header">Room</span>
           <span class="board-col header">Status</span>
-          <span class="board-col header">ESI</span>
+          <span class="board-col header"><?= htmlspecialchars($triageStandard->columnLabel()) ?></span>
           <span class="board-col header">Chief Complaint</span>
           <span class="board-col header">Elapsed</span>
         </div>
@@ -737,32 +738,32 @@ function cc_alert_icon(string $type): string {
           </div>
         <?php endif; ?>
         <?php foreach ($boardRows as $r):
-          $status    = strtoupper((string)($r['status'] ?? 'WAITING'));
-          $esi       = (int)($r['acuity_esi'] ?? 0);
-          $arrivedTs = $r['start_datetime'] ? strtotime((string)$r['start_datetime']) : 0;
-          $elapsedMin = $arrivedTs > 0 ? (int)round((time() - $arrivedTs) / 60) : 0;
-          $elapsedH  = intdiv($elapsedMin, 60);
-          $elapsedM  = $elapsedMin % 60;
-          $elapsedStr = $elapsedH > 0 ? "{$elapsedH}h {$elapsedM}m" : "{$elapsedM}m";
-          $elapsedCls = $elapsedMin > 240 ? 'over4h' : ($elapsedMin > 120 ? 'over2h' : '');
+            $status    = strtoupper((string)($r['status'] ?? 'WAITING'));
+            $esi       = (int)($r['acuity_esi'] ?? 0);
+            $arrivedTs = $r['start_datetime'] ? strtotime((string)$r['start_datetime']) : 0;
+            $elapsedMin = $arrivedTs > 0 ? (int)round((time() - $arrivedTs) / 60) : 0;
+            $elapsedH  = intdiv($elapsedMin, 60);
+            $elapsedM  = $elapsedMin % 60;
+            $elapsedStr = $elapsedH > 0 ? "{$elapsedH}h {$elapsedM}m" : "{$elapsedM}m";
+            $elapsedCls = $elapsedMin > 240 ? 'over4h' : ($elapsedMin > 120 ? 'over2h' : '');
           // Check if this episode has a critical alert
-          $epId = (int)($r['id'] ?? 0);
-          $hasCrit = false;
-          $hasSepsis = false;
-          foreach ($activeAlerts as $a) {
-            if ((int)($a['episode_id'] ?? 0) === $epId) {
-              if ($a['severity'] === 'CRITICAL') $hasCrit = true;
-              if ($a['type'] === 'SEPSIS_RISK') $hasSepsis = true;
+            $epId = (int)($r['id'] ?? 0);
+            $hasCrit = false;
+            $hasSepsis = false;
+            foreach ($activeAlerts as $a) {
+                if ((int)($a['episode_id'] ?? 0) === $epId) {
+                    if ($a['severity'] === 'CRITICAL') $hasCrit = true;
+                    if ($a['type'] === 'SEPSIS_RISK') $hasSepsis = true;
+                }
             }
-          }
-          $rowCls = $hasSepsis ? 'has-sepsis' : ($hasCrit ? 'has-critical' : ($status === 'WAITING' ? 'is-waiting' : ''));
-          $statusCls = match ($status) {
-            'WAITING' => 'status-WAITING',
-            'ROOMED'  => 'status-ROOMED',
-            'PROVIDER_EVALUATION' => 'status-PROVIDER_EVALUATION',
-            'OBS_START' => 'status-OBS_START',
-            default   => 'status-default',
-          };
+            $rowCls = $hasSepsis ? 'has-sepsis' : ($hasCrit ? 'has-critical' : ($status === 'WAITING' ? 'is-waiting' : ''));
+            $statusCls = match ($status) {
+                'WAITING' => 'status-WAITING',
+                'ROOMED'  => 'status-ROOMED',
+                'PROVIDER_EVALUATION' => 'status-PROVIDER_EVALUATION',
+                'OBS_START' => 'status-OBS_START',
+                default   => 'status-default',
+            };
           $statusLabel = match ($status) {
             'WAITING'   => 'WAITING',
             'ROOMED'    => 'ROOMED',
@@ -771,14 +772,14 @@ function cc_alert_icon(string $type): string {
             'READY_DISPO' => 'READY',
             default     => substr($status, 0, 8),
           };
-          $esiCls = $esi >= 1 && $esi <= 5 ? "esi-{$esi}" : 'esi-x';
-        ?>
+          $esiCls = $triageStandard->badgeClass($esi ?: 0);
+    ?>
           <a href="timeline.php?facility_id=<?= $facilityId ?>&episode_id=<?= $epId ?>"
              style="text-decoration:none;display:block;"
              class="board-row <?= $rowCls ?>">
             <span class="board-col"><?= htmlspecialchars((string)($r['location_name'] ?? '—')) ?></span>
             <span class="board-col"><span class="status-chip <?= $statusCls ?>"><?= htmlspecialchars($statusLabel) ?></span></span>
-            <span class="board-col"><span class="esi-badge <?= $esiCls ?>"><?= $esi ?: '?' ?></span></span>
+            <span class="board-col"><span class="esi-badge <?= $esiCls ?>"><?= htmlspecialchars($triageStandard->shortLabel($esi ?: 0)) ?></span></span>
             <span class="board-col"><?= htmlspecialchars(mb_strimwidth((string)($r['chief_complaint'] ?? ''), 0, 38, '…')) ?></span>
             <span class="board-col elapsed-chip <?= $elapsedCls ?>"><?= $elapsedStr ?></span>
           </a>
@@ -795,12 +796,12 @@ function cc_alert_icon(string $type): string {
       <div class="cc-panel-body">
         <div class="cms-panel-body">
           <?php foreach ($cmsMeasures as $key => $m):
-            $rate    = $m['rate_pct'];
-            $pct     = min(100, max(0, (float)($rate ?? 0)));
-            $barColor = $pct >= 90 ? '#00e676' : ($pct >= 75 ? '#00e5ff' : ($pct >= 50 ? '#ffab00' : '#ff3d57'));
-            $tier     = $pct >= 90 ? 'EXCELLENT' : ($pct >= 75 ? 'GOOD' : ($pct >= 50 ? 'FAIR' : ($rate === null ? 'NO DATA' : 'POOR')));
-            $tierColor = $pct >= 90 ? '#00e676' : ($pct >= 75 ? '#00e5ff' : ($pct >= 50 ? '#ffab00' : '#ff3d57'));
-          ?>
+                $rate    = $m['rate_pct'];
+                $pct     = min(100, max(0, (float)($rate ?? 0)));
+                $barColor = $pct >= 90 ? '#00e676' : ($pct >= 75 ? '#00e5ff' : ($pct >= 50 ? '#ffab00' : '#ff3d57'));
+                $tier     = $pct >= 90 ? 'EXCELLENT' : ($pct >= 75 ? 'GOOD' : ($pct >= 50 ? 'FAIR' : ($rate === null ? 'NO DATA' : 'POOR')));
+                $tierColor = $pct >= 90 ? '#00e676' : ($pct >= 75 ? '#00e5ff' : ($pct >= 50 ? '#ffab00' : '#ff3d57'));
+                ?>
           <div class="cms-gauge-card">
             <div class="cms-gauge-header">
               <span class="cms-gauge-title"><?= htmlspecialchars($m['label']) ?></span>
@@ -846,16 +847,16 @@ function cc_alert_icon(string $type): string {
   <?php if (!empty($obsBillingRows)): ?>
   <div class="cc-obs-strip">
     <span class="cc-obs-label">OBS at-risk</span>
-    <?php foreach ($obsBillingRows as $r):
-      $isConvert = in_array($r['status'], ['CONVERSION_DUE', 'OVERRUN']);
-      $cls = $isConvert ? 'convert' : 'watch';
-      $statusText = match ($r['status']) {
-        'OVERRUN'        => 'OVERRUN',
-        'CONVERSION_DUE' => 'CONVERT',
-        'APPROACHING_2'  => '2ND MIDNIGHT',
-        'APPROACHING_1'  => '1ST MIDNIGHT',
-        default          => $r['status'],
-      };
+        <?php foreach ($obsBillingRows as $r):
+            $isConvert = in_array($r['status'], ['CONVERSION_DUE', 'OVERRUN']);
+            $cls = $isConvert ? 'convert' : 'watch';
+            $statusText = match ($r['status']) {
+                'OVERRUN'        => 'OVERRUN',
+                'CONVERSION_DUE' => 'CONVERT',
+                'APPROACHING_2'  => '2ND MIDNIGHT',
+                'APPROACHING_1'  => '1ST MIDNIGHT',
+                default          => $r['status'],
+            };
     ?>
     <div class="obs-pill <?= $cls ?>">
       <span class="obs-pill-ep">#<?= (int)$r['episode_id'] ?></span>
@@ -895,3 +896,5 @@ function cc_alert_icon(string $type): string {
 </script>
 </body>
 </html>
+
+

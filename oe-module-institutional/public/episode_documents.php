@@ -105,13 +105,13 @@ function mimeIcon(string $mime): string
 
   <?php if ($data['message']): ?>
     <div class="alert alert-success alert-dismissible py-2">
-      <?= htmlspecialchars($data['message']) ?>
+        <?= htmlspecialchars($data['message']) ?>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php endif; ?>
   <?php if ($data['error']): ?>
     <div class="alert alert-danger alert-dismissible py-2">
-      <?= htmlspecialchars($data['error']) ?>
+        <?= htmlspecialchars($data['error']) ?>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
   <?php endif; ?>
@@ -124,9 +124,9 @@ function mimeIcon(string $mime): string
         <div class="card-header small fw-semibold"><?= xlt('Active Episodes') ?></div>
         <div class="list-group list-group-flush" style="max-height:420px;overflow-y:auto;">
           <?php foreach ($episodes as $e):
-            $active  = ((int)$e['id'] === $episodeId);
-            $docCount = $repo->countForEpisode((int)$e['id']);
-          ?>
+                $active  = ((int)$e['id'] === $episodeId);
+                $docCount = $repo->countForEpisode((int)$e['id']);
+                ?>
             <a class="list-group-item list-group-item-action py-2 <?= $active ? 'active' : '' ?>"
                href="episode_documents.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$e['id']) ?>">
               <div class="d-flex justify-content-between align-items-start">
@@ -152,7 +152,7 @@ function mimeIcon(string $mime): string
       <div class="card shadow-sm mt-3">
         <div class="card-header small fw-semibold"><?= xlt('By Type') ?></div>
         <div class="list-group list-group-flush">
-          <?php foreach ($data['summary'] as $type => $count): ?>
+            <?php foreach ($data['summary'] as $type => $count): ?>
             <div class="list-group-item d-flex justify-content-between py-1 small">
               <span><?= htmlspecialchars($data['types'][$type] ?? $type) ?></span>
               <span class="badge text-bg-secondary"><?= $count ?></span>
@@ -329,3 +329,5 @@ dropZone.addEventListener('drop', e => {
 </script>
 </body>
 </html>
+
+
