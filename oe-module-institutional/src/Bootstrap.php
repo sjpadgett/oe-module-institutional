@@ -89,7 +89,7 @@ final class Bootstrap
 
         foreach ($groups as $groupLabel => $entries) {
             // Header node (non-clickable group separator)
-            $h           = new stdClass();
+            $h = new stdClass();
             $h->requirement = 0;
             $h->target   = preg_replace('/[^a-z0-9_]/i', '_', strtolower($groupLabel));
             $h->menu_id  = 'inst_grp_' . preg_replace('/[^a-z0-9_]/i', '_', strtolower($groupLabel));

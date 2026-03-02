@@ -24,7 +24,8 @@ namespace OpenEMR\Modules\Institutional\Core\Domain;
  *   Reporting       : cms_quality
  *   Admin           : context_manager, bed_mgmt, adt_lite,
  *                     facility_directory, hl7_adt, admin_exports, settings
- *   Assisted Living : al_board, al_care_plan, al_adl, al_incident, al_intake
+ *   Assisted Living : al_board, al_care_plan, al_adl, al_incident, al_intake,
+ *                     al_profile, al_vitals, al_fall_risk, al_mar
  *
  * Context resolution order: session cache → DB → DEFAULT_CONTEXT
  */
@@ -154,7 +155,8 @@ final class CareContext
             // Reuses: tasks, mar (standing orders), assignment, handoff,
             //         alerts, episode_documents, ereferral.
             // New AL-specific: al_board, al_care_plan, al_adl,
-            //                  al_incident, al_intake.
+            //                  al_incident, al_intake, al_profile,
+            //                  al_vitals, al_fall_risk, al_mar.
             self::ASSISTED_LIVING => [
                 'label'       => 'Assisted Living',
                 'subtitle'    => 'Resident census, care plans & ADL tracking',
@@ -163,9 +165,11 @@ final class CareContext
                 'color_muted' => '#243d2c',
                 'audience'    => 'Care aide · LPN · AL Director · Activity coordinator',
                 'features'    => [
-                    // AL-specific submodules
+                    // AL-specific submodules (phase 1)
                     'al_board', 'al_care_plan', 'al_adl',
                     'al_incident', 'al_intake',
+                    // AL-specific submodules (phase 2)
+                    'al_profile', 'al_vitals', 'al_fall_risk', 'al_mar',
                     // Shared submodules surfaced in AL context
                     'tasks', 'mar', 'assignment', 'handoff',
                     'alerts', 'episode_documents', 'ereferral',

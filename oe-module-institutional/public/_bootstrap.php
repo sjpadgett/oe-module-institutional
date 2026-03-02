@@ -114,6 +114,70 @@ if (!in_array($_oei_theme, ['light', 'dark'], true)) {
 }
 unset($_oei_settingsForTheme);
 
+// ── Helper: themed exit page ───────────────────────────────────────────────
+/**
+ * Emit a properly themed Bootstrap alert page and exit.
+ *
+ * Replaces bare `echo '<div class="alert...">' . exit` patterns so Bootstrap
+ * CSS and data-bs-theme are always present. Discards the ob buffer (which
+ * holds the context_bar partial HTML at this point) and writes a full page.
+ *
+ * Compatible with PHP 8.0+.
+ *
+ * @param string $message  Caller-escaped text (use htmlspecialchars() or xlt()).
+ * @param string $type     Bootstrap alert variant: warning|danger|info|success
+ */
+function oei_exit_with_alert(string $message, string $type = 'warning'): void
+{
+    global $_oei_theme, $manifest;
+
+    $theme   = (isset($_oei_theme) && $_oei_theme === 'dark') ? 'dark' : 'light';
+    $bgClass = $theme === 'dark' ? 'bg-dark text-light' : 'bg-light';
+    $href    = (isset($manifest) && function_exists('institutional_bootstrap5_href'))
+               ? institutional_bootstrap5_href($manifest)
+               : 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+
+    // Clear every active ob level so we get a clean output stream.
+    // Our own ob_start() from the top of this file is at level 1;
+    // globals.php may have added more. We discard all of them.
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+
+    $safeType = preg_replace('/[^a-z]/', '', $type);
+
+    // Inline minimal alert CSS so the message is styled even if the CDN
+    // request is still in-flight or blocked (common on dev environments).
+    $fallbackCss = $theme === 'dark'
+        ? '.alert-danger{background:#2c1518;color:#ea868f;border-color:#842029}'
+        . '.alert-warning{background:#2c2503;color:#ffda6a;border-color:#664d03}'
+        . '.alert-info{background:#031f2d;color:#6edff6;border-color:#084298}'
+        . '.alert-success{background:#051b11;color:#75b798;border-color:#0a3622}'
+        . 'body{background:#1a1d21;color:#dee2e6}'
+        : '.alert-danger{background:#f8d7da;color:#842029;border-color:#f5c2c7}'
+        . '.alert-warning{background:#fff3cd;color:#664d03;border-color:#ffecb5}'
+        . '.alert-info{background:#cff4fc;color:#055160;border-color:#b6effb}'
+        . '.alert-success{background:#d1e7dd;color:#0a3622;border-color:#badbcc}';
+
+    echo '<!DOCTYPE html>';
+    echo '<html lang="en" data-bs-theme="' . $theme . '">';
+    echo '<head>'
+        . '<meta charset="utf-8">'
+        . '<meta name="viewport" content="width=device-width,initial-scale=1">'
+        . '<style>.alert{padding:.75rem 1rem;border:1px solid transparent;border-radius:.375rem;margin:1rem}'
+        . '.container-fluid{padding:1.5rem}' . $fallbackCss . '</style>';
+    if ($href !== '') {
+        echo '<link rel="stylesheet" href="' . htmlspecialchars($href) . '">';
+    }
+    echo '</head>';
+    echo '<body class="' . $bgClass . '">';
+    echo '<div class="container-fluid">';
+    echo '<div class="alert alert-' . $safeType . '" role="alert">' . $message . '</div>';
+    echo '</div>';
+    echo '</body></html>';
+    exit;
+}
+
 // ── Context bar auto-injection ─────────────────────────────────────────────
 // The bar is fixed-position (36px) so it doesn't break existing page layouts.
 // It is only injected when the page sends HTML output (i.e. not JSON endpoints).

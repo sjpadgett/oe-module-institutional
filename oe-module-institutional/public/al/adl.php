@@ -13,7 +13,7 @@ use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AdlTracking\Controlle
 use OpenEMR\Modules\Institutional\AssistedLiving\Domain\AdlLevel;
 
 if (!$manifest->featureEnabled('al_adl')) {
-    echo '<p class="text-muted p-3">' . xlt('ADL Tracking is not enabled.') . '</p>'; exit;
+    oei_exit_with_alert(xlt('ADL Tracking is not enabled.'), 'info');
 }
 
 $episodeId  = (int)($_GET['episode_id'] ?? $_POST['episode_id'] ?? 0);
@@ -21,7 +21,10 @@ $facilityId = $_oei_facilityId ?? 1;
 $userId     = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : 0;
 
 if ($episodeId === 0) {
-    echo '<div class="alert alert-warning m-3">' . xlt('Episode not specified.') . '</div>';
+    // No episode context — send to Board to select a resident
+    header('Location: board.php?facility_id=' . $facilityId
+         . '&notice=select_resident');
+    exit;
 }
 
 $controller = new AdlController();
@@ -37,19 +40,23 @@ $levelOptions = [
 ];
 
 $pageTitle = xlt('ADL Charting');
+
+$activePage  = 'adl';
+$__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="<?= $_oei_theme ?? 'light' ?>">
 <head>
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
 </head>
-<body>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid p-3">
-
-<?php require __DIR__ . '/../../src/Core/Ui/partials/page_title.php'; ?>
-
+<?php
+// AL resident nav — tabs + context strip
+require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+?>
 <?php if ($data['flash']): ?>
 <div class="alert <?= str_contains($data['flash'], 'saved') ? 'alert-success' : 'alert-danger' ?> py-2">
   <?= htmlspecialchars($data['flash']) ?>

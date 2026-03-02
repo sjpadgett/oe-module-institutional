@@ -14,7 +14,7 @@ use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\IncidentReport\Contro
 use OpenEMR\Modules\Institutional\AssistedLiving\Domain\IncidentType;
 
 if (!$manifest->featureEnabled('al_incident')) {
-    echo '<p class="text-muted p-3">' . xlt('Incident Reports is not enabled.') . '</p>'; exit;
+    oei_exit_with_alert(xlt('Incident Reports is not enabled.'), 'info');
 }
 
 $facilityId = $_oei_facilityId ?? 1;
@@ -25,19 +25,23 @@ $controller = new IncidentController();
 $data = $controller->handle($facilityId, $userId);
 
 $pageTitle = xlt('Incident Reports');
+
+$activePage  = 'incident';
+$__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="<?= $_oei_theme ?? 'light' ?>">
 <head>
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
 </head>
-<body>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid p-3">
-
-<?php require __DIR__ . '/../../src/Core/Ui/partials/page_title.php'; ?>
-
+<?php
+// AL resident nav — tabs + context strip
+require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+?>
 <?php if ($data['flash']): ?>
 <div class="alert alert-success py-2"><?= htmlspecialchars($data['flash']) ?></div>
 <?php endif; ?>

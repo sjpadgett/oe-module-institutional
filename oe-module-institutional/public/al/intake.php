@@ -15,7 +15,7 @@ use OpenEMR\Modules\Institutional\AssistedLiving\Domain\CareLevel;
 use OpenEMR\Modules\Institutional\AssistedLiving\Domain\FallRiskLevel;
 
 if (!$manifest->featureEnabled('al_intake')) {
-    echo '<p class="text-muted p-3">' . xlt('Resident Intake is not enabled.') . '</p>'; exit;
+    oei_exit_with_alert(xlt('Resident Intake is not enabled.'), 'info');
 }
 
 $facilityId = $_oei_facilityId ?? 1;
@@ -25,30 +25,39 @@ $controller = new ResidentIntakeController();
 $data = $controller->handle($facilityId, $userId);
 $result = $data['result'];
 
+// PRG: redirect to Profile hub immediately after successful admission
+if ($result['submitted'] && $result['success']) {
+    $newEpisodeId = (int)$result['episode_id'];
+    $newPid       = (int)($_POST['pid'] ?? 0);
+    header('Location: profile.php?episode_id=' . $newEpisodeId
+         . '&pid=' . $newPid
+         . '&facility_id=' . $facilityId
+         . '&flash=admitted');
+    exit;
+}
+
 $pageTitle = xlt('Resident Admission');
+$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="<?= $_oei_theme ?? 'light' ?>">
 <head>
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
 </head>
-<body>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid p-3">
 
-<?php require __DIR__ . '/../../src/Core/Ui/partials/page_title.php'; ?>
-
-<?php if ($result['submitted'] && $result['success']): ?>
-<div class="alert alert-success">
-  ✔ <?= xlt('Resident admitted successfully.') ?>
-  <a href="board.php?facility_id=<?= $facilityId ?>"><?= xlt('View Board') ?></a>
-  &nbsp;·&nbsp;
-  <a href="care_plan.php?episode_id=<?= (int)$result['episode_id'] ?>&pid=<?= (int)($_POST['pid'] ?? 0) ?>&facility_id=<?= $facilityId ?>">
-    <?= xlt('Open Care Plan') ?>
+<div class="d-flex align-items-center gap-3 mb-3">
+  <a href="board.php?facility_id=<?= $facilityId ?>" class="btn btn-sm btn-outline-secondary">
+    ← <?= xlt('Board') ?>
   </a>
+  <h5 class="mb-0">🏡 <?= xlt('Admit New Resident') ?></h5>
 </div>
-<?php elseif ($result['submitted'] && !$result['success']): ?>
+
+<?php if ($result['submitted'] && !$result['success']): ?>
 <div class="alert alert-danger">
   <?= htmlspecialchars($result['error']) ?>
 </div>
