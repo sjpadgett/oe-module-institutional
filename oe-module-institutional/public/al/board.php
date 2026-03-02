@@ -70,6 +70,18 @@ $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
     <span class="badge bg-warning text-dark">🏥 <?= $counts['high_care'] ?> <?= xlt('Tier 3') ?></span>
     <a href="<?= $_SERVER['PHP_SELF'] ?>?facility_id=<?= $facilityId ?>"
        class="btn btn-sm btn-outline-light"><?= xlt('Refresh') ?></a>
+    <?php if ($manifest->featureEnabled('al_handoff')): ?>
+    <a href="handoff.php?facility_id=<?= $facilityId ?>"
+       class="btn btn-sm btn-outline-light">
+      🏥 <?= xlt('Handoff') ?>
+    </a>
+    <?php endif; ?>
+    <?php if ($manifest->featureEnabled('al_activity')): ?>
+    <a href="activity.php?facility_id=<?= $facilityId ?>"
+       class="btn btn-sm btn-outline-light">
+      🎭 <?= xlt('Activity Log') ?>
+    </a>
+    <?php endif; ?>
     <?php if ($manifest->featureEnabled('al_intake')): ?>
     <a href="intake.php?facility_id=<?= $facilityId ?>"
        class="btn btn-sm btn-light text-dark fw-semibold">
@@ -213,6 +225,13 @@ $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
           <a href="incident.php?episode_id=<?= $eid ?>&facility_id=<?= $facilityId ?>"
              class="btn btn-sm btn-outline-danger" title="<?= xlt('Report incident') ?>">
             🚨
+          </a>
+          <?php endif; ?>
+
+          <?php if ($manifest->featureEnabled('al_activity')): ?>
+          <a href="activity.php?<?= $qEpPid ?>"
+             class="btn btn-sm btn-outline-secondary" title="<?= xlt('Activity log') ?>">
+            🎭
           </a>
           <?php endif; ?>
 
