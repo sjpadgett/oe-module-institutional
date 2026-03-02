@@ -65,7 +65,8 @@ $worstBadge = $statusBadge[$worst] ?? $statusBadge['OPEN'];
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
   <?php endif; ?>
 </head>
-<body class="bg-light">
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid py-4 px-4">
 
   <!-- Header -->

@@ -251,5 +251,3 @@ final class EReferralService
         return $row ?: null;
     }
 }
-
-

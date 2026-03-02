@@ -235,7 +235,8 @@ final class TimelineRepository
         if (!function_exists('sqlStatement') || !$this->tableExists('oei_mar_administration')) return [];
         $res = sqlStatement(
             "SELECT ma.outcome, ma.administered_datetime, ma.administered_by_user_id,
-                    mo.drug_name, mo.dose, mo.unit AS dose_unit, ma.is_high_alert
+                    ma.is_high_alert,
+                    mo.drug_name, mo.dose, mo.unit
              FROM oei_mar_administration ma
              JOIN oei_mar_order mo ON mo.id = ma.mar_order_id
              WHERE ma.episode_id = ?
@@ -248,7 +249,7 @@ final class TimelineRepository
         while ($row = sqlFetchArray($res)) {
             $outcome   = (string)($row['outcome'] ?? '');
             $drug      = (string)($row['drug_name'] ?? '');
-            $dose      = trim((string)($row['dose'] ?? '') . ' ' . (string)($row['dose_unit'] ?? ''));
+            $dose      = trim((string)($row['dose'] ?? '') . ' ' . (string)($row['unit'] ?? ''));
             $highAlert = (bool)($row['is_high_alert'] ?? false);
             $sev = match ($outcome) {
                 'GIVEN'   => $highAlert ? 'warning' : 'success',
@@ -364,5 +365,3 @@ final class TimelineRepository
         return (int)($row['c'] ?? 0) > 0;
     }
 }
-
-

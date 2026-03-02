@@ -48,5 +48,3 @@ $svc->switch($userId, $facilityId, $requestedKey);
 
 header('Location: ' . $return);
 exit;
-
-

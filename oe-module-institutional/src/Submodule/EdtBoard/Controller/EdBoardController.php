@@ -1,12 +1,15 @@
 <?php
+
+declare(strict_types=1);
+
 namespace OpenEMR\Modules\Institutional\Submodule\EdtBoard\Controller;
 
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\Core\Domain\Disposition;
 use OpenEMR\Modules\Institutional\Core\Domain\EpisodeStatus;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\AdtLite\Repository\LocationRepository;
 use OpenEMR\Modules\Institutional\Submodule\AdtLite\Service\AdtService;
+use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\LocationRepository;  // was AdtLite
 use OpenEMR\Modules\Institutional\Submodule\ObsStay\Service\ObsService;
 
 final class EdBoardController
@@ -43,18 +46,18 @@ final class EdBoardController
 
     private function processPost(int $facilityId, ?int $userId): void
     {
-        $action    = (string)($_POST['action'] ?? '');
-        $episodeId = (int)($_POST['episode_id'] ?? 0);
-        $pid       = (int)($_POST['pid'] ?? 0);
-        $eidRaw    = trim((string)($_POST['eid'] ?? ''));
+        $action    = (string)($_POST['action']     ?? '');
+        $episodeId = (int)($_POST['episode_id']    ?? 0);
+        $pid       = (int)($_POST['pid']           ?? 0);
+        $eidRaw    = trim((string)($_POST['eid']   ?? ''));
         $eid       = ctype_digit($eidRaw) && $eidRaw !== '' ? (int)$eidRaw : null;
         $now       = date('Y-m-d H:i:s');
 
         switch ($action) {
             case 'arrival':
-                $pid    = (int)($_POST['pid'] ?? 0);
+                $pid    = (int)($_POST['pid']          ?? 0);
                 $chief  = trim((string)($_POST['chief_complaint'] ?? '')) ?: null;
-                $esiRaw = trim((string)($_POST['acuity_esi'] ?? ''));
+                $esiRaw = trim((string)($_POST['acuity_esi']      ?? ''));
                 $esi    = is_numeric($esiRaw) ? (int)$esiRaw : null;
                 if ($pid > 0) {
                     $this->episodes->createArrival($pid, $facilityId, $chief, $esi, $userId);
@@ -75,7 +78,7 @@ final class EdBoardController
 
             case 'assign_location':
                 $locIdRaw = (string)($_POST['location_id'] ?? '');
-                $locId = is_numeric($locIdRaw) && $locIdRaw !== '' ? (int)$locIdRaw : null;
+                $locId    = is_numeric($locIdRaw) && $locIdRaw !== '' ? (int)$locIdRaw : null;
                 if ($episodeId > 0 && $pid > 0) {
                     $this->adtService->assignLocation($episodeId, $pid, $eid, $facilityId, $locId);
                 }
@@ -104,5 +107,3 @@ final class EdBoardController
         }
     }
 }
-
-

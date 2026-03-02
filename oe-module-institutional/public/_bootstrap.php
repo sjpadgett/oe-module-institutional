@@ -102,6 +102,18 @@ function institutional_human_elapsed(string $start): string
     return $days . "d " . $hours2 . "h";
 }
 
+
+// ── Theme resolution ────────────────────────────────────────────────────────
+// Read the facility's ui_theme setting (light|dark) and expose it to every
+// page and to context_bar.php so the Bootstrap data-bs-theme is applied
+// before the page CSS loads.
+$_oei_settingsForTheme = new \OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository();
+$_oei_theme = $_oei_settingsForTheme->get($_oei_facilityId, 'ui_theme') ?: 'light';
+if (!in_array($_oei_theme, ['light', 'dark'], true)) {
+    $_oei_theme = 'light';
+}
+unset($_oei_settingsForTheme);
+
 // ── Context bar auto-injection ─────────────────────────────────────────────
 // The bar is fixed-position (36px) so it doesn't break existing page layouts.
 // It is only injected when the page sends HTML output (i.e. not JSON endpoints).
@@ -124,5 +136,3 @@ if ($manifest->featureEnabled('context_manager')) {
 
 // Clean up temporaries
 unset($_oei_userId, $_oei_facilityId);
-
-

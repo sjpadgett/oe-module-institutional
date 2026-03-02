@@ -136,7 +136,8 @@ function rate_gauge(?float $rate): string
     details > summary::-webkit-details-marker { display: none; }
   </style>
 </head>
-<body class="bg-light">
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
   <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
@@ -299,5 +300,3 @@ function rate_gauge(?float $rate): string
 </div>
 </body>
 </html>
-
-

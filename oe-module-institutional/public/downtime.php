@@ -103,7 +103,8 @@ $syncUrl     = "downtime_sync.php?facility_id={$facilityId}";
     .oei-elapsed-warn { color: #dc3545; font-weight: 600; }
   </style>
 </head>
-<body class="bg-light">
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>">
 
 <!-- Offline banner — controlled by JS -->
 <div id="oei-offline-banner">

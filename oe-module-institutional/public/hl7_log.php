@@ -51,7 +51,8 @@ $hlEndpoint  = $hlTransport === 'HTTP'
     pre { background:#1e1e2e; color:#cdd6f4; font-size:.78rem; border-radius:6px; padding:1rem; overflow-x:auto; white-space:pre-wrap; }
   </style>
 </head>
-<body class="bg-light">
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
   <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
@@ -185,8 +186,3 @@ function showRaw(logId, facilityId) {
 </script>
 </body>
 </html>
-
-
-
-
-

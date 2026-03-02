@@ -69,7 +69,8 @@ function fmt_d2r(?int $min): string
     .live-dot { animation: pulse 2s infinite; }
   </style>
 </head>
-<body class="bg-light">
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
   <!-- Header -->
@@ -240,5 +241,3 @@ function fmt_d2r(?int $min): string
 </script>
 </body>
 </html>
-
-

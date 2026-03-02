@@ -1,6 +1,6 @@
 {
     "module_id": "oe-module-institutional",
-    "version": "0.10.0",
+    "version": "0.11.0",
     "features": {
         "context_manager": true,
         "edt_board": true,
@@ -34,14 +34,20 @@
         "obs_billing": true,
         "multi_facility": true,
         "command_center": true,
-        "mts_triage": true
+        "mts_triage": true,
+        "al_board":     true,
+        "al_care_plan": true,
+        "al_adl":       true,
+        "al_incident":  true,
+        "al_intake":    true
     },
     "ui": {
         "bootstrap5_mode": "cdn"
     },
     "migrations": [
         "table.sql",
-        "sql/context.sql"
+        "sql/context.sql",
+        "sql/assisted_living.sql"
     ],
     "menus": {
         "top_label": "Institutional",
@@ -68,42 +74,49 @@
                 "sort": 30
             },
             {
-                "label": "Provider Scorecard",
+                "label": "Scorecard",
                 "url": "/public/scorecard.php",
                 "feature": "scorecard",
                 "group": "Tracking",
                 "sort": 40
             },
             {
-                "label": "Episode Timeline",
+                "label": "Timeline",
                 "url": "/public/timeline.php",
                 "feature": "timeline",
                 "group": "Tracking",
                 "sort": 50
             },
             {
-                "label": "Shift Handoff",
+                "label": "Handoff",
                 "url": "/public/handoff.php",
                 "feature": "handoff",
                 "group": "Tracking",
                 "sort": 60
             },
             {
-                "label": "Health System",
-                "url": "/public/multi_facility.php",
-                "feature": "multi_facility",
+                "label": "Command Center",
+                "url": "/public/command_center.php",
+                "feature": "command_center",
                 "group": "Tracking",
                 "sort": 70
             },
             {
-                "label": "Episode Intake",
+                "label": "Multi-Facility",
+                "url": "/public/multi_facility.php",
+                "feature": "multi_facility",
+                "group": "Tracking",
+                "sort": 80
+            },
+            {
+                "label": "Patient Intake",
                 "url": "/public/intake.php",
                 "feature": "intake",
                 "group": "Operations",
                 "sort": 10
             },
             {
-                "label": "Triage / Vitals",
+                "label": "Triage",
                 "url": "/public/triage.php",
                 "feature": "triage",
                 "group": "Operations",
@@ -131,14 +144,14 @@
                 "sort": 50
             },
             {
-                "label": "E-Referral",
+                "label": "eReferral",
                 "url": "/public/ereferral.php",
                 "feature": "ereferral",
                 "group": "Operations",
                 "sort": 60
             },
             {
-                "label": "Episode Documents",
+                "label": "Documents",
                 "url": "/public/episode_documents.php",
                 "feature": "episode_documents",
                 "group": "Operations",
@@ -166,95 +179,123 @@
                 "sort": 100
             },
             {
-                "label": "Transfer Tracking",
-                "url": "/public/transfers.php",
+                "label": "Transfers",
+                "url": "/public/transfer_tracking.php",
                 "feature": "transfer_tracking",
                 "group": "Operations",
                 "sort": 110
             },
             {
-                "label": "Command Center",
-                "url": "/public/command_center.php",
-                "feature": "command_center",
-                "group": "Operations",
-                "sort": 120
-            },
-            {
-                "label": "Obs Protocols",
+                "label": "OBS Protocols",
                 "url": "/public/obs_protocols.php",
                 "feature": "obs_protocols",
                 "group": "Protocols",
                 "sort": 10
             },
             {
-                "label": "Obs Episodes",
+                "label": "OBS Episodes",
                 "url": "/public/obs_episodes.php",
                 "feature": "obs_episodes",
                 "group": "Protocols",
                 "sort": 20
             },
             {
-                "label": "OBS Billing Flags",
+                "label": "OBS Billing",
                 "url": "/public/obs_billing.php",
                 "feature": "obs_billing",
                 "group": "Protocols",
                 "sort": 30
             },
             {
-                "label": "CMS Quality Measures",
+                "label": "CMS Quality",
                 "url": "/public/cms_quality.php",
                 "feature": "cms_quality",
                 "group": "Reporting",
                 "sort": 10
             },
             {
-                "label": "Care Context",
-                "url": "/public/context_manager.php",
-                "feature": "context_manager",
-                "group": "Admin",
-                "sort": 5
+                "label": "Resident Board",
+                "url": "/public/al/board.php",
+                "feature": "al_board",
+                "group": "Assisted Living",
+                "sort": 10
             },
             {
-                "label": "Bed Board",
-                "url": "/public/bed_board.php",
-                "feature": "bed_mgmt",
+                "label": "Resident Intake",
+                "url": "/public/al/intake.php",
+                "feature": "al_intake",
+                "group": "Assisted Living",
+                "sort": 20
+            },
+            {
+                "label": "Care Plans",
+                "url": "/public/al/care_plan.php",
+                "feature": "al_care_plan",
+                "group": "Assisted Living",
+                "sort": 30
+            },
+            {
+                "label": "ADL Tracking",
+                "url": "/public/al/adl.php",
+                "feature": "al_adl",
+                "group": "Assisted Living",
+                "sort": 40
+            },
+            {
+                "label": "Incident Reports",
+                "url": "/public/al/incident.php",
+                "feature": "al_incident",
+                "group": "Assisted Living",
+                "sort": 50
+            },
+            {
+                "label": "Context Manager",
+                "url": "/public/context_manager.php",
+                "feature": "context_manager",
                 "group": "Admin",
                 "sort": 10
             },
             {
-                "label": "Locations",
-                "url": "/public/locations.php",
-                "feature": "adt_lite",
+                "label": "Bed Management",
+                "url": "/public/bed_management.php",
+                "feature": "bed_mgmt",
                 "group": "Admin",
                 "sort": 20
+            },
+            {
+                "label": "ADT Lite",
+                "url": "/public/adt.php",
+                "feature": "adt_lite",
+                "group": "Admin",
+                "sort": 30
             },
             {
                 "label": "Facility Directory",
                 "url": "/public/facility_directory.php",
                 "feature": "facility_directory",
                 "group": "Admin",
-                "sort": 30
+                "sort": 40
             },
             {
                 "label": "HL7 ADT Log",
                 "url": "/public/hl7_log.php",
                 "feature": "hl7_adt",
                 "group": "Admin",
-                "sort": 40
+                "sort": 50
             },
             {
-                "label": "Exports",
-                "url": "/public/exports.php",
+                "label": "Admin Exports",
+                "url": "/public/admin_exports.php",
                 "feature": "admin_exports",
                 "group": "Admin",
-                "sort": 50
+                "sort": 60
             },
             {
                 "label": "Settings",
                 "url": "/public/settings.php",
                 "feature": "settings",
                 "group": "Admin",
-                "sort": 60
+                "sort": 70
             }
         ]
     }

@@ -43,6 +43,10 @@ final class SettingsRepository
             // Triage standard (requires mts_triage feature flag)
             // Values: ESI | MTS | CTAS
             'triage_standard'             => 'ESI',
+
+            // UI appearance
+            // Values: light | dark
+            'ui_theme'                    => 'light',
         ];
     }
 
@@ -100,5 +104,3 @@ final class SettingsRepository
         return $result;
     }
 }
-
-

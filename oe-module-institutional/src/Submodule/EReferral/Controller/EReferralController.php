@@ -146,5 +146,3 @@ final class EReferralController
         return $row ?: null;
     }
 }
-
-

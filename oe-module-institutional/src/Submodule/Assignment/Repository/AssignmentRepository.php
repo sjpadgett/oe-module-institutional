@@ -2,27 +2,33 @@
 
 namespace OpenEMR\Modules\Institutional\Submodule\Assignment\Repository;
 
+use OpenEMR\Modules\Institutional\Core\Repository\UserRepository;
+
 /**
  * AssignmentRepository
  *
  * Manages nurse and provider assignments stored on oei_episode.
- * Two new nullable FK columns are added via migration:
- *   assigned_nurse_user_id   INT NULL
- *   assigned_provider_user_id INT NULL  (may alias provider_user_id if that already exists)
- *
- * Reads provider display names from OpenEMR's users table.
  */
 final class AssignmentRepository
 {
+    private UserRepository $users;
+
+    public function __construct(?UserRepository $users = null)
+    {
+        $this->users = $users ?? new UserRepository();
+    }
+
     /**
      * Assign or clear nurse and/or provider for an episode.
-     * Pass null to clear; omit (leave out of $fields) to leave unchanged.
+     * Pass null to clear; omit key to leave unchanged.
      *
      * @param array{nurse?:int|null,provider?:int|null} $fields
      */
     public function assign(int $episodeId, array $fields): void
     {
-        if (!function_exists('sqlStatement') || empty($fields)) return;
+        if (!function_exists('sqlStatement') || empty($fields)) {
+            return;
+        }
 
         $sets   = [];
         $params = [];
@@ -36,7 +42,9 @@ final class AssignmentRepository
             $params[] = $fields['provider'] ? (int)$fields['provider'] : null;
         }
 
-        if (empty($sets)) return;
+        if (empty($sets)) {
+            return;
+        }
 
         $params[] = $episodeId;
         sqlStatement(
@@ -51,7 +59,9 @@ final class AssignmentRepository
      */
     public function getForEpisode(int $episodeId): array
     {
-        if (!function_exists('sqlQuery')) return ['nurse_id' => null, 'provider_id' => null];
+        if (!function_exists('sqlQuery')) {
+            return ['nurse_id' => null, 'provider_id' => null];
+        }
         $row = sqlQuery(
             "SELECT assigned_nurse_user_id, assigned_provider_user_id
              FROM oei_episode WHERE id = ? LIMIT 1",
@@ -64,18 +74,19 @@ final class AssignmentRepository
     }
 
     /**
-     * Return all active episodes with their current assignments.
-     * Joined with user names for display.
+     * Return all active episodes with their current assignments and staff names.
      *
      * @return array<int,array<string,mixed>>
      */
     public function listWithAssignments(int $facilityId): array
     {
-        if (!function_exists('sqlStatement')) return [];
+        if (!function_exists('sqlStatement')) {
+            return [];
+        }
         $res = sqlStatement(
             "SELECT
                 e.id, e.pid, e.chief_complaint, e.acuity_esi, e.start_datetime,
-                e.assigned_nurse_user_id   AS nurse_id,
+                e.assigned_nurse_user_id    AS nurse_id,
                 e.assigned_provider_user_id AS provider_id,
                 CONCAT(COALESCE(nu.fname,''), ' ', COALESCE(nu.lname,'')) AS nurse_name,
                 CONCAT(COALESCE(pu.fname,''), ' ', COALESCE(pu.lname,'')) AS provider_name,
@@ -84,7 +95,13 @@ final class AssignmentRepository
                  WHERE sh.episode_id = e.id ORDER BY sh.id DESC LIMIT 1) AS workflow_status
              FROM oei_episode e
              LEFT JOIN users nu ON nu.id = e.assigned_nurse_user_id
+                                AND nu.active = 1
+                                AND nu.username IS NOT NULL
+                                AND nu.fname IS NOT NULL
              LEFT JOIN users pu ON pu.id = e.assigned_provider_user_id
+                                AND pu.active = 1
+                                AND pu.username IS NOT NULL
+                                AND pu.fname IS NOT NULL
              LEFT JOIN oei_episode_location el ON el.episode_id = e.id AND el.end_datetime IS NULL
              LEFT JOIN oei_location l ON l.id = el.location_id
              WHERE e.facility_id = ? AND e.status = 'ACTIVE'
@@ -92,49 +109,20 @@ final class AssignmentRepository
             [$facilityId]
         );
         $rows = [];
-        while ($row = sqlFetchArray($res)) $rows[] = $row;
+        while ($row = sqlFetchArray($res)) {
+            $rows[] = $row;
+        }
         return $rows;
     }
 
     /**
-     * Return users eligible to be assigned.
-     * Uses only columns confirmed present in this OpenEMR schema:
-     *   id, fname, lname, active, authorized, npi
-     * Nurses  = authorized=0 (non-providers — RNs, techs, aides)
-     * Providers = authorized=1 OR npi not empty (physicians, APPs)
+     * Return nurses and providers available for assignment.
+     * Delegates to UserRepository which applies the standard active/username/fname filter.
      *
-     * @return array{nurses:array<int,array<string,mixed>>,providers:array<int,array<string,mixed>>}
+     * @return array{nurses:array<int,array{id:int,name:string}>, providers:array<int,array{id:int,name:string}>}
      */
     public function availableStaff(): array
     {
-        if (!function_exists('sqlStatement')) return ['nurses' => [], 'providers' => []];
-
-        $nurses = [];
-        $res = sqlStatement(
-            "SELECT id, CONCAT(fname, ' ', lname) AS name
-             FROM users
-             WHERE active = 1 AND authorized = 0
-             ORDER BY lname ASC, fname ASC
-             LIMIT 200"
-        );
-        while ($row = sqlFetchArray($res)) {
-            $nurses[(int)$row['id']] = ['id' => (int)$row['id'], 'name' => trim((string)$row['name'])];
-        }
-
-        $providers = [];
-        $res = sqlStatement(
-            "SELECT id, CONCAT(fname, ' ', lname) AS name
-             FROM users
-             WHERE active = 1 AND (authorized = 1 OR (npi IS NOT NULL AND npi != ''))
-             ORDER BY lname ASC, fname ASC
-             LIMIT 200"
-        );
-        while ($row = sqlFetchArray($res)) {
-            $providers[(int)$row['id']] = ['id' => (int)$row['id'], 'name' => trim((string)$row['name'])];
-        }
-
-        return ['nurses' => $nurses, 'providers' => $providers];
+        return $this->users->fetchStaff();
     }
 }
-
-

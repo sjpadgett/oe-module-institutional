@@ -7,6 +7,23 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 
+CREATE TABLE IF NOT EXISTS `oei_adl_record`
+(
+    `id`               bigint(20) UNSIGNED                                NOT NULL AUTO_INCREMENT,
+    `episode_id`       bigint(20) UNSIGNED                                NOT NULL COMMENT 'FK → oei_episode.id',
+    `facility_id`      bigint(20) UNSIGNED                                NOT NULL,
+    `noted_by_user_id` bigint(20) UNSIGNED                                         DEFAULT NULL COMMENT 'FK → users.id (aide/nurse)',
+    `noted_datetime`   datetime                                           NOT NULL,
+    `adl_json`         longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'domain→level map, e.g. {"bathing":2,"dressing":1,...}' CHECK (json_valid(`adl_json`)),
+    `adl_score`        tinyint(3) UNSIGNED                                NOT NULL DEFAULT 0 COMMENT 'Aggregate 0–28; see AdlLevel::aggregateScore()',
+    `notes`            text                                                        DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_oei_adl_episode` (`episode_id`, `noted_datetime`),
+    KEY `idx_oei_adl_facility` (`facility_id`, `noted_datetime`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_general_ci COMMENT ='ADL charting sessions; one row per aide session covering all 7 domains';
+
 CREATE TABLE IF NOT EXISTS `oei_alert_ack`
 (
     `id`               bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -21,6 +38,30 @@ CREATE TABLE IF NOT EXISTS `oei_alert_ack`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci COMMENT ='Per-user alert snooze/acknowledgement records';
+
+CREATE TABLE IF NOT EXISTS `oei_al_episode`
+(
+    `id`                bigint(20) UNSIGNED               NOT NULL AUTO_INCREMENT,
+    `episode_id`        bigint(20) UNSIGNED               NOT NULL COMMENT 'FK → oei_episode.id',
+    `pid`               bigint(20) UNSIGNED               NOT NULL COMMENT 'FK → patient_data.pid',
+    `facility_id`       bigint(20) UNSIGNED               NOT NULL,
+    `encounter_id`      bigint(20) UNSIGNED                        DEFAULT NULL COMMENT 'FK → form_encounter.id — anchors form_care_plan entries',
+    `room`              varchar(20)                                DEFAULT NULL,
+    `unit`              varchar(40)                                DEFAULT NULL,
+    `care_level`        enum ('TIER_1','TIER_2','TIER_3') NOT NULL DEFAULT 'TIER_1' COMMENT 'CareLevel domain: Low / Medium / High',
+    `fall_risk_level`   enum ('LOW','MODERATE','HIGH')    NOT NULL DEFAULT 'LOW' COMMENT 'Morse Fall Scale tier',
+    `fall_risk_score`   tinyint(3) UNSIGNED               NOT NULL DEFAULT 0 COMMENT 'Raw Morse Fall Scale total (0-125)',
+    `admit_reason`      varchar(255)                               DEFAULT NULL,
+    `last_adl_score`    tinyint(3) UNSIGNED                        DEFAULT NULL COMMENT 'Cached aggregate ADL score from latest oei_adl_record',
+    `last_adl_datetime` datetime                                   DEFAULT NULL,
+    `created_datetime`  datetime                          NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_oei_al_episode` (`episode_id`),
+    KEY `idx_oei_al_facility` (`facility_id`, `care_level`),
+    KEY `idx_oei_al_room` (`facility_id`, `unit`, `room`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_general_ci COMMENT ='AL-specific overlay on oei_episode; links to form_encounter for care plan anchoring';
 
 CREATE TABLE IF NOT EXISTS `oei_bh_boarding`
 (
@@ -72,6 +113,61 @@ CREATE TABLE IF NOT EXISTS `oei_bh_safety`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS `oei_diversion`
+(
+    `id`                 bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `facility_id`        bigint(20) UNSIGNED NOT NULL,
+    `service_line`       varchar(40)         NOT NULL DEFAULT 'ED' COMMENT 'ED | ICU | OBS | PSYCH | TRAUMA | PEDS | BURN',
+    `status`             varchar(20)         NOT NULL DEFAULT 'OPEN' COMMENT 'OPEN | DIVERSION | LIMITED | BYPASS',
+    `reason`             varchar(255)                 DEFAULT NULL COMMENT 'Free-text reason shown in facility directory',
+    `diversion_start`    datetime                     DEFAULT NULL,
+    `diversion_end`      datetime                     DEFAULT NULL,
+    `updated_by_user_id` bigint(20) UNSIGNED          DEFAULT NULL,
+    `updated_datetime`   datetime            NOT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_oei_diversion_service` (`facility_id`, `service_line`),
+    KEY `idx_oei_diversion_facility` (`facility_id`, `status`, `updated_datetime`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_general_ci COMMENT ='Current diversion status per facility and service line';
+
+CREATE TABLE IF NOT EXISTS `oei_diversion_history`
+(
+    `id`                 bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `facility_id`        bigint(20) UNSIGNED NOT NULL,
+    `service_line`       varchar(40)         NOT NULL,
+    `previous_status`    varchar(20)         DEFAULT NULL,
+    `new_status`         varchar(20)         NOT NULL,
+    `reason`             varchar(255)        DEFAULT NULL,
+    `diversion_start`    datetime            DEFAULT NULL,
+    `diversion_end`      datetime            DEFAULT NULL,
+    `changed_by_user_id` bigint(20) UNSIGNED DEFAULT NULL,
+    `changed_datetime`   datetime            NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_oei_div_hist_facility` (`facility_id`, `service_line`, `changed_datetime`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_general_ci COMMENT ='Audit log of all diversion status changes';
+
+CREATE TABLE IF NOT EXISTS `oei_downtime_sync_queue`
+(
+    `id`                   bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    `facility_id`          bigint(20) UNSIGNED NOT NULL,
+    `entry_type`           varchar(30)         NOT NULL COMMENT 'ARRIVAL | VITALS | STATUS_NOTE | TASK_NOTE',
+    `payload_json`         mediumtext          NOT NULL COMMENT 'Raw JSON captured by browser',
+    `captured_client`      datetime            NOT NULL COMMENT 'Client-side timestamp from the browser',
+    `queued_datetime`      datetime            NOT NULL COMMENT 'Server-receipt datetime on sync POST',
+    `synced_datetime`      datetime                     DEFAULT NULL,
+    `status`               varchar(20)         NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING | SYNCED | FAILED | SKIPPED',
+    `result_note`          varchar(255)                 DEFAULT NULL COMMENT 'Error message or resultant ID on success',
+    `submitted_by_user_id` bigint(20) UNSIGNED          DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_oei_dt_queue_facility` (`facility_id`, `status`, `queued_datetime`),
+    KEY `idx_oei_dt_queue_type` (`entry_type`, `status`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_general_ci COMMENT ='Offline write queue — rows written by browser during network outage';
 
 CREATE TABLE IF NOT EXISTS `oei_episode`
 (
@@ -286,6 +382,29 @@ CREATE TABLE IF NOT EXISTS `oei_hl7_outbound_log`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci COMMENT ='HL7 v2 ADT outbound message log';
 
+CREATE TABLE IF NOT EXISTS `oei_incident`
+(
+    `id`                    bigint(20) UNSIGNED                        NOT NULL AUTO_INCREMENT,
+    `episode_id`            bigint(20) UNSIGNED                        NOT NULL COMMENT 'FK → oei_episode.id',
+    `facility_id`           bigint(20) UNSIGNED                        NOT NULL,
+    `reported_by_user_id`   bigint(20) UNSIGNED                                 DEFAULT NULL COMMENT 'FK → users.id',
+    `incident_type`         varchar(30)                                NOT NULL COMMENT 'IncidentType constant: FALL|FALL_INJURY|ELOPEMENT|MED_ERROR|…',
+    `severity`              enum ('LOW','MODERATE','HIGH','CRITICAL')  NOT NULL DEFAULT 'MODERATE',
+    `incident_datetime`     datetime                                   NOT NULL COMMENT 'When the incident occurred',
+    `location_description`  varchar(120)                                        DEFAULT NULL,
+    `narrative`             text                                                DEFAULT NULL COMMENT 'Factual description of what happened',
+    `corrective_action`     text                                                DEFAULT NULL COMMENT 'Immediate corrective action taken',
+    `reported_state`        enum ('PENDING','REPORTED','NOT_REQUIRED') NOT NULL DEFAULT 'PENDING',
+    `mandatory_report_sent` tinyint(1)                                 NOT NULL DEFAULT 0 COMMENT '1 = state notification filed',
+    `created_datetime`      datetime                                   NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `idx_oei_incident_episode` (`episode_id`),
+    KEY `idx_oei_incident_facility` (`facility_id`, `incident_datetime`),
+    KEY `idx_oei_incident_type` (`facility_id`, `incident_type`, `severity`)
+) ENGINE = InnoDB
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_general_ci COMMENT ='AL incident reports; mandatory_report_sent tracks state notification status';
+
 CREATE TABLE IF NOT EXISTS `oei_location`
 (
     `id`            bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -320,6 +439,7 @@ CREATE TABLE IF NOT EXISTS `oei_mar_administration`
     `route_given`             varchar(60)                                                                 DEFAULT NULL,
     `site`                    varchar(80)                                                                 DEFAULT NULL,
     `lot_number`              varchar(60)                                                                 DEFAULT NULL,
+    `hold_reason`             varchar(60)                                                                 DEFAULT NULL COMMENT 'Structured HELD reason code — see MarService::HOLD_REASONS',
     `administered_by_user_id` int(11)                                                                     DEFAULT NULL,
     `note`                    text                                                                        DEFAULT NULL,
     `is_high_alert`           tinyint(1)                                                         NOT NULL DEFAULT 0,
@@ -527,109 +647,20 @@ CREATE TABLE IF NOT EXISTS `oei_triage`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci COMMENT ='Triage vitals sets; multiple per episode for re-triage support';
 
--- ============================================================
--- oei_user_context  —  per-user care context preference
--- Created by oe-module-institutional v0.9.7
---
--- One row per (user_id, facility_id).
--- context_key: ED_ACUTE | OBS_STAY | BH | OPERATIONS | FULL
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS `oei_user_context`
 (
     `id`               bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id`          bigint(20) UNSIGNED NOT NULL,
     `facility_id`      bigint(20) UNSIGNED NOT NULL,
-    `context_key`      varchar(30)         NOT NULL DEFAULT 'ED_ACUTE',
+    `context_key`      varchar(30)         NOT NULL DEFAULT 'FULL',
     `updated_datetime` datetime            NOT NULL,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uniq_oei_ctx_user_fac` (`user_id`, `facility_id`),
     KEY `idx_oei_ctx_facility` (`facility_id`, `context_key`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-    COMMENT = 'Per-user care context preference per facility';
+  COLLATE = utf8mb4_general_ci COMMENT ='Per-user care context preference per facility';
 
 /*!40101 SET CHARACTER_SET_CLIENT = @OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS = @OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION = @OLD_COLLATION_CONNECTION */;
-
-
--- Offline write queue: captures new arrivals / vitals / status notes
--- entered while the network was unavailable.
--- Each row is processed once and then status set to SYNCED or FAILED.
-CREATE TABLE IF NOT EXISTS `oei_downtime_sync_queue`
-(
-    `id`                   bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `facility_id`          bigint(20) UNSIGNED NOT NULL,
-    `entry_type`           varchar(30)         NOT NULL
-        COMMENT 'ARRIVAL | VITALS | STATUS_NOTE | TASK_NOTE',
-    `payload_json`         mediumtext          NOT NULL
-        COMMENT 'Raw JSON captured by browser',
-    `captured_client`      datetime            NOT NULL
-        COMMENT 'Client-side timestamp from the browser',
-    `queued_datetime`      datetime            NOT NULL
-        COMMENT 'Server-receipt datetime on sync POST',
-    `synced_datetime`      datetime                     DEFAULT NULL,
-    `status`               varchar(20)         NOT NULL DEFAULT 'PENDING'
-        COMMENT 'PENDING | SYNCED | FAILED | SKIPPED',
-    `result_note`          varchar(255)                 DEFAULT NULL
-        COMMENT 'Error message or resultant ID on success',
-    `submitted_by_user_id` bigint(20) UNSIGNED          DEFAULT NULL,
-    PRIMARY KEY (`id`),
-    KEY `idx_oei_dt_queue_facility` (`facility_id`, `status`, `queued_datetime`),
-    KEY `idx_oei_dt_queue_type` (`entry_type`, `status`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-    COMMENT = 'Offline write queue — rows written by browser during network outage';
-
--- Current diversion status per facility × service line
--- One row per (facility_id, service_line) — updated in-place, history preserved below.
-CREATE TABLE IF NOT EXISTS `oei_diversion`
-(
-    `id`                 bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `facility_id`        bigint(20) UNSIGNED NOT NULL,
-    `service_line`       varchar(40)         NOT NULL DEFAULT 'ED'
-        COMMENT 'ED | ICU | OBS | PSYCH | TRAUMA | PEDS | BURN',
-    `status`             varchar(20)         NOT NULL DEFAULT 'OPEN'
-        COMMENT 'OPEN | DIVERSION | LIMITED | BYPASS',
-    `reason`             varchar(255)                 DEFAULT NULL
-        COMMENT 'Free-text reason shown in facility directory',
-    `diversion_start`    datetime                     DEFAULT NULL,
-    `diversion_end`      datetime                     DEFAULT NULL,
-    `updated_by_user_id` bigint(20) UNSIGNED          DEFAULT NULL,
-    `updated_datetime`   datetime            NOT NULL,
-    PRIMARY KEY (`id`),
-    UNIQUE KEY `uniq_oei_diversion_service` (`facility_id`, `service_line`),
-    KEY `idx_oei_diversion_facility` (`facility_id`, `status`, `updated_datetime`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-    COMMENT = 'Current diversion status per facility and service line';
-
--- Full audit trail — every status change is appended here.
-CREATE TABLE IF NOT EXISTS `oei_diversion_history`
-(
-    `id`                 bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    `facility_id`        bigint(20) UNSIGNED NOT NULL,
-    `service_line`       varchar(40)         NOT NULL,
-    `previous_status`    varchar(20)         DEFAULT NULL,
-    `new_status`         varchar(20)         NOT NULL,
-    `reason`             varchar(255)        DEFAULT NULL,
-    `diversion_start`    datetime            DEFAULT NULL,
-    `diversion_end`      datetime            DEFAULT NULL,
-    `changed_by_user_id` bigint(20) UNSIGNED DEFAULT NULL,
-    `changed_datetime`   datetime            NOT NULL,
-    PRIMARY KEY (`id`),
-    KEY `idx_oei_div_hist_facility` (`facility_id`, `service_line`, `changed_datetime`)
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_general_ci
-    COMMENT = 'Audit log of all diversion status changes';
-
-ALTER TABLE `oei_mar_administration`
-    ADD COLUMN IF NOT EXISTS `hold_reason` varchar(60) DEFAULT NULL
-        COMMENT 'Structured HELD reason code — see MarService::HOLD_REASONS'
-        AFTER `lot_number`;
-

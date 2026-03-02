@@ -5,36 +5,38 @@ declare(strict_types=1);
 namespace OpenEMR\Modules\Institutional\Core\Domain;
 
 /**
- * CareContext — five care-setting lenses for the institutional module.
+ * CareContext — care-setting display lenses for the institutional module.
  *
  * A context is a DISPLAY LENS, not an access-control boundary.
  * It controls which manifest features and menu groups are surfaced
  * for a given user/role. Clinicians can still navigate directly to
  * any page they have ACL access to.
  *
- * Feature ↔ group mapping (corrected manifest v0.9.7):
+ * Feature ↔ group mapping (v0.11.0):
  *
- *   Tracking  : edt_board, alerts, throughput, scorecard,
- *               timeline, handoff, multi_facility
- *   Operations: intake, triage, tasks, mar, disposition,
- *               ereferral, episode_documents, assignment,
- *               bh_safety, bh_boarding, transfer_tracking,
- *               command_center
- *   Protocols : obs_protocols, obs_episodes, obs_billing
- *   Reporting : cms_quality
- *   Admin     : context_manager, bed_mgmt, adt_lite,
- *               facility_directory, hl7_adt, admin_exports, settings
+ *   Tracking        : edt_board, alerts, throughput, scorecard,
+ *                     timeline, handoff, multi_facility
+ *   Operations      : intake, triage, tasks, mar, disposition,
+ *                     ereferral, episode_documents, assignment,
+ *                     bh_safety, bh_boarding, transfer_tracking,
+ *                     command_center
+ *   Protocols       : obs_protocols, obs_episodes, obs_billing
+ *   Reporting       : cms_quality
+ *   Admin           : context_manager, bed_mgmt, adt_lite,
+ *                     facility_directory, hl7_adt, admin_exports, settings
+ *   Assisted Living : al_board, al_care_plan, al_adl, al_incident, al_intake
  *
  * Context resolution order: session cache → DB → DEFAULT_CONTEXT
  */
 final class CareContext
 {
     // ── Context keys ──────────────────────────────────────────────────────
-    public const ED_ACUTE   = 'ED_ACUTE';
-    public const OBS_STAY   = 'OBS_STAY';
-    public const BH         = 'BH';
-    public const OPERATIONS = 'OPERATIONS';
-    public const FULL       = 'FULL';
+    public const ED_ACUTE        = 'ED_ACUTE';
+    public const OBS_STAY        = 'OBS_STAY';
+    public const BH              = 'BH';
+    public const OPERATIONS      = 'OPERATIONS';
+    public const ASSISTED_LIVING = 'ASSISTED_LIVING';
+    public const FULL            = 'FULL';
 
     public const DEFAULT_CONTEXT = self::FULL;
 
@@ -43,6 +45,7 @@ final class CareContext
         self::OBS_STAY,
         self::BH,
         self::OPERATIONS,
+        self::ASSISTED_LIVING,
         self::FULL,
     ];
 
@@ -65,10 +68,6 @@ final class CareContext
         return [
 
             // ── Emergency Department ──────────────────────────────────────
-            // Charge nurse, ED provider, Triage nurse.
-            // Needs the full per-patient ED workflow: board → triage →
-            // tasks/MAR → disposition/transfer. Throughput & scorecard are
-            // management tools — not shown here. No OBS protocols.
             self::ED_ACUTE => [
                 'label'       => 'Emergency Department',
                 'subtitle'    => 'Acute care tracking & triage',
@@ -77,13 +76,10 @@ final class CareContext
                 'color_muted' => '#7c1a20',
                 'audience'    => 'Charge nurse · ED provider · Triage nurse',
                 'features'    => [
-                    // Tracking group items surfaced
                     'edt_board', 'alerts', 'timeline', 'handoff',
-                    // Operations group items surfaced
                     'intake', 'triage', 'tasks', 'mar', 'disposition',
                     'ereferral', 'episode_documents', 'assignment',
                     'bh_safety', 'transfer_tracking',
-                    // Admin group items surfaced (bed/location management)
                     'bed_mgmt', 'adt_lite',
                 ],
                 'menu_groups' => ['Tracking', 'Operations', 'Admin'],
@@ -91,10 +87,6 @@ final class CareContext
             ],
 
             // ── Observation Stay ──────────────────────────────────────────
-            // Hospitalist, OBS nurse, Case manager.
-            // Needs OBS protocol management, billing compliance, and the
-            // per-patient operations workflow (vitals → MAR → disposition).
-            // Throughput is useful for LOS monitoring. ED board not needed.
             self::OBS_STAY => [
                 'label'       => 'Observation Stay',
                 'subtitle'    => 'Two-midnight & protocol management',
@@ -103,17 +95,12 @@ final class CareContext
                 'color_muted' => '#134f4a',
                 'audience'    => 'Hospitalist · OBS nurse · Case manager',
                 'features'    => [
-                    // Tracking group items surfaced
                     'alerts', 'timeline', 'throughput', 'handoff',
-                    // Operations group items surfaced
                     'triage', 'tasks', 'mar', 'disposition',
                     'ereferral', 'episode_documents', 'assignment',
-                    // Protocols group — all three OBS items
                     'obs_protocols', 'obs_episodes', 'obs_billing',
                     'obs_stay', 'obs_start_picker',
-                    // Reporting group
                     'cms_quality',
-                    // Admin: facility directory for transfers/referrals
                     'facility_directory',
                 ],
                 'menu_groups' => ['Tracking', 'Operations', 'Protocols', 'Reporting', 'Admin'],
@@ -121,25 +108,18 @@ final class CareContext
             ],
 
             // ── Behavioral Health ─────────────────────────────────────────
-            // BH clinician, Social worker, Boarding coordinator.
-            // Needs safety assessments, boarding management, and placement
-            // workflows. OBS protocols and financial reporting not relevant.
-            // Facility directory needed for placement searches.
             self::BH => [
                 'label'       => 'Behavioral Health',
-                'subtitle'    => 'Safety, boarding & placement workflows',
+                'subtitle'    => 'BH safety, boarding & crisis coordination',
                 'icon'        => '🧠',
                 'color'       => '#7b2d8b',
-                'color_muted' => '#3d1647',
+                'color_muted' => '#3d1545',
                 'audience'    => 'BH clinician · Social worker · Boarding coordinator',
                 'features'    => [
-                    // Tracking group items surfaced
                     'alerts', 'timeline', 'handoff',
-                    // Operations group — BH-relevant per-patient workflow
                     'intake', 'triage', 'tasks', 'mar', 'disposition',
                     'ereferral', 'episode_documents', 'assignment',
                     'bh_safety', 'bh_boarding', 'transfer_tracking',
-                    // Admin: directory for placement facility searches
                     'facility_directory',
                 ],
                 'menu_groups' => ['Tracking', 'Operations', 'Admin'],
@@ -147,11 +127,6 @@ final class CareContext
             ],
 
             // ── Operations & Admin ────────────────────────────────────────
-            // Nursing director, Admin, Quality officer.
-            // Needs aggregate dashboards, reporting, and system admin.
-            // Per-patient clinical workflows (triage, MAR, etc.) are not
-            // surfaced — that would add noise for this role. OBS billing
-            // and CMS quality are financial/quality oversight tools.
             self::OPERATIONS => [
                 'label'       => 'Operations & Admin',
                 'subtitle'    => 'Multi-facility oversight & reporting',
@@ -160,16 +135,11 @@ final class CareContext
                 'color_muted' => '#7a4e28',
                 'audience'    => 'Nursing director · Admin · Quality officer',
                 'features'    => [
-                    // Tracking group — oversight dashboards
                     'edt_board', 'alerts', 'throughput', 'scorecard',
                     'handoff', 'multi_facility',
-                    // Operations group — command centre & transfers only
                     'command_center', 'transfer_tracking',
-                    // Protocols group — billing compliance only
                     'obs_billing',
-                    // Reporting group
                     'cms_quality',
-                    // Admin group — full admin toolset
                     'bed_mgmt', 'adt_lite', 'facility_directory',
                     'hl7_adt', 'admin_exports', 'settings',
                 ],
@@ -177,9 +147,36 @@ final class CareContext
                 'badge_color' => 'warning',
             ],
 
+            // ── Assisted Living ───────────────────────────────────────────
+            // Care aide, LPN, AL Director, Activity coordinator.
+            // Long-term residency model: census board → ADL charting →
+            // care plan management → incident reporting.
+            // Reuses: tasks, mar (standing orders), assignment, handoff,
+            //         alerts, episode_documents, ereferral.
+            // New AL-specific: al_board, al_care_plan, al_adl,
+            //                  al_incident, al_intake.
+            self::ASSISTED_LIVING => [
+                'label'       => 'Assisted Living',
+                'subtitle'    => 'Resident census, care plans & ADL tracking',
+                'icon'        => '🏡',
+                'color'       => '#4a7c59',
+                'color_muted' => '#243d2c',
+                'audience'    => 'Care aide · LPN · AL Director · Activity coordinator',
+                'features'    => [
+                    // AL-specific submodules
+                    'al_board', 'al_care_plan', 'al_adl',
+                    'al_incident', 'al_intake',
+                    // Shared submodules surfaced in AL context
+                    'tasks', 'mar', 'assignment', 'handoff',
+                    'alerts', 'episode_documents', 'ereferral',
+                    // Admin: room/unit management + settings
+                    'bed_mgmt', 'settings',
+                ],
+                'menu_groups' => ['Assisted Living', 'Operations', 'Admin'],
+                'badge_color' => 'success',
+            ],
+
             // ── Full Access ───────────────────────────────────────────────
-            // Superuser, Module administrator.
-            // Wildcard — no filtering applied.
             self::FULL => [
                 'label'       => 'Full Access',
                 'subtitle'    => 'All submodules — no filtering',
@@ -246,10 +243,8 @@ final class CareContext
      * Returns all valid context keys in display order.
      * @return string[]
      */
-    public static function keys(): array
+    public static function validKeys(): array
     {
         return self::VALID;
     }
 }
-
-
