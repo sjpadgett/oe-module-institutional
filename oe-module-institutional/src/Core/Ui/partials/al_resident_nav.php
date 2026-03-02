@@ -64,6 +64,7 @@ $navTabs = [
     ['al_mar',       xlt('Meds (MAR)'), '💊', "al_mar.php?$q"],
     ['al_fall_risk', xlt('Fall Risk'),  '⚠️',  "fall_risk.php?$q"],
     ['al_incident',  xlt('Incident'),  '🚨',  "incident.php?episode_id=$episodeId&$qf"],
+    ['al_activity',  xlt('Activity'),  '🎭',  "activity.php?$q"],
     ['al_discharge', xlt('Discharge'), '🚪',  "discharge.php?$q"],
 ];
 
@@ -76,6 +77,7 @@ $pageTabMap = [
     'mar'       => xlt('Meds (MAR)'),
     'fall_risk' => xlt('Fall Risk'),
     'incident'  => xlt('Incident'),
+    'activity'  => xlt('Activity'),
     'discharge' => xlt('Discharge'),
 ];
 $activeLabel = $pageTabMap[$activePage] ?? '';

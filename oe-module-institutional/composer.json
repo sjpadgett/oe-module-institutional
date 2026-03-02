@@ -13,7 +13,9 @@
       "OpenEMR\\Modules\\Institutional\\AssistedLiving\\Submodule\\AlVitals\\": "src/AssistedLiving/Submodule/AlVitals/",
       "OpenEMR\\Modules\\Institutional\\AssistedLiving\\Submodule\\FallRisk\\": "src/AssistedLiving/Submodule/FallRisk/",
       "OpenEMR\\Modules\\Institutional\\AssistedLiving\\Submodule\\AlMar\\": "src/AssistedLiving/Submodule/AlMar/",
-      "OpenEMR\\\\Modules\\\\Institutional\\\\AssistedLiving\\\\Submodule\\\\AlDischarge\\\\": "src/AssistedLiving/Submodule/AlDischarge/"
+      "OpenEMR\\\\Modules\\\\Institutional\\\\AssistedLiving\\\\Submodule\\\\AlDischarge\\\\": "src/AssistedLiving/Submodule/AlDischarge/",
+      "OpenEMR\\\\Modules\\\\Institutional\\\\AssistedLiving\\\\Submodule\\\\AlActivity\\\\": "src/AssistedLiving/Submodule/AlActivity/",
+      "OpenEMR\\\\Modules\\\\Institutional\\\\AssistedLiving\\\\Submodule\\\\AlHandoff\\\\": "src/AssistedLiving/Submodule/AlHandoff/"
     }
   },
   "minimum-stability": "stable",
