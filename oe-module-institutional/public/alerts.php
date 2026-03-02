@@ -40,7 +40,7 @@ $href = institutional_bootstrap5_href($manifest);
 
 function severityBadge(string $sev): string
 {
-    return $sev === 'CRITICAL' ? 'text-bg-danger' : 'text-bg-warning text-dark';
+    return $sev === 'CRITICAL' ? 'text-bg-danger' : 'oei-badge-warning';
 }
 
 function rowClass(string $sev): string
@@ -67,13 +67,13 @@ function typeLabel(string $type): string
 function groupMeta(string $group): array
 {
     return match ($group) {
-        'lwbs'    => ['label' => 'LWBS',    'cls' => 'bg-warning text-dark'],
-        'tasks'   => ['label' => 'Tasks',   'cls' => 'bg-info text-dark'],
-        'bh'      => ['label' => 'BH',      'cls' => 'bg-danger'],
-        'obs'     => ['label' => 'Obs',     'cls' => 'bg-primary'],
-        'vitals'  => ['label' => 'Vitals',  'cls' => 'bg-danger'],
-        'mar'     => ['label' => 'MAR',     'cls' => 'bg-warning text-dark'],
-        default   => ['label' => ucfirst($group), 'cls' => 'bg-secondary'],
+        'lwbs'    => ['label' => 'LWBS',    'cls' => 'oei-badge-warning'],
+        'tasks'   => ['label' => 'Tasks',   'cls' => 'oei-badge-warning'],
+        'bh'      => ['label' => 'BH',      'cls' => 'text-bg-danger'],
+        'obs'     => ['label' => 'Obs',     'cls' => 'text-bg-primary'],
+        'vitals'  => ['label' => 'Vitals',  'cls' => 'text-bg-danger'],
+        'mar'     => ['label' => 'MAR',     'cls' => 'oei-badge-warning'],
+        default   => ['label' => ucfirst($group), 'cls' => 'text-bg-secondary'],
     };
 }
 
@@ -93,30 +93,78 @@ foreach ($alerts as $a) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
   <style>
-    body { background: #0f1117; color: #e8eaed; }
-    .dash-header { background: #1a1d27; border-bottom: 2px solid #2a2d3e; }
-    .card { background: #1e2130; border: 1px solid #2a2d3e; color: #e8eaed; }
-    .card-header { background: #252840; border-bottom: 1px solid #2a2d3e; }
-    .table { color: #e8eaed; }
-    .table td, .table th { border-color: #2a2d3e; }
-    .table-danger  { --bs-table-bg: rgba(220,53,69,.18); --bs-table-color: #f8d7da; }
-    .table-warning { --bs-table-bg: rgba(255,193,7,.14);  --bs-table-color: #fff3cd; }
-    .alert-none { background: #1a2a1a; border: 1px solid #2a4a2a; color: #aee8ae; }
-    .pulse-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%;
-                 background: #ff4d4f; animation: pulse 1.4s infinite; }
-    .pulse-dot.green { background: #52c41a; }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: .5; transform: scale(1.3); }
+    /*
+     * alerts.php — theme-adaptive styles
+     * All colours use Bootstrap 5.3 CSS variables so they flip automatically
+     * when data-bs-theme="dark"|"light" is set on <html>.
+     * Hardcoded hex values are only used for non-Bootstrap custom UI elements,
+     * and even those use a light/dark variant via the [data-bs-theme] selector.
+     */
+
+    /* ── dashboard header bar ───────────────────────────────────────────── */
+    .dash-header {
+        background: var(--bs-tertiary-bg);
+        border-bottom: 2px solid var(--bs-border-color);
     }
+
+    /* ── alert-none (all-clear panel) ──────────────────────────────────── */
+    .alert-none {
+        background: var(--bs-success-bg-subtle);
+        border: 1px solid var(--bs-success-border-subtle);
+        color: var(--bs-success-text-emphasis);
+        border-radius: .5rem;
+    }
+
+    /* ── group header row inside card ──────────────────────────────────── */
+    .group-header {
+        font-size: .7rem;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--bs-secondary-color);
+        padding: 6px 12px;
+        background: var(--bs-tertiary-bg);
+    }
+
+    /* ── pulse dot ─────────────────────────────────────────────────────── */
+    .pulse-dot {
+        display: inline-block;
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        background: var(--bs-danger);
+        animation: oei-pulse-dot 1.4s infinite;
+    }
+    .pulse-dot.green { background: var(--bs-success); }
+    @keyframes oei-pulse-dot {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%       { opacity: .5; transform: scale(1.3); }
+    }
+
+    /* ── misc ───────────────────────────────────────────────────────────── */
     .countdown { font-variant-numeric: tabular-nums; }
     .snooze-btn { font-size: .75rem; padding: 1px 6px; }
-    .group-header { font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
-                    color: #8b8fa8; padding: 6px 12px; background: #161925; }
     #soundToggle { cursor: pointer; }
+
+    /* ── dark-theme only: patient sidebar list-group items ─────────────── */
+    [data-bs-theme="dark"] .list-group-item-action {
+        color: var(--bs-body-color);
+    }
+    [data-bs-theme="dark"] .list-group-item-action:hover {
+        background: var(--bs-tertiary-bg);
+    }
+
+    /* ── warning badge: override text-dark which breaks in dark theme ───── */
+    /* Bootstrap's text-bg-warning uses black text; in dark mode the badge
+       background is dark-yellow and black text is still legible — but the
+       legacy `text-dark` force on some elements breaks. We let BS5.3 handle
+       it via data-bs-theme instead. */
+    .oei-badge-warning {
+        background-color: var(--bs-warning);
+        color: var(--bs-emphasis-color);  /* black in light, white in dark */
+    }
   </style>
 </head>
-<body>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>">
 
 <div class="dash-header px-3 py-2 d-flex align-items-center gap-3 flex-wrap sticky-top">
   <div class="d-flex align-items-center gap-2">
@@ -131,7 +179,7 @@ foreach ($alerts as $a) {
       </span>
     <?php endif; ?>
     <?php if ($summary['warning'] > 0): ?>
-      <span class="badge text-bg-warning text-dark" id="badgeWarning">
+      <span class="badge oei-badge-warning fs-6" id="badgeWarning">
         <?= (int)$summary['warning'] ?> <?= xlt('Warning') ?>
       </span>
     <?php endif; ?>
@@ -180,7 +228,7 @@ foreach ($alerts as $a) {
             </div>
             <div class="table-responsive">
               <table class="table table-sm align-middle mb-0">
-                <thead style="font-size:.75rem; color:#8b8fa8;">
+                <thead style="font-size:.75rem;" class="text-secondary">
                   <tr>
                     <th><?= xlt('Severity') ?></th>
                     <th><?= xlt('Episode') ?></th>
@@ -201,9 +249,8 @@ foreach ($alerts as $a) {
                       </span>
                     </td>
                     <td class="text-nowrap">
-                      <a class="text-decoration-none"
-                         href="ed_board.php?facility_id=<?= urlencode((string)$facilityId) ?>#ep<?= $eid ?>"
-                         style="color:#7eb6ff;">
+                      <a class="text-decoration-none link-primary"
+                         href="ed_board.php?facility_id=<?= urlencode((string)$facilityId) ?>#ep<?= $eid ?>">
                         #<?= $eid ?>
                       </a>
                       <span class="text-muted small">&bull; PID <?= (int)$a['pid'] ?></span>
@@ -265,9 +312,8 @@ foreach ($alerts as $a) {
                 $aCnt   = $epAlertCount[$eid] ?? 0;
                 $isCrit = !empty($epCritical[$eid]);
                 ?>
-          <a class="list-group-item list-group-item-action py-2"
-             href="triage.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= $eid ?>"
-             style="background:<?= $isCrit ? 'rgba(220,53,69,.15)' : 'transparent' ?>; color:#e8eaed;">
+          <a class="list-group-item list-group-item-action py-2 <?= $isCrit ? 'list-group-item-danger' : '' ?>"
+             href="triage.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= $eid ?>">
             <div class="d-flex justify-content-between align-items-start">
               <div>
                 <div class="fw-semibold small">#<?= $eid ?> &middot; PID <?= (int)$e['pid'] ?></div>
@@ -278,7 +324,7 @@ foreach ($alerts as $a) {
                 <?php endif; ?>
               </div>
                 <?php if ($aCnt > 0): ?>
-                <span class="badge <?= $isCrit ? 'text-bg-danger' : 'text-bg-warning text-dark' ?>">
+                <span class="badge <?= $isCrit ? 'text-bg-danger' : 'oei-badge-warning' ?>">
                     <?= $aCnt ?>
                 </span>
               <?php endif; ?>

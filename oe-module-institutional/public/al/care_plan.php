@@ -13,11 +13,11 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\CarePlan\Controller\CarePlanController;
 
 if (!$manifest->featureEnabled('al_care_plan')) {
-    echo '<p class="text-muted p-3">' . xlt('Care Plan is not enabled.') . '</p>'; exit;
+    oei_exit_with_alert(xlt('Care Plan is not enabled.'), 'info');
 }
 
 $episodeId  = (int)($_GET['episode_id'] ?? $_POST['episode_id'] ?? 0);
-$pid = (int)($_GET['pid'] ?? $_POST['pid'] ?? 0);
+$pid        = (int)($_GET['pid']        ?? $_POST['pid']        ?? 0);
 $facilityId = $_oei_facilityId ?? 1;
 $userId     = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : 0;
 
@@ -28,45 +28,51 @@ if ($episodeId > 0 && $pid === 0 && function_exists('sqlQuery')) {
 }
 
 if ($episodeId === 0 || $pid === 0) {
-    echo '<div class="alert alert-warning m-3">' . xlt('Episode or patient not specified.') . '</div>';
+    header('Location: board.php?facility_id=' . $facilityId
+         . '&notice=select_resident');
+    exit;
 }
 
 $controller = new CarePlanController();
 $data = $controller->handle($episodeId, $pid, $userId);
 
 $pageTitle = xlt('Care Plan');
+
+$activePage  = 'care_plan';
+$__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="<?= $_oei_theme ?? 'light' ?>">
 <head>
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
 </head>
-<body>
-    <div class="container-fluid p-3">
+<body class="<?= $__bgClass ?>">
+<div class="container-fluid p-3">
+<?php
+// AL resident nav — tabs + context strip
+require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+?>
+<?php if ($data['flash']): ?>
+<div class="alert alert-success py-2"><?= htmlspecialchars($data['flash']) ?></div>
+<?php endif; ?>
 
-        <?php require __DIR__ . '/../../src/Core/Ui/partials/page_title.php'; ?>
+<div class="row g-3">
 
-        <?php if ($data['flash']): ?>
-            <div class="alert alert-success py-2"><?= htmlspecialchars($data['flash']) ?></div>
-        <?php endif; ?>
-
-        <div class="row g-3">
-
-            <!-- Goals column -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                        <strong>🎯 <?= xlt('Goals') ?></strong>
-                        <span class="badge bg-light text-dark"><?= count($data['goals']) ?></span>
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <?php foreach ($data['goals'] as $g): ?>
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between">
-                                    <span><?= htmlspecialchars($g['description']) ?></span>
-                                    <span class="badge bg-<?= $g['plan_status'] === 'active' ? 'success' : 'secondary' ?> ms-2">
+  <!-- Goals column -->
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <strong>🎯 <?= xlt('Goals') ?></strong>
+        <span class="badge bg-light text-dark"><?= count($data['goals']) ?></span>
+      </div>
+      <ul class="list-group list-group-flush">
+        <?php foreach ($data['goals'] as $g): ?>
+        <li class="list-group-item">
+          <div class="d-flex justify-content-between">
+            <span><?= htmlspecialchars($g['description']) ?></span>
+            <span class="badge bg-<?= $g['plan_status'] === 'active' ? 'success' : 'secondary' ?> ms-2">
               <?= htmlspecialchars($g['plan_status']) ?>
             </span>
           </div>
