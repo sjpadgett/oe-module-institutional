@@ -170,6 +170,7 @@ final class CareContext
                     'al_incident', 'al_intake',
                     // AL-specific submodules (phase 2)
                     'al_profile', 'al_vitals', 'al_fall_risk', 'al_mar',
+            'al_discharge',
                     // Shared submodules surfaced in AL context
                     'tasks', 'mar', 'assignment', 'handoff',
                     'alerts', 'episode_documents', 'ereferral',

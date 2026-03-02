@@ -216,6 +216,13 @@ $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
           </a>
           <?php endif; ?>
 
+          <?php if ($manifest->featureEnabled('al_discharge')): ?>
+          <a href="discharge.php?<?= $qEpPid ?>"
+             class="btn btn-sm btn-outline-secondary" title="<?= xlt('Discharge / Transfer planning') ?>">
+            🚪 <?= xlt('D/C Plan') ?>
+          </a>
+          <?php endif; ?>
+
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 {
   "module_id": "oe-module-institutional",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "features": {
     "context_manager": true,
     "edt_board": true,
@@ -43,7 +43,8 @@
     "al_profile": true,
     "al_vitals": true,
     "al_fall_risk": true,
-    "al_mar": true
+    "al_mar": true,
+    "al_discharge": true
   },
   "ui": {
     "bootstrap5_mode": "cdn"
@@ -52,7 +53,8 @@
     "table.sql",
     "sql/context.sql",
     "sql/assisted_living.sql",
-    "sql/al_phase2.sql"
+    "sql/al_phase2.sql",
+    "sql/al_discharge_seed.sql"
   ],
   "menus": {
     "top_label": "Institutional",
@@ -140,6 +142,13 @@
         "feature": "al_incident",
         "group": "Assisted Living",
         "sort": 50
+      },
+      {
+        "label": "Discharge Planning",
+        "url": "/public/al/discharge.php",
+        "feature": "al_discharge",
+        "group": "Assisted Living",
+        "sort": 60
       },
       {
         "label": "Patient Intake",
