@@ -1,6 +1,6 @@
 {
   "module_id": "oe-module-institutional",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "features": {
     "context_manager": true,
     "edt_board": true,
@@ -44,7 +44,9 @@
     "al_vitals": true,
     "al_fall_risk": true,
     "al_mar": true,
-    "al_discharge": true
+    "al_discharge": true,
+    "al_activity": true,
+    "al_handoff": true
   },
   "ui": {
     "bootstrap5_mode": "cdn"
@@ -54,7 +56,8 @@
     "sql/context.sql",
     "sql/assisted_living.sql",
     "sql/al_phase2.sql",
-    "sql/al_discharge_seed.sql"
+    "sql/al_discharge_seed.sql",
+    "sql/al_activity.sql"
   ],
   "menus": {
     "top_label": "Institutional",
@@ -149,6 +152,20 @@
         "feature": "al_discharge",
         "group": "Assisted Living",
         "sort": 60
+      },
+      {
+        "label": "Activity Log",
+        "url": "/public/al/activity.php",
+        "feature": "al_activity",
+        "group": "Assisted Living",
+        "sort": 70
+      },
+      {
+        "label": "Shift Handoff",
+        "url": "/public/al/handoff.php",
+        "feature": "al_handoff",
+        "group": "Assisted Living",
+        "sort": 80
       },
       {
         "label": "Patient Intake",
