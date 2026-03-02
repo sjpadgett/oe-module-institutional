@@ -28,6 +28,10 @@ $managerUrl = htmlspecialchars(
     . '?facility_id=' . urlencode((string)$facilityId)
     . '&return=' . urlencode((string)($_SERVER['REQUEST_URI'] ?? ''))
 );
+
+// ── Theme init script — runs before Bootstrap CSS, prevents flash ──────────
+$_oei_theme_js = ($_oei_theme ?? 'light') === 'dark' ? 'dark' : 'light';
+echo '<script>(function(){document.documentElement.setAttribute("data-bs-theme","' . $_oei_theme_js . '")}())</script>';
 ?>
 <style>
 :root {
@@ -287,6 +291,11 @@ $featureLabels = [
     'obs_episodes'      => 'OBS Episodes',
     'adt_lite'          => 'ADT',
     'obs_start_picker'  => 'OBS Start',
+    'al_board'      => 'Resident Board',
+    'al_care_plan'  => 'Care Plans',
+    'al_adl'        => 'ADL Tracking',
+    'al_incident'   => 'Incident Reports',
+    'al_intake'     => 'Resident Intake',
 ];
 
 $pills = [];
@@ -320,6 +329,15 @@ $allContexts = \OpenEMR\Modules\Institutional\Core\Domain\CareContext::all();
             <span class="ctx-pill">+<?= $hiddenCount ?> more</span>
         <?php endif; ?>
     </div>
+    <?php
+    $_oei_theme_icon = ($_oei_theme ?? 'light') === 'dark' ? '&#x2600;&#xFE0F;' : '&#x1F319;';
+    ?>
+    <button type="button"
+            id="oei-theme-toggle"
+            onclick="oeiToggleTheme()"
+            title="<?= ($_oei_theme ?? 'light') === 'dark' ? 'Switch to light theme' : 'Switch to dark theme' ?>"
+            style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);color:#e2e8f0;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:13px;line-height:1.6;flex-shrink:0;"
+            aria-label="Toggle theme"><?= $_oei_theme_icon ?></button>
     <button class="ctx-switch-btn"
             id="oei-ctx-toggle"
             aria-haspopup="true"
@@ -394,6 +412,29 @@ $allContexts = \OpenEMR\Modules\Institutional\Core\Domain\CareContext::all();
         }
     });
 }());
+
+function oeiToggleTheme() {
+    var html   = document.documentElement;
+    var cur    = html.getAttribute('data-bs-theme') || 'light';
+    var next   = cur === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-bs-theme', next);
+
+    var btn = document.getElementById('oei-theme-toggle');
+    if (btn) { btn.innerHTML = next === 'dark' ? '&#x2600;&#xFE0F;' : '&#x1F319;'; }
+
+    // Persist: POST to settings.php — fire-and-forget
+    var fid = document.querySelector('[name=csrf_token_form]')?.closest('form') ? 0 :
+        (new URLSearchParams(location.search)).get('facility_id') || 1;
+    var csrf = document.querySelector('[name=csrf_token_form]')?.value || '';
+    var fd = new FormData();
+    fd.append('ajax_action', 'set_theme');
+    fd.append('ui_theme',     next);
+    fd.append('facility_id',  '<?= (int)$facilityId ?>');
+    fd.append('csrf_token_form', csrf);
+    fetch(location.pathname.replace(/\/[^\/]+$/, '/settings.php') +
+          '?facility_id=<?= (int)$facilityId ?>', {
+        method: 'POST', body: fd, credentials: 'same-origin'
+    }).catch(function(){});
+}
+
 </script>
-
-

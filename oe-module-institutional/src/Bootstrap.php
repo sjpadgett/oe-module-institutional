@@ -75,7 +75,7 @@ final class Bootstrap
             $groups[$g][] = ['idx' => $idx, 'child' => $child];
         }
 
-        $groupOrder = ['Tracking', 'Operations', 'Protocols', 'Reporting', 'Admin', 'Other'];
+        $groupOrder = ['Tracking', 'Operations', 'Protocols', 'Reporting', 'Assisted Living', 'Admin', 'Other'];
         uksort($groups, function ($a, $b) use ($groupOrder) {
             $ia = array_search($a, $groupOrder, true);
             $ib = array_search($b, $groupOrder, true);

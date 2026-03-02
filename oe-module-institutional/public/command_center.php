@@ -896,5 +896,3 @@ function cc_alert_icon(string $type): string {
 </script>
 </body>
 </html>
-
-

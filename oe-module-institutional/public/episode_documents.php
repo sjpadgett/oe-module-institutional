@@ -88,7 +88,8 @@ function mimeIcon(string $mime): string
     .type-badge { font-size: .72rem; }
   </style>
 </head>
-<body class="bg-light">
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -329,5 +330,3 @@ dropZone.addEventListener('drop', e => {
 </script>
 </body>
 </html>
-
-

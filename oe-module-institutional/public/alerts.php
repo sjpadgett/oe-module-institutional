@@ -388,5 +388,3 @@ function refreshNow() {
 </script>
 </body>
 </html>
-
-

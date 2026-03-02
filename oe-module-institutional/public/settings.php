@@ -57,6 +57,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax_action'] ?? '') === '
 }
 
 
+
+// ── AJAX: save theme from context bar toggle ───────────────────────────────
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax_action'] ?? '') === 'set_theme') {
+    if (!CsrfUtils::verifyCsrfToken($_POST['csrf_token_form'] ?? '')) {
+        oei_json_response(['ok' => false, 'error' => 'CSRF'], 400);
+    }
+    $theme = in_array($_POST['ui_theme'] ?? '', ['light', 'dark'], true)
+        ? $_POST['ui_theme'] : 'light';
+    $userId = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : null;
+    $repo->set($facilityId, 'ui_theme', $theme, $userId);
+    oei_json_response(['ok' => true, 'theme' => $theme]);
+}
+
 $saved = false;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!CsrfUtils::verifyCsrfToken($_POST['csrf_token_form'] ?? '')) {
@@ -102,7 +115,8 @@ if (ob_get_level() > 0) {
         <style><?= $triageStandard->cssRules() ?></style>
     <?php endif; ?>
 </head>
-<body class="bg-light" data-active-standard="<?= htmlspecialchars($activeStd) ?>">
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>" data-active-standard="<?= htmlspecialchars($activeStd) ?>">
     <div class="container py-4" style="max-width: 860px;">
 
         <div class="d-flex align-items-center justify-content-between mb-3">
@@ -456,6 +470,65 @@ if (ob_get_level() > 0) {
                 </div>
             <?php endif; // hl7_adt ?>
 
+            <!-- ── Appearance ────────────────────────────────────────────────────── -->
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <span class="fw-semibold"><?= xlt('Appearance') ?></span>
+                    </div>
+                    <div class="card-body">
+                        <label class="form-label fw-semibold"><?= xlt('UI Theme') ?></label>
+                        <p class="text-muted small mb-3">
+                            <?= xlt('Sets the color scheme for all module pages at this facility. Light is the default. Dark reduces glare in low-light environments.') ?>
+                        </p>
+                        <div class="row g-3">
+
+                            <!-- Light theme card -->
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="ui_theme"
+                                       id="theme_light" value="light" autocomplete="off"
+                                       <?= ($settings['ui_theme'] ?? 'light') === 'light' ? 'checked' : '' ?>>
+                                <label class="btn btn-outline-secondary w-100 p-0 overflow-hidden text-start" for="theme_light"
+                                       style="border-radius:8px;">
+                                    <!-- Mini preview -->
+                                    <div style="background:#f8f9fa; border-bottom:1px solid #dee2e6; padding:10px 12px; border-radius:8px 8px 0 0;">
+                                        <div style="height:6px; width:55%; background:#dee2e6; border-radius:3px; margin-bottom:5px;"></div>
+                                        <div style="height:4px; width:40%; background:#dee2e6; border-radius:3px;"></div>
+                                        <div style="height:28px; background:#fff; border:1px solid #dee2e6; border-radius:4px; margin-top:7px;"></div>
+                                    </div>
+                                    <div class="px-3 py-2">
+                                        <div class="fw-semibold small"><?= xlt('Light') ?></div>
+                                        <div class="text-muted" style="font-size:.75rem;"><?= xlt('Default') ?></div>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Dark theme card -->
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="ui_theme"
+                                       id="theme_dark" value="dark" autocomplete="off"
+                                       <?= ($settings['ui_theme'] ?? 'light') === 'dark' ? 'checked' : '' ?>>
+                                <label class="btn btn-outline-secondary w-100 p-0 overflow-hidden text-start" for="theme_dark"
+                                       style="border-radius:8px;">
+                                    <!-- Mini preview -->
+                                    <div style="background:#1a1d20; border-bottom:1px solid #373b3e; padding:10px 12px; border-radius:8px 8px 0 0;">
+                                        <div style="height:6px; width:55%; background:#373b3e; border-radius:3px; margin-bottom:5px;"></div>
+                                        <div style="height:4px; width:40%; background:#373b3e; border-radius:3px;"></div>
+                                        <div style="height:28px; background:#2b2f32; border:1px solid #373b3e; border-radius:4px; margin-top:7px;"></div>
+                                    </div>
+                                    <div class="px-3 py-2">
+                                        <div class="fw-semibold small"><?= xlt('Dark') ?></div>
+                                        <div class="text-muted" style="font-size:.75rem;"><?= xlt('Low-light mode') ?></div>
+                                    </div>
+                                </label>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
             <div class="col-12">
                 <button class="btn btn-primary px-4"><?= xlt('Save Settings') ?></button>
             </div>
@@ -731,5 +804,3 @@ if (ob_get_level() > 0) {
 
 </body>
 </html>
-
-

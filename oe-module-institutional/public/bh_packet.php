@@ -147,5 +147,3 @@ function mimeIconPkt(string $mime): string
 </div>
 </body>
 </html>
-
-

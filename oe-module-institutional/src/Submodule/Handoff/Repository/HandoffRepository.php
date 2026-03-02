@@ -24,6 +24,9 @@ final class HandoffRepository
      * Return all active episodes for a facility, enriched for handoff display.
      * Ordered by location name ASC (unassigned rooms last), then arrival time.
      *
+     * User JOINs apply the standard active/username/fname filter so that
+     * deactivated or incomplete accounts never surface as staff names.
+     *
      * @return array<int,array<string,mixed>>
      */
     public function fetchHandoff(int $facilityId): array
@@ -112,7 +115,13 @@ final class HandoffRepository
             ) tv ON tv.episode_id = e.id
 
             LEFT JOIN users nu ON nu.id = e.assigned_nurse_user_id
+                               AND nu.active = 1
+                               AND nu.username IS NOT NULL
+                               AND nu.fname IS NOT NULL
             LEFT JOIN users pu ON pu.id = e.assigned_provider_user_id
+                               AND pu.active = 1
+                               AND pu.username IS NOT NULL
+                               AND pu.fname IS NOT NULL
 
             WHERE e.facility_id = ?
               AND e.status = 'ACTIVE'
@@ -131,5 +140,3 @@ final class HandoffRepository
         return $rows;
     }
 }
-
-

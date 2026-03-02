@@ -15,6 +15,7 @@ if (!class_exists('OpenEMR\\Modules\\Institutional\\Submodule\\Disposition\\Repo
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
 use OpenEMR\Modules\Institutional\Core\Service\AuditService;
 use OpenEMR\Modules\Institutional\Submodule\AdtLite\Repository\LocationRepository;
+use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\LocationRepository as BedMgmtLocationRepository;
 use OpenEMR\Modules\Institutional\Submodule\AdtLite\Repository\LocationHistoryRepository;
 use OpenEMR\Modules\Institutional\Submodule\AdtLite\Service\AdtService;
 use OpenEMR\Modules\Institutional\Submodule\Assignment\Controller\AssignmentController;
@@ -81,7 +82,7 @@ $adtService = new AdtService($episodeRepo, $historyRepo, $locationRepo, null, $v
 $obsService = new ObsService($episodeRepo, $taskService, $protocolEngine, null, $vitalsScheduler);
 
 $eventRepo  = new EpisodeEventRepository();
-$controller = new EdBoardController($episodeRepo, $locationRepo, $adtService, $obsService);
+$controller = new EdBoardController($episodeRepo, new BedMgmtLocationRepository(), $adtService, $obsService);
 $data       = $controller->handle($facilityId, $userId);
 
 // ── Assignment data for board column (if enabled) ─────────────────────────────
@@ -126,7 +127,8 @@ $href = institutional_bootstrap5_href($manifest);
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
 </head>
-<body class="bg-light">
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="h4 mb-0"><?= xlt("ED Tracking Board") ?></h1>
@@ -469,5 +471,3 @@ $href = institutional_bootstrap5_href($manifest);
 
 </body>
 </html>
-
-

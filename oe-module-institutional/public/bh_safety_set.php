@@ -41,5 +41,3 @@ $bhService->setBhSafety($episodeId, $pid, $eid, $facilityId, $level, 0, 0, 0, 0,
 
 header("Location: ed_board.php?facility_id=" . urlencode((string)$facilityId));
 exit;
-
-
