@@ -4,11 +4,11 @@ require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ProtocolRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ObsPlanRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Service\ObsProtocolEngine;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Controller\ObsEpisodeController;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ProtocolRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ObsPlanRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Service\ObsProtocolEngine;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Controller\ObsEpisodeController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
 
 if (!$manifest->featureEnabled('obs_protocols')) {
     die(xlt("Institutional Obs Protocols is disabled by manifest"));

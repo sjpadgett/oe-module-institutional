@@ -4,8 +4,8 @@ require_once __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Timeline\Controller\TimelineController;
-use OpenEMR\Modules\Institutional\Submodule\Timeline\Repository\TimelineRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Timeline\Controller\TimelineController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Timeline\Repository\TimelineRepository;
 
 if (!$manifest->featureEnabled('timeline')) {
     die(xlt("Episode Timeline is disabled by manifest"));

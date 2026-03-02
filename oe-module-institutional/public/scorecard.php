@@ -2,9 +2,9 @@
 
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\Scorecard\Repository\ScorecardRepository;
-use OpenEMR\Modules\Institutional\Submodule\Scorecard\Service\ScorecardService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Scorecard\Repository\ScorecardRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Scorecard\Service\ScorecardService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('scorecard')) {
     die(xlt('Provider Scorecard is disabled by manifest'));

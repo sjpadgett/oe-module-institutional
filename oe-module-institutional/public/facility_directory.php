@@ -6,7 +6,7 @@ require_once __DIR__ . '/_bootstrap.php';
 $pageTitle = xlt('Facility Directory');
 require __DIR__ . '/../src/Core/Ui/partials/page_title.php';
 use OpenEMR\Common\Csrf\CsrfUtils;
-use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
 
 if (!$manifest->featureEnabled('facility_directory')) {
     die(xlt("Facility Directory is disabled by manifest"));

@@ -19,5 +19,3 @@ foreach ($_oei_flash as $_m) {
     echo '<div class="alert ' . htmlspecialchars($cls) . ' py-2 my-2" role="alert">' . $_msg . '</div>';
 }
 unset($_oei_flash, $_m, $_t, $_msg, $cls);
-
-

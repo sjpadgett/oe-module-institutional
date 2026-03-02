@@ -2,7 +2,7 @@
 
 namespace OpenEMR\Modules\Institutional\Core\Repository;
 
-use OpenEMR\Modules\Institutional\Submodule\Hl7Adt\Service\AdtNotificationService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Hl7Adt\Service\AdtNotificationService;
 
 final class EpisodeRepository
 {
@@ -204,5 +204,3 @@ final class EpisodeRepository
         return $rows;
     }
 }
-
-

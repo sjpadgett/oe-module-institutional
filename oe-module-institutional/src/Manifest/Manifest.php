@@ -62,5 +62,3 @@ final class Manifest
         return $out;
     }
 }
-
-

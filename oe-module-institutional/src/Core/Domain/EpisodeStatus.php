@@ -18,5 +18,3 @@ final class EpisodeStatus
         return [self::WAITING, self::ROOMED, self::PROVIDER, self::RESULTS, self::READY_DISPO, self::OBS];
     }
 }
-
-

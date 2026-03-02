@@ -5,6 +5,7 @@ namespace OpenEMR\Modules\Institutional;
 use OpenEMR\Common\Logging\SystemLogger;
 use OpenEMR\Menu\MenuEvent;
 use OpenEMR\Modules\Institutional\Core\Domain\CareContext;
+use OpenEMR\Modules\Institutional\Core\Migration\MigrationRunner;
 use OpenEMR\Modules\Institutional\Manifest\ContextManifest;
 use OpenEMR\Modules\Institutional\Manifest\ManifestLoader;
 use stdClass;
@@ -27,6 +28,24 @@ final class Bootstrap
 
     public function subscribeToEvents(): void
     {
+        // ── Schema migrations ─────────────────────────────────────────────
+        // Runs pending sql/migrations/NNNN_*.sql files in order.
+        // Fast no-op when the install is already up-to-date (one SELECT).
+        try {
+            $applied = (new MigrationRunner($this->moduleRoot))->runPending();
+            if ($applied > 0) {
+                $this->logger->info(
+                    "Institutional: {$applied} migration(s) applied",
+                    ['module' => self::MODULE_NAME]
+                );
+            }
+        } catch (\Throwable $e) {
+            $this->logger->error("Institutional: migration runner failed", [
+                'error' => $e->getMessage(),
+            ]);
+            // Don't abort — menus etc. should still load even if a migration fails
+        }
+
         $this->eventDispatcher->addListener(MenuEvent::MENU_UPDATE, $this->addInstitutionalMenu(...));
     }
 
@@ -170,5 +189,3 @@ final class Bootstrap
         return $key;
     }
 }
-
-

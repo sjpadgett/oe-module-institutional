@@ -67,7 +67,7 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 <div class="container-fluid p-3">
 <?php
 // AL resident nav — tabs + context strip
-require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php';
 ?>
 <!-- Header -->
 <div class="mar-header p-3 mb-3 d-flex align-items-center justify-content-between flex-wrap gap-2">

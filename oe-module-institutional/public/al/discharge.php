@@ -19,7 +19,7 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Controller\AlDischargeController;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Repository\AlDischargeRepository;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
 
 if (!$manifest->featureEnabled('al_discharge')) {
     oei_exit_with_alert(xlt('Discharge Planning is not enabled.'), 'info');
@@ -114,7 +114,7 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid px-3 pt-2">
 
-<?php require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php'; ?>
+<?php require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php'; ?>
 
 <?php if ($data['flash']): ?>
 <div class="alert alert-success alert-dismissible py-2 mx-1" role="alert">

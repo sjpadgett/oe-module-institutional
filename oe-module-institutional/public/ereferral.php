@@ -5,11 +5,11 @@ require_once __DIR__ . '/_bootstrap.php';
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\DispositionRepository;
-use OpenEMR\Modules\Institutional\Submodule\EReferral\Controller\EReferralController;
-use OpenEMR\Modules\Institutional\Submodule\EReferral\Repository\EReferralRepository;
-use OpenEMR\Modules\Institutional\Submodule\EReferral\Service\EReferralService;
-use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\DispositionRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EReferral\Controller\EReferralController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EReferral\Repository\EReferralRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EReferral\Service\EReferralService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
 
 if (!$manifest->featureEnabled('ereferral')) {
     die(xlt("Institutional E-Referral is disabled by manifest"));

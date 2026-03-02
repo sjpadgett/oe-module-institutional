@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlMar\Repository;
 
-use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarOrderRepository;
-use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarAdministrationRepository;
-use OpenEMR\Modules\Institutional\Submodule\Mar\Service\MarService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Repository\MarOrderRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Repository\MarAdministrationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Service\MarService;
 
 /**
  * AlMarRepository

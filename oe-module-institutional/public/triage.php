@@ -3,10 +3,10 @@
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Controller\TriageController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Controller\TriageController;
 
 if (!$manifest->featureEnabled('triage')) {
     die(xlt('Triage is disabled by manifest'));
@@ -52,7 +52,7 @@ function tv(mixed $v, string $unit = ''): string
 /** Map severity to Bootstrap badge class */
 function vitalsBadge(array $row): string
 {
-    $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($row);
+    $sev = \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService::boardSeverity($row);
     return match ($sev) {
         'danger'  => 'text-bg-danger',
         'warning' => 'text-bg-warning',
@@ -151,10 +151,10 @@ $latest    = $data['latest'];
 
       <!-- Latest vitals summary banner -->
           <?php if ($latest): ?>
-                <?php $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($latest); ?>
+                <?php $sev = \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService::boardSeverity($latest); ?>
         <div class="alert <?= $sev === 'danger' ? 'alert-danger' : ($sev === 'warning' ? 'alert-warning' : 'alert-secondary') ?> py-2 mb-3 d-flex align-items-center gap-3 flex-wrap">
           <strong><?= xlt('Latest') ?>:</strong>
-          <span><?= \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::formatForBoard($latest) ?></span>
+          <span><?= \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService::formatForBoard($latest) ?></span>
                 <?php if (!empty($latest['pain_score'])): ?>
             <span class="badge text-bg-secondary"><?= xlt('Pain') ?> <?= htmlspecialchars((string)$latest['pain_score']) ?>/10</span>
           <?php endif; ?>
@@ -316,7 +316,7 @@ $latest    = $data['latest'];
             </thead>
             <tbody>
             <?php foreach (array_reverse($history) as $row):
-                $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($row);
+                $sev = \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService::boardSeverity($row);
                 $trClass = $sev === 'danger' ? 'set-row-critical' : ($sev === 'warning' ? 'set-row-warning' : '');
                 ?>
               <tr class="<?= $trClass ?>">

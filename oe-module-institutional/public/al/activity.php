@@ -97,7 +97,7 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
 <div class="container-fluid px-3 pt-2">
 
 <?php if ($mode === 'resident'): ?>
-  <?php require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php'; ?>
+  <?php require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php'; ?>
 <?php endif; ?>
 
 <?php if ($data['flash'] ?? ''): ?>

@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\ObsBilling\Service\ObsBillingService;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsBilling\Service\ObsBillingService;
 
 if (!$manifest->featureEnabled('obs_billing')) {
     die(xlt('Observation Billing Flags is disabled by manifest'));

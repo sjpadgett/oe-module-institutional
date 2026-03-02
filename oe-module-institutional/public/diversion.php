@@ -3,12 +3,12 @@
 require_once __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 
-use OpenEMR\Modules\Institutional\Submodule\Diversion\Controller\DiversionController;
-use OpenEMR\Modules\Institutional\Submodule\Diversion\Repository\DiversionRepository;
-use OpenEMR\Modules\Institutional\Submodule\Diversion\Service\DiversionService;
-use OpenEMR\Modules\Institutional\Submodule\Hl7Adt\Repository\Hl7OutboundLogRepository;
-use OpenEMR\Modules\Institutional\Submodule\Hl7Adt\Service\AdtNotificationService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Diversion\Controller\DiversionController;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Diversion\Repository\DiversionRepository;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Diversion\Service\DiversionService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Hl7Adt\Repository\Hl7OutboundLogRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Hl7Adt\Service\AdtNotificationService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('diversion')) {
     die(xlt('Diversion Status is disabled by manifest'));

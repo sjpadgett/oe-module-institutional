@@ -7,7 +7,7 @@ require_once __DIR__ . '/_bootstrap.php';
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\Core\Domain\TriageStandard;
 use OpenEMR\Modules\Institutional\Core\Service\AclGuard;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('settings')) {
     die(xlt('Settings is disabled by manifest'));

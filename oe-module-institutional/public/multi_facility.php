@@ -2,8 +2,8 @@
 
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\MultiFacility\Repository\MultiFacilityRepository;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\MultiFacility\Repository\MultiFacilityRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('multi_facility')) {
     die(xlt('Multi-Facility Dashboard is disabled by manifest'));

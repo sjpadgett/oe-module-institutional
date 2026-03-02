@@ -32,5 +32,3 @@ final class Flash
         $_SESSION[self::KEY][] = ['type' => $type, 'message' => $message];
     }
 }
-
-

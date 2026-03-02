@@ -3,11 +3,11 @@
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Mar\Controller\MarController;
-use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarAdministrationRepository;
-use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarOrderRepository;
-use OpenEMR\Modules\Institutional\Submodule\Mar\Service\AllergyService;
-use OpenEMR\Modules\Institutional\Submodule\Mar\Service\MarService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Controller\MarController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Repository\MarAdministrationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Repository\MarOrderRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Service\AllergyService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Service\MarService;
 
 if (!$manifest->featureEnabled('mar')) {
     die(xlt('MAR is disabled by manifest'));

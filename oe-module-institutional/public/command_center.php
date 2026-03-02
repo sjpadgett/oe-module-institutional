@@ -3,12 +3,12 @@
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Alerts\Service\AlertService;
-use OpenEMR\Modules\Institutional\Submodule\Alerts\Repository\AlertAckRepository;
-use OpenEMR\Modules\Institutional\Submodule\Cms\Repository\CmsMeasureRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsBilling\Service\ObsBillingService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Service\AlertService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Repository\AlertAckRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\CmsQuality\Repository\CmsMeasureRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsBilling\Service\ObsBillingService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository;
 
 if (!$manifest->featureEnabled('command_center')) {
     die(xlt('Command Center is disabled by manifest'));
@@ -37,7 +37,7 @@ $ackRepo     = new AlertAckRepository();
 $allAlerts   = $alertSvc->computeAll($boardRows, $latestVitals, $facilityId);
 $snoozed      = $ackRepo->activeSnoozed($facilityId);   // array<string,true>
 $activeAlerts = array_values(array_filter($allAlerts, function (array $a) use ($snoozed): bool {
-    $key = \OpenEMR\Modules\Institutional\Submodule\Alerts\Repository\AlertAckRepository::key(
+    $key = \OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Repository\AlertAckRepository::key(
         (string)($a['type'] ?? ''),
         (int)($a['episode_id'] ?? 0)
     );
@@ -861,7 +861,7 @@ function cc_alert_icon(string $type): string {
     <div class="obs-pill <?= $cls ?>">
       <span class="obs-pill-ep">#<?= (int)$r['episode_id'] ?></span>
       <span class="obs-pill-status"><?= htmlspecialchars($statusText) ?></span>
-      <span class="obs-pill-elapsed"><?= htmlspecialchars(\OpenEMR\Modules\Institutional\Submodule\ObsBilling\Service\ObsBillingService::formatElapsed($r['elapsed_hours'])) ?></span>
+      <span class="obs-pill-elapsed"><?= htmlspecialchars(\OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsBilling\Service\ObsBillingService::formatElapsed($r['elapsed_hours'])) ?></span>
     </div>
     <?php endforeach; ?>
   </div>

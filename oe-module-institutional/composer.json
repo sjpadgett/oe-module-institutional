@@ -1,23 +1,16 @@
 {
-  "name": "openemr/oe-module-institutional",
-  "description": "Institutional module (Rural ED + Observation + BH safety foundation) for OpenEMR",
-  "type": "openemr-module",
-  "license": "GPL-3.0-or-later",
-  "require": {
-    "php": ">=8.1"
-  },
-  "autoload": {
-    "psr-4": {
-      "OpenEMR\\Modules\\Institutional\\": "src/",
-      "OpenEMR\\Modules\\Institutional\\AssistedLiving\\Submodule\\ResidentProfile\\": "src/AssistedLiving/Submodule/ResidentProfile/",
-      "OpenEMR\\Modules\\Institutional\\AssistedLiving\\Submodule\\AlVitals\\": "src/AssistedLiving/Submodule/AlVitals/",
-      "OpenEMR\\Modules\\Institutional\\AssistedLiving\\Submodule\\FallRisk\\": "src/AssistedLiving/Submodule/FallRisk/",
-      "OpenEMR\\Modules\\Institutional\\AssistedLiving\\Submodule\\AlMar\\": "src/AssistedLiving/Submodule/AlMar/",
-      "OpenEMR\\\\Modules\\\\Institutional\\\\AssistedLiving\\\\Submodule\\\\AlDischarge\\\\": "src/AssistedLiving/Submodule/AlDischarge/",
-      "OpenEMR\\\\Modules\\\\Institutional\\\\AssistedLiving\\\\Submodule\\\\AlActivity\\\\": "src/AssistedLiving/Submodule/AlActivity/",
-      "OpenEMR\\\\Modules\\\\Institutional\\\\AssistedLiving\\\\Submodule\\\\AlHandoff\\\\": "src/AssistedLiving/Submodule/AlHandoff/"
-    }
-  },
-  "minimum-stability": "stable",
-  "prefer-stable": true
+    "name": "openemr/oe-module-institutional",
+    "description": "Institutional workflows — Emergency Department, Observation Stay, Behavioral Health, and Assisted Living — for OpenEMR.",
+    "type": "openemr-module",
+    "license": "GPL-3.0-or-later",
+    "require": {
+        "php": ">=8.1"
+    },
+    "autoload": {
+        "psr-4": {
+            "OpenEMR\\Modules\\Institutional\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
 }

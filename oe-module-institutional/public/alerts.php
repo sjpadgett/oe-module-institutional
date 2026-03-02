@@ -3,10 +3,10 @@
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Alerts\Controller\AlertsController;
-use OpenEMR\Modules\Institutional\Submodule\Alerts\Repository\AlertAckRepository;
-use OpenEMR\Modules\Institutional\Submodule\Alerts\Service\AlertService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Controller\AlertsController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Repository\AlertAckRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Service\AlertService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 $facilityId = (int)($_GET['facility_id'] ?? ($GLOBALS['facility_default_id'] ?? 1));
 $userId     = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : null;
@@ -24,8 +24,8 @@ $episodeRepo = new EpisodeRepository();
 $ackRepo     = new AlertAckRepository();
 
 $triageRepo = null;
-if (class_exists('OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository')) {
-    $triageRepo = new \OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository();
+if (class_exists('OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository')) {
+    $triageRepo = new \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository();
 }
 
 $controller = new AlertsController($alertService, $episodeRepo, $ackRepo, $triageRepo);

@@ -142,7 +142,7 @@ final class CareContext
                     'obs_billing',
                     'cms_quality',
                     'bed_mgmt', 'adt_lite', 'facility_directory',
-                    'hl7_adt', 'admin_exports', 'settings',
+                    'hl7_adt', 'admin_exports', 'settings', 'smoke_test',
                 ],
                 'menu_groups' => ['Tracking', 'Operations', 'Protocols', 'Reporting', 'Admin'],
                 'badge_color' => 'warning',

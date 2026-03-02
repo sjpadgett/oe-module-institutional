@@ -14,22 +14,22 @@ if (!class_exists('OpenEMR\\Modules\\Institutional\\Submodule\\Disposition\\Repo
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
 use OpenEMR\Modules\Institutional\Core\Service\AuditService;
-use OpenEMR\Modules\Institutional\Submodule\AdtLite\Repository\LocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\LocationRepository as BedMgmtLocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\AdtLite\Repository\LocationHistoryRepository;
-use OpenEMR\Modules\Institutional\Submodule\AdtLite\Service\AdtService;
-use OpenEMR\Modules\Institutional\Submodule\Assignment\Controller\AssignmentController;
-use OpenEMR\Modules\Institutional\Submodule\Assignment\Repository\AssignmentRepository;
-use OpenEMR\Modules\Institutional\Submodule\EdtBoard\Controller\EdBoardController;
-use OpenEMR\Modules\Institutional\Submodule\ObsStay\Service\ObsService;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Service\TaskService;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ProtocolRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ObsPlanRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Service\ObsProtocolEngine;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Service\VitalsSchedulerService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\AdtLite\Repository\LocationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\BedMgmt\Repository\LocationRepository as BedMgmtLocationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\AdtLite\Repository\LocationHistoryRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\AdtLite\Service\AdtService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Assignment\Controller\AssignmentController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Assignment\Repository\AssignmentRepository;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\EdBoard\Controller\EdBoardController;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsCore\Service\ObsService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Service\TaskService;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ProtocolRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ObsPlanRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Service\ObsProtocolEngine;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\VitalsSchedulerService;
 
 if (!$manifest->featureEnabled('edt_board')) {
     die(xlt("Institutional ED Board is disabled by manifest"));

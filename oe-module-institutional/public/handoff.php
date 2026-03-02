@@ -2,10 +2,10 @@
 
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\Handoff\Controller\HandoffController;
-use OpenEMR\Modules\Institutional\Submodule\Handoff\Repository\HandoffRepository;
-use OpenEMR\Modules\Institutional\Submodule\Handoff\Service\HandoffService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Handoff\Controller\HandoffController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Handoff\Repository\HandoffRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Handoff\Service\HandoffService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('handoff')) {
     die(xlt('Handoff Report is disabled by manifest'));

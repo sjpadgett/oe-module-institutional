@@ -52,7 +52,7 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 <div class="container-fluid p-3">
 <?php
 // AL resident nav — tabs + context strip
-require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php';
 ?>
 <?php if ($data['flash']): ?>
 <div class="alert alert-success py-2"><?= htmlspecialchars($data['flash']) ?></div>

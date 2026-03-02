@@ -5,9 +5,9 @@ require_once __DIR__ . '/_bootstrap.php';
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\BhBoarding\Repository\BhBoardingRepository;
-use OpenEMR\Modules\Institutional\Submodule\BhBoarding\Controller\BhBoardingController;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhBoarding\Repository\BhBoardingRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhBoarding\Controller\BhBoardingController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
 
 if (!$manifest->featureEnabled('bh_boarding')) {
     die(xlt("Institutional BH Boarding is disabled by manifest"));

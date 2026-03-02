@@ -3,8 +3,8 @@
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Service\AclGuard;
-use OpenEMR\Modules\Institutional\Submodule\Hl7Adt\Repository\Hl7OutboundLogRepository;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Hl7Adt\Repository\Hl7OutboundLogRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 AclGuard::requireAdmin();
 

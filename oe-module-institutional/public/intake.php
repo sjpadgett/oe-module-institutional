@@ -6,10 +6,10 @@ require_once __DIR__ . '/_bootstrap.php';
 $pageTitle = xlt('Intake');
 require __DIR__ . '/../src/Core/Ui/partials/page_title.php';
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Intake\Repository\PatientRepository;
-use OpenEMR\Modules\Institutional\Submodule\Intake\Repository\EpisodeIntakeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Intake\Service\IntakeService;
-use OpenEMR\Modules\Institutional\Submodule\Intake\Controller\IntakeController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Intake\Repository\PatientRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Intake\Repository\EpisodeIntakeRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Intake\Service\IntakeService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Intake\Controller\IntakeController;
 
 if (!$manifest->featureEnabled('intake')) {
     die(xlt("Institutional Intake is disabled by manifest"));

@@ -5,8 +5,8 @@ require_once __DIR__ . '/_bootstrap.php';
 // Flash messages
 $pageTitle = xlt('Tasks');
 require __DIR__ . '/../src/Core/Ui/partials/page_title.php';
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Controller\TasksController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Controller\TasksController;
 
 if (!$manifest->featureEnabled('tasks')) {
     die(xlt("Institutional Tasks is disabled by manifest"));

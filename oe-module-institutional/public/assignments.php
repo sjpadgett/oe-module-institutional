@@ -4,8 +4,8 @@ require_once __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 
 use OpenEMR\Modules\Institutional\Core\Service\AuditService;
-use OpenEMR\Modules\Institutional\Submodule\Assignment\Controller\AssignmentController;
-use OpenEMR\Modules\Institutional\Submodule\Assignment\Repository\AssignmentRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Assignment\Controller\AssignmentController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Assignment\Repository\AssignmentRepository;
 
 if (!$manifest->featureEnabled('assignment')) {
     die(xlt("Staff Assignment is disabled by manifest"));

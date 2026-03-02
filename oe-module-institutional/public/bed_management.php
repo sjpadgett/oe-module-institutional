@@ -2,9 +2,9 @@
 
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Controller\BedMgmtController;
-use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\EpisodeLocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\LocationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\BedMgmt\Controller\BedMgmtController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\BedMgmt\Repository\EpisodeLocationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\BedMgmt\Repository\LocationRepository;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
 
 if (!$manifest->featureEnabled('bed_mgmt')) {

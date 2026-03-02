@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlVitals\Repository;
 
-use OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository;
 
 /**
  * AlVitalsRepository

@@ -123,5 +123,3 @@ final class ContextManifest
         return $this->inner->menusTopLabel();
     }
 }
-
-

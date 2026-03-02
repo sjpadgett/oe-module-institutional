@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\Cms\Repository\CmsMeasureRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\CmsQuality\Repository\CmsMeasureRepository;
 
 if (!$manifest->featureEnabled('cms_quality')) {
     die(xlt('CMS Quality Dashboard is disabled by manifest'));

@@ -2,9 +2,9 @@
 
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\Trends\Controller\TrendsController;
-use OpenEMR\Modules\Institutional\Submodule\Trends\Repository\TrendRepository;
-use OpenEMR\Modules\Institutional\Submodule\Trends\Service\TrendsService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Trends\Controller\TrendsController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Trends\Repository\TrendRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Trends\Service\TrendsService;
 
 if (!$manifest->featureEnabled('trends')) {
     die(xlt('Operational Trends is disabled by manifest'));

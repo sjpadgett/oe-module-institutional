@@ -7,7 +7,7 @@ namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Con
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Repository\AlDischargeRepository;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
 
 /**
  * AlDischargeController

@@ -5,8 +5,8 @@ require_once __DIR__ . '/_bootstrap.php';
 // Flash messages
 $pageTitle = xlt('Locations');
 require __DIR__ . '/../src/Core/Ui/partials/page_title.php';
-use OpenEMR\Modules\Institutional\Submodule\AdtLite\Repository\LocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\AdtLite\Controller\LocationsController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\AdtLite\Repository\LocationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\AdtLite\Controller\LocationsController;
 
 if (!$manifest->featureEnabled('adt_lite')) {
     die(xlt("Institutional Locations is disabled by manifest"));

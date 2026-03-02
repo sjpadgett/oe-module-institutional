@@ -7,7 +7,7 @@ $pageTitle = xlt('Exports');
 require __DIR__ . '/../src/Core/Ui/partials/page_title.php';
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\TransferTracking\Repository\TransferRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\TransferTracking\Repository\TransferRepository;
 
 if (!$manifest->featureEnabled('admin_exports')) {
     die(xlt("Exports is disabled by manifest"));

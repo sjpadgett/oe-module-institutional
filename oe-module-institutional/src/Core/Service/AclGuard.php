@@ -30,5 +30,3 @@ final class AclGuard
         self::requireSection('admin', 'users');
     }
 }
-
-

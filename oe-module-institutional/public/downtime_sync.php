@@ -25,15 +25,15 @@
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Common\Csrf\CsrfUtils;
-use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\EpisodeLocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\LocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\Diversion\Repository\DiversionRepository;
-use OpenEMR\Modules\Institutional\Submodule\Downtime\Controller\DowntimeController;
-use OpenEMR\Modules\Institutional\Submodule\Downtime\Service\DowntimeSnapshotService;
-use OpenEMR\Modules\Institutional\Submodule\Downtime\Service\DowntimeSyncService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\BedMgmt\Repository\EpisodeLocationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\BedMgmt\Repository\LocationRepository;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Diversion\Repository\DiversionRepository;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Downtime\Controller\DowntimeController;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Downtime\Service\DowntimeSnapshotService;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Downtime\Service\DowntimeSyncService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository;
 
 if (!$manifest->featureEnabled('downtime')) {
     http_response_code(403);

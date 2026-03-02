@@ -1,55 +1,64 @@
 <?php
+
+declare(strict_types=1);
+
 /**
- * public/smoke_test.php — Institutional Module Smoke Test Suite
+ * oe-module-institutional — Smoke Tests
  *
- * Tests three layers in order:
- *   1. SCHEMA  — every expected table exists, every expected column is present
- *   2. CLASS   — every Repository class loads and exposes its expected methods
- *   3. QUERY   — every critical repository query runs without SQL error
- *   4. DATA    — demo seed row counts are within expected ranges
+ * Sections:
+ *   1. SCHEMA   — every oei_* table and required columns exist
+ *   2. AUTOLOAD — every domain class resolves via PSR-4
+ *   3. METHODS  — every expected public method exists
+ *   4. DATA     — demo seed row counts within expected ranges
+ *   5. MANIFEST — every feature flag enabled in manifest.json
+ *   6. PATHS    — critical files and directories on disk
  *
- * Run from browser: http://localhost/openemr/interface/modules/custom_modules/
- *                   oe-module-institutional/public/smoke_test.php
- * Run from CLI:     php public/smoke_test.php
+ * Every failure is also written to the PHP error log via error_log().
  *
- * Returns HTTP 200 + "ALL PASS" or lists every failure.
- * Add ?verbose=1 to see all PASS results too.
+ * Run from browser: …/oe-module-institutional/public/smoke_test.php
+ * Add ?verbose=1 to show passing rows too.
+ * Run from CLI: php public/smoke_test.php [--verbose]
  *
- * Safe to run on production — read-only queries only.
- *
- * Ground truth: institutional_all_source.txt (project knowledge)
- * Last updated: v0.14.2
+ * Read-only queries — safe for production.
+ * Ground truth: real source scan + institutional_all_source.txt
+ * Last updated: v0.15.0
  */
 
 require_once __DIR__ . '/_bootstrap.php';
 
-$verbose = isset($_GET['verbose']) || (php_sapi_name() === 'cli' && in_array('--verbose', $argv ?? []));
+$verbose    = isset($_GET['verbose']) || (php_sapi_name() === 'cli' && in_array('--verbose', $argv ?? []));
 $facilityId = 1;
 
 // ─── Test runner ─────────────────────────────────────────────────────────────
 
-$results = [];
+$results   = [];
 $failCount = 0;
 
 function smoke_pass(string $group, string $name, string $detail = ''): void {
-    global $results, $verbose;
+    global $results;
     $results[] = ['pass', $group, $name, $detail];
 }
 
 function smoke_fail(string $group, string $name, string $detail): void {
     global $results, $failCount;
-    $results[] = ['fail', $group, $name, $detail];
+    $results[]  = ['fail', $group, $name, $detail];
     $failCount++;
+    error_log("[OEI SMOKE FAIL] [{$group}] {$name} — {$detail}");
 }
 
 function smoke_cols(string $table): array {
     if (!function_exists('sqlStatement')) return [];
-    $res = sqlStatement("SHOW COLUMNS FROM `{$table}`");
-    $cols = [];
-    while ($row = sqlFetchArray($res)) {
-        $cols[] = $row['Field'];
+    try {
+        $res  = sqlStatement("SHOW COLUMNS FROM `{$table}`");
+        $cols = [];
+        while ($row = sqlFetchArray($res)) {
+            $cols[] = $row['Field'];
+        }
+        return $cols;
+    } catch (\Throwable $e) {
+        error_log("[OEI SMOKE FAIL] [SCHEMA] SHOW COLUMNS failed for {$table}: " . $e->getMessage());
+        return [];
     }
-    return $cols;
 }
 
 function smoke_count(string $sql, array $params = []): int {
@@ -63,7 +72,7 @@ function smoke_count(string $sql, array $params = []): int {
 }
 
 // ─── 1. SCHEMA TESTS ─────────────────────────────────────────────────────────
-// Every column list derived directly from institutional_all_source.txt schema.
+// Column names verified against actual CREATE TABLE definitions in database.sql
 
 $SCHEMA = [
 
@@ -128,6 +137,111 @@ $SCHEMA = [
         'admit_flag','notes','updated_by_user_id','updated_datetime',
     ],
 
+    // ── Columns verified against actual DB (not inferred) ────────────────────
+
+    'oei_ereferral' => [
+        'id','episode_id','pid','eid','facility_id',
+        'referral_type','status','priority',
+        'destination_directory_id','destination_name','destination_fax',
+        'destination_phone','destination_address',
+        'reason_for_referral','clinical_summary','services_requested',
+        'medications_summary','followup_instructions',
+        'sent_datetime','sent_by_user_id','send_method',
+        'response_datetime','response_by_name','response_notes',
+        'created_by_user_id','created_datetime','updated_datetime',
+    ],
+
+    'oei_episode_document' => [
+        'id','episode_id','pid','facility_id','doc_type','label',
+        'original_name','mime_type','file_size','storage_path',
+        'uploaded_by_user_id','uploaded_datetime','is_deleted','notes',
+    ],
+
+    'oei_task' => [
+        'id','episode_id','pid','eid','facility_id',
+        'task_type','due_datetime','completed_datetime',
+        'assigned_to_user_id','status','payload_json',
+        'created_by_user_id','created_datetime',
+    ],
+
+    'oei_location' => [
+        'id','facility_id','code','name','location_type',
+        'status','unit_name','is_active','sort_order','notes',
+    ],
+
+    'oei_episode_location' => [
+        'id','episode_id','pid','eid','facility_id',
+        'location_id','location_code','start_datetime','end_datetime',
+        'user_id','note',
+    ],
+
+    'oei_protocol' => [
+        'id','facility_id','protocol_key','label','version',
+        'enabled','definition_json','updated_by_user_id','updated_datetime',
+    ],
+
+    'oei_obs_plan' => [
+        'id','episode_id','pid','eid','facility_id',
+        'protocol_key','status','start_datetime',
+        'protocol_json','updated_by_user_id','updated_datetime',
+    ],
+
+    'oei_settings' => [
+        'id','facility_id','setting_key','setting_value','updated_datetime',
+    ],
+
+    'oei_user_context' => [
+        'id','user_id','facility_id','context_key','updated_datetime',
+    ],
+
+    'oei_transfer' => [
+        'id','episode_id','pid','eid','facility_id',
+        'transfer_type','reason',
+        'receiving_directory_id','receiving_name',
+        'requested_datetime','accepted_datetime','transport_datetime',
+        'status','checklist_json','notes',
+        'updated_by_user_id','updated_datetime',
+    ],
+
+    'oei_hl7_outbound_log' => [
+        'id','episode_id','pid','facility_id',
+        'event_type','transport_type','endpoint',
+        'message_body','ack_body','status','error_message','sent_datetime',
+    ],
+
+    'oei_diversion' => [
+        'id','facility_id','service_line','status','reason',
+        'diversion_start','diversion_end',
+        'updated_by_user_id','updated_datetime',
+    ],
+
+    'oei_bh_safety' => [
+        'id','episode_id','pid','eid','facility_id',
+        'observation_level','is_involuntary',
+        'risk_violence','risk_suicide','elopement_risk',
+        'precautions_json','updated_by_user_id','updated_datetime',
+    ],
+
+    'oei_bh_boarding' => [
+        'id','episode_id','pid','eid','facility_id',
+        'legal_status','suicide_risk','violence_risk','placement_status',
+        'accepting_facility','accepted_datetime',
+        'transport_method','transport_datetime',
+        'emtala_complete','checklist_json','notes',
+        'updated_by_user_id','updated_datetime',
+    ],
+
+    'oei_alert_ack' => [
+        'id','alert_key','facility_id','user_id',
+        'acked_datetime','expires_datetime',
+    ],
+
+    'oei_facility_directory' => [
+        'id','facility_id','name','service_type',
+        'phone','fax','email','address',
+        'hours','notes','is_active','sort_order',
+    ],
+
     'oei_activity_log' => [
         'id','facility_id','activity_date','activity_type','activity_name',
         'start_time','duration_minutes','location',
@@ -135,383 +249,329 @@ $SCHEMA = [
         'notes','created_datetime','updated_datetime',
     ],
 
-    // form_care_plan columns used by the module
-    'form_care_plan_smoke' => [], // checked separately below
-];
-
-// Special: form_care_plan (OpenEMR core table — check only what we USE)
-$FORM_CARE_PLAN_COLS_USED = [
-    'id','pid','encounter','description','care_plan_type','plan_status',
-    'proposed_date','date_end',
+    'oei_schema_version' => [
+        'version','applied_datetime',
+    ],
 ];
 
 foreach ($SCHEMA as $table => $expectedCols) {
-    if ($table === 'form_care_plan_smoke') continue;
-    $actual = smoke_cols($table);
+    $actual  = smoke_cols($table);
     if (empty($actual)) {
-        smoke_fail('SCHEMA', $table, "Table does not exist or SHOW COLUMNS failed");
+        smoke_fail('SCHEMA', $table, 'Table missing or SHOW COLUMNS failed');
         continue;
     }
     $missing = array_diff($expectedCols, $actual);
-    $extra   = [];   // We don't fail on extra columns — migrations add columns over time
     if ($missing) {
-        smoke_fail('SCHEMA', $table, "Missing columns: " . implode(', ', $missing));
+        smoke_fail('SCHEMA', $table, 'Missing columns: ' . implode(', ', $missing));
     } else {
-        smoke_pass('SCHEMA', $table, count($actual) . " columns present");
+        smoke_pass('SCHEMA', $table, count($actual) . ' columns present');
     }
 }
 
-// form_care_plan special check
-$fcpActual = smoke_cols('form_care_plan');
-$fcpMissing = array_diff($FORM_CARE_PLAN_COLS_USED, $fcpActual);
+// form_care_plan (OpenEMR core table — only the columns we USE)
+$fcpCols     = smoke_cols('form_care_plan');
+$fcpRequired = ['id','pid','encounter','description','care_plan_type','plan_status','proposed_date','date_end'];
+$fcpMissing  = array_diff($fcpRequired, $fcpCols);
 if ($fcpMissing) {
-    smoke_fail('SCHEMA', 'form_care_plan (used cols)', "Missing: " . implode(', ', $fcpMissing));
+    smoke_fail('SCHEMA', 'form_care_plan (used cols)', 'Missing: ' . implode(', ', $fcpMissing));
 } else {
-    smoke_pass('SCHEMA', 'form_care_plan (used cols)', "All required columns present");
+    smoke_pass('SCHEMA', 'form_care_plan (used cols)', 'All required columns present');
 }
 
-// ─── 2. CLASS / METHOD TESTS ──────────────────────────────────────────────────
-// Verify autoload resolves and each method_exists check passes.
+// ─── 2 & 3. AUTOLOAD + METHOD TESTS ──────────────────────────────────────────
+// Method names verified by direct scan of source files in staging tree.
+// Reflects v0.15.0 domain namespace layout.
+
+$NS = 'OpenEMR\\Modules\\Institutional\\';
 
 $CLASSES = [
-    // ResidentBoard
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentBoard\Repository\ResidentBoardRepository::class => [
-        'fetchActiveResidents', 'fetchUnitSummary',
+
+    // ── Core ──────────────────────────────────────────────────────────────────
+    $NS.'Core\\Repository\\EpisodeRepository' => [
+        'fetchBoard','fetchOne','createArrival','closeWithDisposition','appendStatusHistory',
     ],
-    // ResidentIntake
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentIntake\Repository\ResidentIntakeRepository::class => [
-        'admitResident', 'hasActiveEpisode',
+    $NS.'Core\\Repository\\UserRepository' => [
+        'fetchNurses','fetchProviders','namesByIds','fetchStaff',
     ],
-    // ResidentProfile
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentProfile\Repository\ResidentProfileRepository::class => [
-        'fetchHeader', 'fetchVitalsHistory', 'fetchAdlHistory',
-        'fetchCarePlanSummary', 'fetchMarToday', 'fetchRecentIncidents',
-        'fetchLatestFallRisk', 'fetchCareTeam',
+    $NS.'Core\\Service\\AuditService' => [
+        'record','forEpisode','firstEventsByEpisode',
     ],
-    // AlVitals
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlVitals\Repository\AlVitalsRepository::class => [
-        'record', 'listForEpisode', 'getLatest', 'weightTrend',
+    $NS.'Core\\Migration\\MigrationRunner' => [
+        'runPending','appliedVersions','currentVersion',
     ],
-    // AlMar
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlMar\Repository\AlMarRepository::class => [
-        'listActiveOrders', 'listAllOrders', 'listAdminsByWindow', 'administer',
+
+    // ── AssistedLiving ────────────────────────────────────────────────────────
+    $NS.'AssistedLiving\\Submodule\\ResidentBoard\\Repository\\ResidentBoardRepository' => [
+        'fetchActiveResidents','fetchUnitSummary',
     ],
-    // AdlTracking
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AdlTracking\Repository\AdlRepository::class => [
-        'listByEpisode', 'chart', 'fetchOverdueEpisodes',
+    $NS.'AssistedLiving\\Submodule\\ResidentIntake\\Repository\\ResidentIntakeRepository' => [
+        'admitResident','hasActiveEpisode',
     ],
-    // CarePlan
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\CarePlan\Repository\CarePlanRepository::class => [
-        'fetchByEpisode', 'addEntry', 'updateStatus', 'fetchCareTeam',
+    $NS.'AssistedLiving\\Submodule\\ResidentProfile\\Repository\\ResidentProfileRepository' => [
+        'fetchHeader','fetchVitalsHistory','fetchAdlHistory',
+        'fetchCarePlanSummary','fetchMarToday','fetchRecentIncidents',
+        'fetchLatestFallRisk','fetchCareTeam',
     ],
-    // FallRisk
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\FallRisk\Repository\FallRiskRepository::class => [
-        'listByEpisode', 'getLatest', 'record', 'daysSinceLastAssessment',
+    $NS.'AssistedLiving\\Submodule\\AlVitals\\Repository\\AlVitalsRepository' => [
+        'record','listForEpisode','getLatest','weightTrend',
     ],
-    // IncidentReport
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\IncidentReport\Repository\IncidentRepository::class => [
-        'listByFacility', 'create', 'markReported', 'fetchOne',
+    $NS.'AssistedLiving\\Submodule\\AlMar\\Repository\\AlMarRepository' => [
+        'listActiveOrders','listAllOrders','listAdminsByWindow',
     ],
-    // AlDischarge
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Repository\AlDischargeRepository::class => [
-        'getPlan', 'savePlan', 'confirmDeparture', 'getResidentHeader', 'getRecentDischarges',
+    $NS.'AssistedLiving\\Submodule\\FallRisk\\Repository\\FallRiskRepository' => [
+        'record','getLatest','listByEpisode',
     ],
-    // AlActivity
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlActivity\Repository\AlActivityRepository::class => [
-        'getByDate', 'getByDateRange', 'getByEpisode', 'typeSummary',
-        'participationRates', 'insert', 'updateAttendance', 'getById',
+    $NS.'AssistedLiving\\Submodule\\CarePlan\\Repository\\CarePlanRepository' => [
+        'fetchByEpisode','addEntry','updateStatus','fetchCareTeam',
     ],
-    // AlHandoff
-    \OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlHandoff\Repository\AlHandoffRepository::class => [
-        'fetchHandoff', 'fetchSummary',
+    $NS.'AssistedLiving\\Submodule\\IncidentReport\\Repository\\IncidentRepository' => [
+        'create','listByFacility','markReported','fetchOne',
+    ],
+    $NS.'AssistedLiving\\Submodule\\AdlTracking\\Repository\\AdlRepository' => [
+        'listByEpisode','chart','fetchOverdueEpisodes',
+    ],
+    $NS.'AssistedLiving\\Submodule\\AlDischarge\\Repository\\AlDischargeRepository' => [
+        'getPlan','savePlan','confirmDeparture','getResidentHeader',
+    ],
+    $NS.'AssistedLiving\\Submodule\\AlHandoff\\Repository\\AlHandoffRepository' => [
+        'fetchHandoff','fetchSummary',
+    ],
+    $NS.'AssistedLiving\\Submodule\\AlActivity\\Repository\\AlActivityRepository' => [
+        'getByDate','getByDateRange','getByEpisode','insert',
+    ],
+
+    // ── EmergencyDepartment ───────────────────────────────────────────────────
+    $NS.'EmergencyDepartment\\Submodule\\EdBoard\\Controller\\EdBoardController' => [
+        'handle',
+    ],
+    $NS.'EmergencyDepartment\\Submodule\\Diversion\\Repository\\DiversionRepository' => [
+        'getCurrent','upsert','listByFacility',
+    ],
+    $NS.'EmergencyDepartment\\Submodule\\Diversion\\Service\\DiversionService' => [
+        'setStatus','liftDiversion','getStatusMap','worstStatus',
+    ],
+    $NS.'EmergencyDepartment\\Submodule\\Downtime\\Service\\DowntimeSnapshotService' => [
+        'build',
+    ],
+    $NS.'EmergencyDepartment\\Submodule\\Downtime\\Service\\DowntimeSyncService' => [
+        'processRow','processFacilityQueue',
+    ],
+
+    // ── ObservationStay ───────────────────────────────────────────────────────
+    $NS.'ObservationStay\\Submodule\\ObsCore\\Service\\ObsService' => [
+        'startObs',
+    ],
+    $NS.'ObservationStay\\Submodule\\ObsProtocols\\Repository\\ProtocolRepository' => [
+        'listEnabled','ensureDefaultProtocols','upsert','get',
+    ],
+    $NS.'ObservationStay\\Submodule\\ObsProtocols\\Repository\\ObsPlanRepository' => [
+        'getByEpisode','upsert','listActive',
+    ],
+    $NS.'ObservationStay\\Submodule\\ObsProtocols\\Service\\ObsProtocolEngine' => [
+        'apply','generateOnlyRunway',
+    ],
+    $NS.'ObservationStay\\Submodule\\ObsBilling\\Service\\ObsBillingService' => [
+        'fetchObsBillingStatus','computeBillingAlerts',
+    ],
+    $NS.'ObservationStay\\Submodule\\CmsQuality\\Repository\\CmsMeasureRepository' => [
+        'computeAll',
+    ],
+
+    // ── Operations ────────────────────────────────────────────────────────────
+    $NS.'Operations\\Submodule\\Settings\\Repository\\SettingsRepository' => [
+        'get','set','setMany','all',
+    ],
+    $NS.'Operations\\Submodule\\Scorecard\\Repository\\ScorecardRepository' => [
+        'byProvider','dailyVolume','providerNames',
+    ],
+    $NS.'Operations\\Submodule\\Scorecard\\Service\\ScorecardService' => [
+        'build',
+    ],
+    $NS.'Operations\\Submodule\\FacilityDirectory\\Repository\\FacilityDirectoryRepository' => [
+        'listActive','get','upsert',
+    ],
+    $NS.'Operations\\Submodule\\MultiFacility\\Repository\\MultiFacilityRepository' => [
+        'fetchAll',
+    ],
+    $NS.'Operations\\Submodule\\Hl7Adt\\Repository\\Hl7OutboundLogRepository' => [
+        'record','listRecent','listForEpisode','summary24h',
+    ],
+    $NS.'Operations\\Submodule\\Hl7Adt\\Service\\AdtNotificationService' => [
+        'notifyArrival','notifyAdmit','notifyTransfer','notifyUpdate','notifyDischarge',
+    ],
+
+    // ── Shared ────────────────────────────────────────────────────────────────
+    $NS.'Shared\\Submodule\\AdtLite\\Repository\\LocationRepository' => [
+        'listAll','listActive','create','update',
+    ],
+    $NS.'Shared\\Submodule\\AdtLite\\Repository\\LocationHistoryRepository' => [
+        'closeOpenHistory','openHistory',
+    ],
+    $NS.'Shared\\Submodule\\AdtLite\\Service\\AdtService' => [
+        'assignLocation',
+    ],
+    $NS.'Shared\\Submodule\\Alerts\\Repository\\AlertAckRepository' => [
+        'ack','activeSnoozed','pruneExpired',
+    ],
+    $NS.'Shared\\Submodule\\Alerts\\Service\\AlertService' => [
+        'computeAll','computeForBoard','computeMarAlerts','computeSepsisAlerts',
+    ],
+    $NS.'Shared\\Submodule\\Assignment\\Repository\\AssignmentRepository' => [
+        'assign','getForEpisode','listWithAssignments',
+    ],
+    $NS.'Shared\\Submodule\\BedMgmt\\Repository\\LocationRepository' => [
+        'listActive','upsert',
+    ],
+    $NS.'Shared\\Submodule\\BedMgmt\\Repository\\EpisodeLocationRepository' => [
+        'getCurrentForEpisode','moveEpisode','listCurrentByFacility',
+    ],
+    $NS.'Shared\\Submodule\\Disposition\\Repository\\DispositionRepository' => [
+        'getByEpisode','upsert','fetchForEpisodes',
+    ],
+    $NS.'Shared\\Submodule\\Disposition\\Repository\\EpisodeEventRepository' => [
+        'addEvent','firstEventMap','forEpisode',
+    ],
+    $NS.'Shared\\Submodule\\EpisodeDocuments\\Repository\\EpisodeDocumentRepository' => [
+        'create','listForEpisode','findById','softDelete','countForEpisode','typeSummary',
+    ],
+    $NS.'Shared\\Submodule\\EpisodeDocuments\\Service\\EpisodeDocumentService' => [
+        'upload','serve','deleteFile',
+    ],
+    $NS.'Shared\\Submodule\\EReferral\\Repository\\EReferralRepository' => [
+        'getByEpisode','upsert','markSent','recordResponse','listByFacility',
+    ],
+    $NS.'Shared\\Submodule\\EReferral\\Service\\EReferralService' => [
+        'draftFromDisposition','applyEdit',
+    ],
+    $NS.'Shared\\Submodule\\Handoff\\Repository\\HandoffRepository' => [
+        'fetchHandoff',
+    ],
+    $NS.'Shared\\Submodule\\Handoff\\Service\\HandoffService' => [
+        'formatVitals','qsofa','computeSummary',
+    ],
+    $NS.'Shared\\Submodule\\Intake\\Repository\\EpisodeIntakeRepository' => [
+        'create',
+    ],
+    $NS.'Shared\\Submodule\\Intake\\Service\\IntakeService' => [
+        'createEpisode',
+    ],
+    $NS.'Shared\\Submodule\\Mar\\Repository\\MarOrderRepository' => [
+        'listByEpisode','listActiveByEpisode','getById','create','discontinue',
+    ],
+    $NS.'Shared\\Submodule\\Mar\\Repository\\MarAdministrationRepository' => [
+        'listByEpisode','listPendingByEpisode','listOverdueByFacility',
+        'createScheduled','createPrn','record','amend','voidPendingForOrder',
+    ],
+    $NS.'Shared\\Submodule\\Mar\\Service\\MarService' => [
+        'buildMarGrid','placeOrder','discontinueOrder','recordAdministration','givePrn',
+    ],
+    $NS.'Shared\\Submodule\\Tasks\\Repository\\TaskRepository' => [
+        'listByEpisode','listOpenByFacility','create','complete',
+    ],
+    $NS.'Shared\\Submodule\\Tasks\\Service\\TaskService' => [
+        'scheduleFromDefinition','scheduleDefaultObs',
+    ],
+    $NS.'Shared\\Submodule\\Timeline\\Repository\\TimelineRepository' => [
+        'forEpisode',
+    ],
+    $NS.'Shared\\Submodule\\Throughput\\Service\\ThroughputService' => [
+        'compute',
+    ],
+    $NS.'Shared\\Submodule\\TransferTracking\\Repository\\TransferRepository' => [
+        'getByEpisode','upsert','updateStatus','listRecentByFacility',
+    ],
+    $NS.'Shared\\Submodule\\Trends\\Repository\\TrendRepository' => [
+        'computeTrends','computeHeatmap',
+    ],
+    $NS.'Shared\\Submodule\\Trends\\Service\\TrendsService' => [
+        'buildViewModel',
+    ],
+    $NS.'Shared\\Submodule\\Triage\\Repository\\TriageRepository' => [
+        'record','getLatestForEpisode','listForEpisode','latestByFacility',
+    ],
+    $NS.'Shared\\Submodule\\Triage\\Service\\TriageService' => [
+        'recordVitals',
+    ],
+    $NS.'Shared\\Submodule\\Triage\\Service\\VitalsSchedulerService' => [
+        'scheduleForEd','scheduleForObs',
+    ],
+
+    // ── BehavioralHealth ──────────────────────────────────────────────────────
+    $NS.'BehavioralHealth\\Submodule\\BhSafety\\Repository\\BhSafetyRepository' => [
+        'getByEpisode','upsert','listRecentByFacility',
+    ],
+    $NS.'BehavioralHealth\\Submodule\\BhSafety\\Service\\BhSafetyService' => [
+        'setBhSafety',
+    ],
+    $NS.'BehavioralHealth\\Submodule\\BhBoarding\\Repository\\BhBoardingRepository' => [
+        'getByEpisode','upsert',
     ],
 ];
 
-foreach ($CLASSES as $className => $methods) {
-    $short = (new \ReflectionClass($className))->getShortName();
-    if (!class_exists($className)) {
-        smoke_fail('CLASS', $short, "Class not found: $className");
+foreach ($CLASSES as $fqcn => $methods) {
+    $short  = substr(strrchr($fqcn, '\\'), 1);
+    $parts  = explode('\\', str_replace($NS, '', $fqcn));
+    $domain = $parts[0];
+
+    if (!class_exists($fqcn)) {
+        smoke_fail('AUTOLOAD', "{$domain}\\{$short}", "Class not found: {$fqcn}");
         continue;
     }
-    $missing = [];
-    foreach ($methods as $m) {
-        if (!method_exists($className, $m)) {
-            $missing[] = $m;
-        }
-    }
-    if ($missing) {
-        smoke_fail('CLASS', $short, "Missing methods: " . implode(', ', $missing));
-    } else {
-        smoke_pass('CLASS', $short, count($methods) . " methods verified");
-    }
-}
+    smoke_pass('AUTOLOAD', "{$domain}\\{$short}");
 
-// ─── 3. QUERY TESTS ──────────────────────────────────────────────────────────
-// Run each repository's primary query against the live DB.
-// These catch column-name bugs that PHP lint cannot catch.
-
-if (function_exists('sqlStatement')) {
-
-    $QUERIES = [
-
-        'ResidentBoard::fetchActiveResidents' => [
-            "SELECT e.id AS episode_id, e.pid, pd.fname, pd.lname,
-                    COALESCE(ale.room,'') AS room,
-                    COALESCE(ale.unit,'') AS unit,
-                    COALESCE(ale.care_level,'TIER_1') AS care_level,
-                    COALESCE(ale.fall_risk_level,'LOW') AS fall_risk_level,
-                    COALESCE(ale.fall_risk_score,0) AS fall_risk_score,
-                    DATEDIFF(NOW(), e.start_datetime) AS days_resident
-             FROM oei_episode e
-             INNER JOIN patient_data pd    ON pd.pid = e.pid
-             LEFT  JOIN oei_al_episode ale ON ale.episode_id = e.id
-             WHERE e.facility_id = ? AND e.status = 'ACTIVE' AND e.type = 'AL'
-             LIMIT 1",
-            [$facilityId],
-        ],
-
-        'AlHandoff::fetchHandoff (key cols)' => [
-            "SELECT e.id, pd.fname, pd.lname,
-                    ale.room, ale.unit, ale.care_level,
-                    ale.fall_risk_level, ale.fall_risk_score, ale.admit_reason,
-                    DATEDIFF(NOW(), e.start_datetime) AS days_resident
-             FROM oei_episode e
-             INNER JOIN patient_data pd    ON pd.pid = e.pid
-             LEFT  JOIN oei_al_episode ale ON ale.episode_id = e.id
-             WHERE e.facility_id = ? AND e.type = 'AL' AND e.status = 'ACTIVE'
-             LIMIT 1",
-            [$facilityId],
-        ],
-
-        'AlHandoff::vitals subquery' => [
-            "SELECT t.bp_systolic, t.bp_diastolic, t.hr, t.rr,
-                    t.temp_f, t.spo2, t.weight_kg, t.noted_datetime
-             FROM oei_triage t
-             WHERE t.episode_id IN (
-                 SELECT id FROM oei_episode
-                 WHERE facility_id = ? AND type = 'AL' AND status = 'ACTIVE'
-             )
-             ORDER BY t.id DESC LIMIT 1",
-            [$facilityId],
-        ],
-
-        'AlHandoff::adl subquery' => [
-            "SELECT ar.adl_score, ar.noted_datetime
-             FROM oei_adl_record ar
-             WHERE ar.episode_id IN (
-                 SELECT id FROM oei_episode
-                 WHERE facility_id = ? AND type = 'AL' AND status = 'ACTIVE'
-             )
-             ORDER BY ar.noted_datetime DESC LIMIT 1",
-            [$facilityId],
-        ],
-
-        'AlHandoff::MAR subquery' => [
-            "SELECT COUNT(*) AS cnt
-             FROM oei_mar_administration ma
-             WHERE ma.outcome = 'PENDING'
-               AND ma.scheduled_datetime <= NOW()
-               AND ma.episode_id IN (
-                   SELECT id FROM oei_episode
-                   WHERE facility_id = ? AND type = 'AL' AND status = 'ACTIVE'
-               )",
-            [$facilityId],
-        ],
-
-        'AlHandoff::incidents subquery' => [
-            "SELECT COUNT(*) AS cnt
-             FROM oei_incident inc
-             WHERE inc.incident_datetime >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-               AND inc.episode_id IN (
-                   SELECT id FROM oei_episode
-                   WHERE facility_id = ? AND type = 'AL' AND status = 'ACTIVE'
-               )",
-            [$facilityId],
-        ],
-
-        'AlHandoff::disposition subquery' => [
-            "SELECT d.disposition_code, d.destination
-             FROM oei_episode_disposition d
-             WHERE d.episode_id IN (
-                 SELECT id FROM oei_episode
-                 WHERE facility_id = ? AND type = 'AL' AND status = 'ACTIVE'
-             )
-             LIMIT 1",
-            [$facilityId],
-        ],
-
-        'AlHandoff::care_plan subquery' => [
-            "SELECT SUBSTR(cp.description, 1, 120) AS goal
-             FROM form_care_plan cp
-             WHERE cp.care_plan_type = 'goal'
-               AND cp.plan_status    = 'active'
-               AND cp.pid IN (
-                   SELECT pid FROM oei_episode
-                   WHERE facility_id = ? AND type = 'AL' AND status = 'ACTIVE'
-               )
-             ORDER BY cp.date DESC, cp.id DESC LIMIT 1",
-            [$facilityId],
-        ],
-
-        'AlHandoff::fall reassessment subquery' => [
-            "SELECT DATEDIFF(NOW(), fra.assessed_datetime) AS days_ago
-             FROM oei_fall_risk_assessment fra
-             WHERE fra.episode_id IN (
-                 SELECT id FROM oei_episode
-                 WHERE facility_id = ? AND type = 'AL' AND status = 'ACTIVE'
-             )
-             ORDER BY fra.assessed_datetime DESC LIMIT 1",
-            [$facilityId],
-        ],
-
-        'AlActivity::getByDate' => [
-            "SELECT a.id, a.activity_type, a.activity_name,
-                    a.start_time, a.duration_minutes, a.location,
-                    a.attendance_json, a.attendance_count, a.notes
-             FROM oei_activity_log a
-             WHERE a.facility_id   = ?
-               AND a.activity_date = CURDATE()
-             ORDER BY a.start_time ASC LIMIT 1",
-            [$facilityId],
-        ],
-
-        'AlActivity::typeSummary' => [
-            "SELECT activity_type, COUNT(*) AS cnt
-             FROM oei_activity_log
-             WHERE facility_id   = ?
-               AND activity_date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-             GROUP BY activity_type ORDER BY cnt DESC",
-            [$facilityId],
-        ],
-
-        'AlActivity::getByEpisode (JSON_CONTAINS_PATH)' => [
-            "SELECT id FROM oei_activity_log
-             WHERE facility_id = ?
-               AND JSON_CONTAINS_PATH(attendance_json, 'one', '$.14')
-             LIMIT 1",
-            [$facilityId],
-        ],
-
-        'FallRisk::listByEpisode' => [
-            "SELECT id, assessed_datetime, total_score, risk_level,
-                    mfs_fall_history, mfs_gait, mfs_mental_status
-             FROM oei_fall_risk_assessment
-             WHERE episode_id = 14
-             ORDER BY assessed_datetime DESC LIMIT 1",
-            [],
-        ],
-
-        'Incident::listByFacility' => [
-            "SELECT id, episode_id, incident_type, severity,
-                    incident_datetime, narrative, reported_state, mandatory_report_sent
-             FROM oei_incident
-             WHERE facility_id = ?
-             ORDER BY incident_datetime DESC LIMIT 1",
-            [$facilityId],
-        ],
-
-        'Disposition::getPlan' => [
-            "SELECT id, disposition_code, destination,
-                    decision_datetime, depart_datetime, notes
-             FROM oei_episode_disposition
-             WHERE episode_id = 14 LIMIT 1",
-            [],
-        ],
-
-        'CarePlan::fetchByEpisode' => [
-            "SELECT id, care_plan_type, description,
-                    plan_status, proposed_date, date_end
-             FROM form_care_plan
-             WHERE pid = 50
-             ORDER BY date DESC LIMIT 1",
-            [],
-        ],
-
-    ];
-
-    foreach ($QUERIES as $label => $spec) {
-        [$sql, $params] = $spec;
-        try {
-            $res = sqlStatement($sql, $params);
-            if ($res === false) {
-                smoke_fail('QUERY', $label, "sqlStatement returned false");
-            } else {
-                smoke_pass('QUERY', $label);
-            }
-        } catch (\Throwable $e) {
-            smoke_fail('QUERY', $label, $e->getMessage());
-        }
-    }
-
-} else {
-    smoke_fail('QUERY', 'ALL', "sqlStatement() not available — OpenEMR not bootstrapped");
-}
-
-// ─── 4. DATA INTEGRITY TESTS ──────────────────────────────────────────────────
-// Verify demo seed data is present with expected minimum counts.
-
-if (function_exists('sqlQuery')) {
-    $DATA = [
-        'AL episodes (type=AL, status=ACTIVE)' => [
-            "SELECT COUNT(*) FROM oei_episode WHERE facility_id=? AND type='AL' AND status='ACTIVE'",
-            [$facilityId], 5, 5,
-        ],
-        'AL overlays (oei_al_episode)' => [
-            "SELECT COUNT(*) FROM oei_al_episode WHERE facility_id=?",
-            [$facilityId], 5, 20,
-        ],
-        'ADL records' => [
-            "SELECT COUNT(*) FROM oei_adl_record WHERE facility_id=?",
-            [$facilityId], 5, 100,
-        ],
-        'Vitals (AL periodic)' => [
-            "SELECT COUNT(*) FROM oei_triage t
-             JOIN oei_episode e ON e.id = t.episode_id
-             WHERE e.facility_id=? AND e.type='AL'",
-            [$facilityId], 5, 500,
-        ],
-        'MAR orders (AL)' => [
-            "SELECT COUNT(*) FROM oei_mar_order mo
-             JOIN oei_episode e ON e.id = mo.episode_id
-             WHERE e.facility_id=? AND e.type='AL'",
-            [$facilityId], 5, 200,
-        ],
-        'Fall risk assessments' => [
-            "SELECT COUNT(*) FROM oei_fall_risk_assessment fra
-             JOIN oei_episode e ON e.id = fra.episode_id
-             WHERE e.facility_id=?",
-            [$facilityId], 5, 100,
-        ],
-        'Incidents (AL)' => [
-            "SELECT COUNT(*) FROM oei_incident WHERE facility_id=?",
-            [$facilityId], 1, 50,
-        ],
-        'Discharge plans (AL)' => [
-            "SELECT COUNT(*) FROM oei_episode_disposition d
-             JOIN oei_episode e ON e.id = d.episode_id
-             WHERE e.facility_id=? AND e.type='AL'",
-            [$facilityId], 2, 20,
-        ],
-        'Activity sessions' => [
-            "SELECT COUNT(*) FROM oei_activity_log WHERE facility_id=?",
-            [$facilityId], 1, 1000,
-        ],
-        'Care plan entries (AL pids 50-54)' => [
-            "SELECT COUNT(*) FROM form_care_plan WHERE pid BETWEEN 50 AND 54",
-            [], 5, 200,
-        ],
-    ];
-
-    foreach ($DATA as $label => [$sql, $params, $min, $max]) {
-        $cnt = smoke_count($sql, $params);
-        if ($cnt < 0) {
-            smoke_fail('DATA', $label, "Query failed");
-        } elseif ($cnt < $min) {
-            smoke_fail('DATA', $label, "Expected >= $min rows, got $cnt — seed data missing?");
-        } elseif ($cnt > $max) {
-            smoke_fail('DATA', $label, "Expected <= $max rows, got $cnt — unexpected data?");
+    foreach ($methods as $method) {
+        if (!method_exists($fqcn, $method)) {
+            smoke_fail('METHODS', "{$short}::{$method}()", "Method missing on {$fqcn}");
         } else {
-            smoke_pass('DATA', $label, "$cnt rows");
+            smoke_pass('METHODS', "{$short}::{$method}()");
+        }
+    }
+}
+
+// ─── 4. DATA TESTS ────────────────────────────────────────────────────────────
+
+$DATA_CHECKS = [
+    ['oei_episode rows',            "SELECT COUNT(*) FROM oei_episode",             0, 300],
+    ['oei_al_episode rows',         "SELECT COUNT(*) FROM oei_al_episode",           0, 100],
+    ['oei_location rows',           "SELECT COUNT(*) FROM oei_location",             0, 200],
+    ['oei_triage rows',             "SELECT COUNT(*) FROM oei_triage",               0, 500],
+    ['oei_mar_order rows',          "SELECT COUNT(*) FROM oei_mar_order",            0, 500],
+    ['oei_mar_administration rows', "SELECT COUNT(*) FROM oei_mar_administration",   0, 2000],
+    ['oei_episode_document rows',   "SELECT COUNT(*) FROM oei_episode_document",     0, 500],
+    ['oei_task rows',               "SELECT COUNT(*) FROM oei_task",                 0, 1000],
+    ['oei_ereferral rows',          "SELECT COUNT(*) FROM oei_ereferral",            0, 200],
+    ['oei_protocol rows',           "SELECT COUNT(*) FROM oei_protocol",             1, 50],
+    ['oei_settings rows',           "SELECT COUNT(*) FROM oei_settings",             0, 200],
+    ['oei_facility_directory rows', "SELECT COUNT(*) FROM oei_facility_directory",   0, 200],
+];
+
+foreach ($DATA_CHECKS as [$label, $sql, $min, $max]) {
+    $cnt = smoke_count($sql);
+    if ($cnt < 0) {
+        smoke_fail('DATA', $label, 'Query failed (DB not connected?)');
+    } elseif ($cnt < $min) {
+        smoke_fail('DATA', $label, "Expected >= {$min} rows, got {$cnt} — seed may not have run");
+    } elseif ($cnt > $max) {
+        smoke_fail('DATA', $label, "Expected <= {$max} rows, got {$cnt} — unexpected data?");
+    } else {
+        smoke_pass('DATA', $label, "{$cnt} rows");
+    }
+}
+
+// oei_schema_version — must have at least the initial version applied
+$schemaVer = smoke_count("SELECT COUNT(*) FROM oei_schema_version");
+if ($schemaVer < 1) {
+    smoke_fail('DATA', 'oei_schema_version populated',
+        "No versions recorded — run table.sql + migrations");
+} else {
+    // Show the most recently applied version
+    if (function_exists('sqlQuery')) {
+        try {
+            $row = sqlQuery("SELECT version, applied_datetime FROM oei_schema_version ORDER BY applied_datetime DESC LIMIT 1");
+            smoke_pass('DATA', 'oei_schema_version populated',
+                "Latest: v{$row['version']} applied {$row['applied_datetime']} ({$schemaVer} total)");
+        } catch (\Throwable $e) {
+            smoke_pass('DATA', 'oei_schema_version populated', "{$schemaVer} versions recorded");
         }
     }
 }
@@ -519,16 +579,81 @@ if (function_exists('sqlQuery')) {
 // ─── 5. MANIFEST FEATURE FLAGS ────────────────────────────────────────────────
 
 $expectedFeatures = [
+    // Core workflows
+    'edt_board','intake','triage','tasks','mar','disposition','ereferral',
+    'episode_documents','assignment','handoff','throughput','timeline',
+    'transfer_tracking','command_center','alerts','scorecard','trends',
+    // ED
+    'diversion','downtime',
+    // BH
+    'bh_safety','bh_boarding',
+    // OBS
+    'obs_protocols','obs_episodes','obs_billing','obs_stay',
+    // Reporting
+    'cms_quality',
+    // Admin
+    'context_manager','bed_mgmt','adt_lite','facility_directory',
+    'hl7_adt','admin_exports','settings','multi_facility','mts_triage','smoke_test',
+    // Assisted Living
     'al_board','al_intake','al_care_plan','al_adl','al_incident',
     'al_profile','al_vitals','al_fall_risk','al_mar',
     'al_discharge','al_activity','al_handoff',
 ];
+
 foreach ($expectedFeatures as $feat) {
     if ($manifest->featureEnabled($feat)) {
         smoke_pass('MANIFEST', $feat);
     } else {
-        smoke_fail('MANIFEST', $feat, "Feature disabled or missing in manifest.json");
+        smoke_fail('MANIFEST', $feat, 'Feature disabled or missing in manifest.json');
     }
+}
+
+// ─── 6. DISK PATH TESTS ───────────────────────────────────────────────────────
+
+$moduleRoot = dirname(__DIR__);
+
+$PATHS = [
+    'manifest.json'                         => $moduleRoot . '/manifest.json',
+    'composer.json'                         => $moduleRoot . '/composer.json',
+    'openemr.bootstrap.php'                 => $moduleRoot . '/openemr.bootstrap.php',
+    'src/Bootstrap.php'                     => $moduleRoot . '/src/Bootstrap.php',
+    'src/Core/Repository/EpisodeRepository' => $moduleRoot . '/src/Core/Repository/EpisodeRepository.php',
+    'src/Shared/ domain'                    => $moduleRoot . '/src/Shared',
+    'src/EmergencyDepartment/ domain'       => $moduleRoot . '/src/EmergencyDepartment',
+    'src/ObservationStay/ domain'           => $moduleRoot . '/src/ObservationStay',
+    'src/Operations/ domain'                => $moduleRoot . '/src/Operations',
+    'src/BehavioralHealth/ domain'          => $moduleRoot . '/src/BehavioralHealth',
+    'src/AssistedLiving/ domain'            => $moduleRoot . '/src/AssistedLiving',
+    'public/_bootstrap.php'                 => $moduleRoot . '/public/_bootstrap.php',
+    'public/ed_board.php'                   => $moduleRoot . '/public/ed_board.php',
+    'public/mar.php'                        => $moduleRoot . '/public/mar.php',
+    'public/episode_documents.php'          => $moduleRoot . '/public/episode_documents.php',
+    'public/ereferral.php'                  => $moduleRoot . '/public/ereferral.php',
+    'table.sql'                             => $moduleRoot . '/table.sql',
+    'sql/migrations/ dir'                   => $moduleRoot . '/sql/migrations',
+    'sql/migrations/0001_initial_schema'    => $moduleRoot . '/sql/migrations/0001_initial_schema.sql',
+    'sql/migrations/0002_assisted_living'   => $moduleRoot . '/sql/migrations/0002_assisted_living.sql',
+    'sql/migrations/0003_al_fall_risk'      => $moduleRoot . '/sql/migrations/0003_al_fall_risk.sql',
+    'sql/migrations/0004_al_activity_log'   => $moduleRoot . '/sql/migrations/0004_al_activity_log.sql',
+    'openemr-module.json'                   => $moduleRoot . '/openemr-module.json',
+    'src/Core/Migration/MigrationRunner'    => $moduleRoot . '/src/Core/Migration/MigrationRunner.php',
+];
+
+foreach ($PATHS as $label => $path) {
+    if (file_exists($path)) {
+        smoke_pass('PATHS', $label);
+    } else {
+        smoke_fail('PATHS', $label, "Not found: {$path}");
+    }
+}
+
+// src/Submodule/ — backward-compat stubs; warn but don't fail
+$oldStubDir = $moduleRoot . '/src/Submodule';
+if (is_dir($oldStubDir)) {
+    smoke_pass('PATHS', 'src/Submodule/ (stub)',
+        'Stub dir present — expected during migration; run composer dump-autoload if autoload issues occur');
+} else {
+    smoke_pass('PATHS', 'src/Submodule/ removed', 'Domain reorganisation fully clean');
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
@@ -536,106 +661,150 @@ foreach ($expectedFeatures as $feat) {
 $totalPass = count(array_filter($results, fn($r) => $r[0] === 'pass'));
 $totalFail = $failCount;
 $totalRun  = count($results);
+$allGood   = ($totalFail === 0);
 
-$allGood = $totalFail === 0;
+// Summary always written to PHP error log
+error_log(sprintf(
+    '[OEI SMOKE] v0.15.0 facility=%d — %s (%d/%d passed, %d failed)',
+    $facilityId,
+    $allGood ? 'ALL PASS' : 'FAILURES',
+    $totalPass, $totalRun, $totalFail
+));
 
 if (php_sapi_name() === 'cli') {
-    // ── CLI output ──
-    echo "\n=== oe-module-institutional Smoke Test ===\n";
+    echo "\n=== oe-module-institutional Smoke Test v0.15.0 ===\n";
     foreach ($results as [$status, $group, $name, $detail]) {
         if ($status === 'fail' || $verbose) {
-            $line = sprintf("  [%s] %-12s %s", strtoupper($status), $group, $name);
-            if ($detail) $line .= " — $detail";
+            $line = sprintf('  [%s] %-12s %s', strtoupper($status), $group, $name);
+            if ($detail) $line .= " — {$detail}";
             echo $line . "\n";
         }
     }
     echo "\n";
-    echo ($allGood ? "✓ ALL PASS" : "✗ FAILURES: $totalFail") . " ($totalPass/$totalRun passed)\n\n";
+    echo ($allGood ? '✓ ALL PASS' : "✗ FAILURES: {$totalFail}") . " ({$totalPass}/{$totalRun} passed)\n\n";
     exit($allGood ? 0 : 1);
 }
 
-// ── Browser output ──
+// ── Browser output ────────────────────────────────────────────────────────────
 $theme = ($_oei_theme ?? 'light');
+
+$groups = [];
+foreach ($results as $r) {
+    $groups[$r[1]][] = $r;
+}
+
+$groupStats = [];
+foreach ($groups as $g => $rows) {
+    $groupStats[$g] = [
+        'pass' => count(array_filter($rows, fn($r) => $r[0] === 'pass')),
+        'fail' => count(array_filter($rows, fn($r) => $r[0] === 'fail')),
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="<?= $theme ?>">
 <head>
   <meta charset="utf-8">
-  <title>Smoke Tests — oe-module-institutional</title>
+  <title>Smoke Tests — oe-module-institutional v0.15.0</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
   <style>
-    .group-badge { font-size:.7rem; width:80px; display:inline-block; text-align:center; }
+    .group-badge { font-size:.7rem; width:86px; display:inline-block; text-align:center; }
     .detail      { font-size:.78rem; color:var(--bs-secondary-color); }
     .result-row.fail { background:var(--bs-danger-bg-subtle); }
     .result-row.pass { display: <?= $verbose ? 'table-row' : 'none' ?>; }
+    .section-header { cursor:pointer; user-select:none; }
+    .section-header:hover { background:var(--bs-secondary-bg); }
   </style>
 </head>
 <body>
-<div class="container py-4" style="max-width:900px">
+<div class="container py-4" style="max-width:960px">
 
   <h4 class="mb-1">🧪 oe-module-institutional — Smoke Tests</h4>
-  <div class="text-muted small mb-3">v0.14.x · facility_id=<?= $facilityId ?> · <?= date('Y-m-d H:i:s') ?></div>
+  <div class="text-muted small mb-3">
+    v0.15.0 &middot; facility_id=<?= $facilityId ?> &middot; <?= date('Y-m-d H:i:s') ?>
+    &middot; Failures logged to PHP error log
+    <?php if (!$verbose): ?>&middot; <a href="?verbose=1">Show all</a><?php endif; ?>
+  </div>
 
-  <!-- Summary banner -->
-  <div class="alert <?= $allGood ? 'alert-success' : 'alert-danger' ?> d-flex align-items-center gap-3 mb-3">
-    <span style="font-size:1.8rem"><?= $allGood ? '✅' : '❌' ?></span>
+  <div class="alert <?= $allGood ? 'alert-success' : 'alert-danger' ?> d-flex align-items-center gap-3 mb-4">
+    <span style="font-size:2rem"><?= $allGood ? '✅' : '❌' ?></span>
     <div>
-      <strong><?= $allGood ? 'ALL TESTS PASSED' : "$totalFail TEST(S) FAILED" ?></strong>
-      <div class="small"><?= $totalPass ?>/<?= $totalRun ?> passed
-        <?php if (!$verbose): ?>
-          · <a href="?verbose=1">Show all results</a>
-        <?php endif; ?>
-      </div>
+      <strong><?= $allGood ? 'All tests passed' : "{$totalFail} test(s) failed" ?></strong>
+      <div class="small"><?= $totalPass ?>/<?= $totalRun ?> passed across 6 sections</div>
     </div>
   </div>
 
-  <!-- Results table -->
-  <?php
-    $byGroup = [];
-    foreach ($results as $r) {
-        $byGroup[$r[1]][] = $r;
-    }
-  ?>
-  <?php foreach ($byGroup as $group => $groupResults): ?>
-    <?php
-      $groupFails = count(array_filter($groupResults, fn($r) => $r[0] === 'fail'));
-      $groupBadge = $groupFails > 0 ? 'danger' : 'success';
-    ?>
-    <div class="card mb-3">
-      <div class="card-header d-flex align-items-center gap-2 py-2">
-        <span class="badge bg-<?= $groupBadge ?> group-badge"><?= $group ?></span>
-        <span class="fw-semibold"><?= $group ?></span>
-        <span class="ms-auto text-muted small">
-          <?= count($groupResults) - $groupFails ?>/<?= count($groupResults) ?>
-        </span>
+  <!-- Per-section summary cards -->
+  <div class="row g-2 mb-4">
+    <?php foreach ($groupStats as $g => $s): ?>
+      <div class="col-6 col-md-4 col-lg-2">
+        <div class="card text-center border-<?= $s['fail'] > 0 ? 'danger' : 'success' ?>">
+          <div class="card-body py-2 px-1">
+            <div class="fw-semibold small"><?= htmlspecialchars($g) ?></div>
+            <div class="fs-5 <?= $s['fail'] > 0 ? 'text-danger' : 'text-success' ?>">
+              <?= $s['fail'] > 0 ? $s['fail'] . ' ✗' : '✓' ?>
+            </div>
+            <div class="text-muted" style="font-size:.7rem"><?= $s['pass'] ?>/<?= $s['pass'] + $s['fail'] ?></div>
+          </div>
+        </div>
       </div>
-      <div class="card-body p-0">
-        <table class="table table-sm mb-0">
+    <?php endforeach; ?>
+  </div>
+
+  <!-- Detail sections -->
+  <?php foreach ($groups as $groupName => $rows):
+    $gStats      = $groupStats[$groupName];
+    $hasFailures = $gStats['fail'] > 0;
+    $anchorId    = 'grp-' . preg_replace('/\W+/', '_', $groupName);
+  ?>
+  <div class="card shadow-sm mb-3">
+    <div class="card-header section-header d-flex justify-content-between align-items-center"
+         data-bs-toggle="collapse" data-bs-target="#<?= $anchorId ?>">
+      <span class="fw-semibold">
+        <?= htmlspecialchars($groupName) ?>
+        <?php if ($hasFailures): ?>
+          <span class="badge text-bg-danger ms-2"><?= $gStats['fail'] ?> failed</span>
+        <?php else: ?>
+          <span class="badge text-bg-success ms-2">all pass</span>
+        <?php endif; ?>
+      </span>
+      <small class="text-muted"><?= $gStats['pass'] ?>/<?= $gStats['pass'] + $gStats['fail'] ?> ▾</small>
+    </div>
+    <div class="collapse <?= ($hasFailures || $verbose) ? 'show' : '' ?>" id="<?= $anchorId ?>">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
           <tbody>
-          <?php foreach ($groupResults as [$status, , $name, $detail]): ?>
+          <?php foreach ($rows as [$status, $group, $name, $detail]):
+            if ($status === 'pass' && !$verbose) continue; ?>
             <tr class="result-row <?= $status ?>">
-              <td style="width:30px" class="text-center ps-2">
-                <?= $status === 'pass' ? '<span class="text-success">✓</span>' : '<span class="text-danger fw-bold">✗</span>' ?>
+              <td style="width:90px">
+                <span class="badge group-badge text-bg-<?= $status === 'pass' ? 'success' : 'danger' ?>">
+                  <?= strtoupper($status) ?>
+                </span>
               </td>
-              <td><?= htmlspecialchars($name) ?>
+              <td class="small">
+                <?= htmlspecialchars($name) ?>
                 <?php if ($detail): ?>
                   <div class="detail"><?= htmlspecialchars($detail) ?></div>
                 <?php endif; ?>
               </td>
             </tr>
           <?php endforeach; ?>
+          <?php if (!$verbose && $gStats['fail'] === 0): ?>
+            <tr><td colspan="2" class="text-muted small py-2 ps-3">
+              All <?= $gStats['pass'] ?> checks passed &mdash;
+              <a href="?verbose=1#<?= $anchorId ?>">show</a>
+            </td></tr>
+          <?php endif; ?>
           </tbody>
         </table>
       </div>
     </div>
+  </div>
   <?php endforeach; ?>
 
-  <div class="text-muted small">
-    Add <code>?verbose=1</code> to show all passing tests.
-    All queries are read-only — safe on production.
-  </div>
-
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

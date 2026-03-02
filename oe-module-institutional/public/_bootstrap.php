@@ -55,7 +55,7 @@ if ($activeContext !== CareContext::FULL && $manifest->featureEnabled('context_m
 // Exposes $triageStandard to every page. When mts_triage is disabled
 // (the default), always returns ESI — identical to existing hardcoded behavior.
 if ($manifest->featureEnabled('mts_triage')) {
-    $_oei_tsRepo = new \OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository();
+    $_oei_tsRepo = new \OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository();
     $_oei_tsCode = $_oei_tsRepo->get($_oei_facilityId, 'triage_standard');
     $triageStandard = \OpenEMR\Modules\Institutional\Core\Domain\TriageStandard::fromCode(
         $_oei_tsCode ?: \OpenEMR\Modules\Institutional\Core\Domain\TriageStandard::ESI
@@ -107,7 +107,7 @@ function institutional_human_elapsed(string $start): string
 // Read the facility's ui_theme setting (light|dark) and expose it to every
 // page and to context_bar.php so the Bootstrap data-bs-theme is applied
 // before the page CSS loads.
-$_oei_settingsForTheme = new \OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository();
+$_oei_settingsForTheme = new \OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository();
 $_oei_theme = $_oei_settingsForTheme->get($_oei_facilityId, 'ui_theme') ?: 'light';
 if (!in_array($_oei_theme, ['light', 'dark'], true)) {
     $_oei_theme = 'light';

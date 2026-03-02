@@ -3,9 +3,9 @@
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\EpisodeDocuments\Controller\EpisodeDocumentController;
-use OpenEMR\Modules\Institutional\Submodule\EpisodeDocuments\Repository\EpisodeDocumentRepository;
-use OpenEMR\Modules\Institutional\Submodule\EpisodeDocuments\Service\EpisodeDocumentService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EpisodeDocuments\Controller\EpisodeDocumentController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EpisodeDocuments\Repository\EpisodeDocumentRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EpisodeDocuments\Service\EpisodeDocumentService;
 use OpenEMR\Common\Csrf\CsrfUtils;
 
 if (!$manifest->featureEnabled('episode_documents')) {

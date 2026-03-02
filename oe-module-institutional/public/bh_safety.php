@@ -4,10 +4,10 @@ require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
-use OpenEMR\Modules\Institutional\Submodule\BhSafety\Repository\BhSafetyRepository;
-use OpenEMR\Modules\Institutional\Submodule\BhSafety\Service\BhSafetyService;
-use OpenEMR\Modules\Institutional\Submodule\BhSafety\Controller\BhSafetyController;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhSafety\Repository\BhSafetyRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhSafety\Service\BhSafetyService;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhSafety\Controller\BhSafetyController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
 
 if (!$manifest->featureEnabled('bh_safety')) {
     die(xlt("Institutional BH Safety is disabled by manifest"));

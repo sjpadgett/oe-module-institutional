@@ -7,9 +7,9 @@ $pageTitle = xlt('Transfers');
 require __DIR__ . '/../src/Core/Ui/partials/page_title.php';
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\TransferTracking\Repository\TransferRepository;
-use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\TransferTracking\Repository\TransferRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
 
 if (!$manifest->featureEnabled('transfer_tracking')) {
     die(xlt("Transfers is disabled by manifest"));
@@ -273,5 +273,3 @@ $types = [
 </div>
 </body>
 </html>
-
-
