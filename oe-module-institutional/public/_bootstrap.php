@@ -1,6 +1,18 @@
 <?php
 
 /**
+ * public/_bootstrap.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
+/**
  * _bootstrap.php — shared include for all module public pages.
  *
  * ob_start() is called as the very first statement so that the context bar
@@ -14,6 +26,9 @@ ob_start();
 use OpenEMR\Modules\Institutional\Core\Domain\CareContext;
 use OpenEMR\Modules\Institutional\Core\Repository\ContextRepository;
 use OpenEMR\Modules\Institutional\Core\Service\ContextService;
+use OpenEMR\Modules\Institutional\Core\Repository\FacilityProfileRepository;
+use OpenEMR\Modules\Institutional\Core\Service\FacilityManifestService;
+use OpenEMR\Modules\Institutional\Core\Service\FacilityProfileService;
 use OpenEMR\Modules\Institutional\Manifest\ContextManifest;
 use OpenEMR\Modules\Institutional\Manifest\ManifestLoader;
 
@@ -26,19 +41,30 @@ if (file_exists($autoload)) {
 
 $moduleRoot = dirname(__DIR__);
 $manifest   = ManifestLoader::load($moduleRoot);
+// Resolve logged-in user id first — needed by services that apply per-user
+// profile overrides (preference reads check personal row before facility default).
+$_oei_userId           = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : 0;
+$_oei_profileRepo      = new FacilityProfileRepository();
+$_oei_facilityProfiles = new FacilityProfileService(null, $_oei_profileRepo, $_oei_userId);
+$_oei_facilityManifest = new FacilityManifestService(null, $moduleRoot, $_oei_profileRepo, $_oei_userId);
 
-// ── Care Context resolution ────────────────────────────────────────────────
-// Resolve early so $activeContext and $ctxMeta are available to every page.
-// The context_bar partial reads these globals and self-injects.
+// ── Care Context + facility resolution ─────────────────────────────────────
+// Facility is the runtime anchor. Context lives inside the selected facility.
+// $_oei_userId is already set above (needed earlier for service construction).
 
-$_oei_userId     = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : 0;
-$_oei_facilityId = (int)($_GET['facility_id'] ?? $_POST['facility_id'] ?? ($GLOBALS['facility_default_id'] ?? 1));
+$_oei_requestedFacilityId = isset($_GET['facility_id'])
+    ? (int)$_GET['facility_id']
+    : (isset($_POST['facility_id']) ? (int)$_POST['facility_id'] : 0);
+$_oei_facilityId = $_oei_facilityProfiles->resolveFacilityId($_oei_requestedFacilityId, $_oei_userId);
+$_oei_facilityProfiles->writeActiveFacilitySession($_oei_facilityId);
+$_oei_facilityName = $_oei_facilityProfiles->getDisplayName($_oei_facilityId);
+$manifest = $_oei_facilityManifest->applyToManifest($_oei_facilityId, $manifest);
 
 if ($_oei_userId > 0 && $manifest->featureEnabled('context_manager')) {
     $activeContext = (new ContextService(new ContextRepository()))
         ->resolve($_oei_userId, $_oei_facilityId);
 } else {
-    $activeContext = CareContext::FULL;   // unauthenticated or feature off → no filtering
+    $activeContext = $_oei_facilityProfiles->getDefaultContext($_oei_facilityId);
 }
 
 $ctxMeta = CareContext::meta($activeContext);
@@ -55,7 +81,7 @@ if ($activeContext !== CareContext::FULL && $manifest->featureEnabled('context_m
 // Exposes $triageStandard to every page. When mts_triage is disabled
 // (the default), always returns ESI — identical to existing hardcoded behavior.
 if ($manifest->featureEnabled('mts_triage')) {
-    $_oei_tsRepo = new \OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository();
+    $_oei_tsRepo = new \OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository();
     $_oei_tsCode = $_oei_tsRepo->get($_oei_facilityId, 'triage_standard');
     $triageStandard = \OpenEMR\Modules\Institutional\Core\Domain\TriageStandard::fromCode(
         $_oei_tsCode ?: \OpenEMR\Modules\Institutional\Core\Domain\TriageStandard::ESI
@@ -72,10 +98,43 @@ if ($manifest->featureEnabled('mts_triage')) {
 function institutional_bootstrap5_href($manifest): string
 {
     $mode = (string)($manifest->ui['bootstrap5_mode'] ?? 'cdn');
-    if ($mode !== 'cdn') {
-        return '';
+    $base = rtrim($GLOBALS['webroot'] ?? '', '/')
+        . '/interface/modules/custom_modules/oe-module-institutional/';
+
+    if ($mode === 'local') {
+        return $base . 'vendor/twbs/bootstrap/dist/css/bootstrap.min.css';
     }
     return "https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css";
+}
+
+/**
+ * Returns a <script> tag for Bootstrap 5 JS bundle (local or CDN).
+ */
+function institutional_bootstrap5_js_tag(): string
+{
+    global $manifest;
+    $mode = 'cdn';
+    if (isset($manifest) && is_object($manifest) && isset($manifest->ui)) {
+        $mode = (string)($manifest->ui['bootstrap5_mode'] ?? 'cdn');
+    }
+    $base = rtrim($GLOBALS['webroot'] ?? '', '/')
+        . '/interface/modules/custom_modules/oe-module-institutional/';
+
+    if ($mode === 'local') {
+        $src = $base . 'vendor/twbs/bootstrap/dist/js/bootstrap.bundle.min.js';
+    } else {
+        $src = 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js';
+    }
+    return '<script src="' . htmlspecialchars($src) . '"></script>';
+}
+
+/**
+ * Returns the module-relative href for the oei-theme.css file.
+ */
+function institutional_theme_css_href(): string
+{
+    return rtrim($GLOBALS['webroot'] ?? '', '/')
+        . '/interface/modules/custom_modules/oe-module-institutional/public/assets/oei-theme.css';
 }
 
 function institutional_human_elapsed(string $start): string
@@ -107,7 +166,7 @@ function institutional_human_elapsed(string $start): string
 // Read the facility's ui_theme setting (light|dark) and expose it to every
 // page and to context_bar.php so the Bootstrap data-bs-theme is applied
 // before the page CSS loads.
-$_oei_settingsForTheme = new \OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository();
+$_oei_settingsForTheme = new \OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository();
 $_oei_theme = $_oei_settingsForTheme->get($_oei_facilityId, 'ui_theme') ?: 'light';
 if (!in_array($_oei_theme, ['light', 'dark'], true)) {
     $_oei_theme = 'light';
@@ -132,10 +191,12 @@ function oei_exit_with_alert(string $message, string $type = 'warning'): void
     global $_oei_theme, $manifest;
 
     $theme   = (isset($_oei_theme) && $_oei_theme === 'dark') ? 'dark' : 'light';
-    $bgClass = $theme === 'dark' ? 'bg-dark text-light' : 'bg-light';
+    $bgClass = $theme === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark';
     $href    = (isset($manifest) && function_exists('institutional_bootstrap5_href'))
                ? institutional_bootstrap5_href($manifest)
-               : 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css';
+               : (file_exists(__DIR__ . '/../vendor/twbs/bootstrap/dist/css/bootstrap.min.css')
+                  ? (rtrim($GLOBALS['webroot'] ?? '', '/') . '/interface/modules/custom_modules/oe-module-institutional/vendor/twbs/bootstrap/dist/css/bootstrap.min.css')
+                  : 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css');
 
     // Clear every active ob level so we get a clean output stream.
     // Our own ob_start() from the top of this file is at level 1;
@@ -198,5 +259,139 @@ if ($manifest->featureEnabled('context_manager')) {
     require_once __DIR__ . '/../src/Core/Ui/partials/context_bar.php';
 }
 
+// ── Setup wizard nudge ────────────────────────────────────────────────────
+// Admin-only banner when the facility has not yet completed Setup Wizard.
+// Session-cached so the DB is only hit once per login after setup is done.
+if ($manifest->featureEnabled('settings') && !empty($_SESSION['authSuperUser'])) {
+    $__ck = 'oei_setup_done_' . $_oei_facilityId;
+    $__done = $_SESSION[$__ck] ?? null;
+    if ($__done === null) {
+        $__done = $_oei_facilityProfiles->isSetupCompleted($_oei_facilityId) ? 1 : 0;
+        if ($__done) { $_SESSION[$__ck] = 1; }
+    }
+    if (!$__done) {
+        $__wu = htmlspecialchars(
+            ($GLOBALS['webroot'] ?? '')
+            . '/interface/modules/custom_modules/oe-module-institutional/public/setup_wizard.php'
+            . '?facility_id=' . urlencode((string)$_oei_facilityId));
+        echo '<div id="oei-setup-nudge" role="alert" '
+           . 'style="position:fixed;top:36px;left:0;right:0;z-index:9998;'
+           . 'background:#1e3a5f;border-bottom:2px solid #3b82f6;'
+           . 'color:#bfdbfe;font-size:12px;padding:5px 14px;'
+           . 'display:flex;align-items:center;gap:10px;'
+           . 'font-family:\x27Segoe UI\x27,system-ui,sans-serif;">'
+           . '<span>&#9432;&nbsp;Facility setup incomplete for <strong>'
+           . htmlspecialchars($_oei_facilityName)
+           . '</strong></span>'
+           . '<a href="' . $__wu . '" '
+           . 'style="color:#93c5fd;font-weight:600;text-decoration:underline;white-space:nowrap;">'
+           . 'Run Setup Wizard &rarr;</a>'
+           . '<button type="button" '
+           . 'onclick="document.getElementById(\x27oei-setup-nudge\x27).remove()" '
+           . 'style="margin-left:auto;background:none;border:none;'
+           . 'color:#93c5fd;cursor:pointer;font-size:16px;line-height:1;">&#x2715;</button>'
+           . '</div>';
+    }
+    unset($__ck, $__done, $__wu);
+}
+
 // Clean up temporaries
-unset($_oei_userId, $_oei_facilityId);
+unset($_oei_userId, $_oei_requestedFacilityId, $_oei_facilityId);
+
+
+// ── Patient / user display helpers ──────────────────────────────────────────
+// Cached batch lookups — single DB hit per unique id set per request.
+
+/**
+ * Batch-fetch patient display names ("Last, First") for a set of pids.
+ * @param  int[]  $pids
+ * @return array<int,string>  pid => "Last, First"
+ */
+function oei_patient_names(array $pids): array
+{
+    static $cache = [];
+    $pids    = array_values(array_unique(array_filter(array_map('intval', $pids))));
+    $missing = array_values(array_diff($pids, array_keys($cache)));
+    if (!empty($missing) && function_exists('sqlStatement')) {
+        $ph  = implode(',', array_fill(0, count($missing), '?'));
+        $res = sqlStatement(
+            "SELECT pid, fname, lname FROM patient_data WHERE pid IN ({$ph})",
+            $missing
+        );
+        while ($row = sqlFetchArray($res)) {
+            $p         = (int)$row['pid'];
+            $cache[$p] = trim((string)$row['lname'] . ', ' . (string)$row['fname']);
+        }
+        foreach ($missing as $p) {
+            if (!isset($cache[$p])) $cache[$p] = '';
+        }
+    }
+    $result = [];
+    foreach ($pids as $p) { $result[$p] = $cache[$p] ?? ''; }
+    return $result;
+}
+
+/**
+ * Batch-fetch user display names ("First Last") for a set of user ids.
+ * @param  int[]  $ids
+ * @return array<int,string>  id => "First Last"
+ */
+function oei_user_names(array $ids): array
+{
+    static $cache = [];
+    $ids     = array_values(array_unique(array_filter(array_map('intval', $ids))));
+    $missing = array_values(array_diff($ids, array_keys($cache)));
+    if (!empty($missing) && function_exists('sqlStatement')) {
+        $ph  = implode(',', array_fill(0, count($missing), '?'));
+        $res = sqlStatement(
+            "SELECT id, fname, lname FROM users WHERE id IN ({$ph})",
+            $missing
+        );
+        while ($row = sqlFetchArray($res)) {
+            $id         = (int)$row['id'];
+            $cache[$id] = trim((string)$row['fname'] . ' ' . (string)$row['lname']);
+        }
+        foreach ($missing as $i) {
+            if (!isset($cache[$i])) $cache[$i] = '';
+        }
+    }
+    $result = [];
+    foreach ($ids as $i) { $result[$i] = $cache[$i] ?? ''; }
+    return $result;
+}
+
+/**
+ * Format a patient for display: "Last, First (PID N)".
+ * Falls back to "PID N" when name unavailable.
+ * Returns HTML-escaped string ready for echo.
+ * @param int               $pid
+ * @param array<int,string> $patientNames  Result of oei_patient_names()
+ */
+function oei_fmt_patient(int $pid, array $patientNames): string
+{
+    $name = $patientNames[$pid] ?? '';
+    if ($name !== '') {
+        return htmlspecialchars($name)
+             . ' <span class="text-muted small">(PID&nbsp;' . $pid . ')</span>';
+    }
+    return '<span class="text-muted">PID&nbsp;' . $pid . '</span>';
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

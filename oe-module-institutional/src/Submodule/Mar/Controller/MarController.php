@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Mar/Controller/MarController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\Submodule\Mar\Controller;
@@ -10,6 +22,7 @@ use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarAdministrationRepo
 use OpenEMR\Modules\Institutional\Submodule\Mar\Service\AllergyService;
 use OpenEMR\Modules\Institutional\Submodule\Mar\Service\MarService;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
+use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
 
 /**
  * MAR Controller.
@@ -31,9 +44,10 @@ final class MarController
         private readonly MarOrderRepository          $orderRepo,
         private readonly MarAdministrationRepository $adminRepo,
         private readonly EpisodeRepository           $episodeRepo,
-        private readonly ?AllergyService             $allergyService = null
+        private readonly ?AllergyService             $allergyService = null,
+        private readonly ?TaskRepository             $taskRepo = null
     ) {
-        $this->service = new MarService($orderRepo, $adminRepo);
+        $this->service = new MarService($orderRepo, $adminRepo, $taskRepo);
     }
 
     /**
@@ -81,6 +95,10 @@ final class MarController
                 $this->actionPlaceOrder($facilityId, $userId);
                 break;
 
+            case 'update_order':
+                $this->actionUpdateOrder($userId);
+                break;
+
             case 'discontinue_order':
                 $orderId = (int)($_POST['order_id'] ?? 0);
                 if ($orderId > 0) {
@@ -107,6 +125,18 @@ final class MarController
             case 'give_prn':
                 $this->actionGivePrn($postEpisodeId, $facilityId, $userId);
                 break;
+
+            case 'co_sign':
+                $adminId     = (int)($_POST['admin_id']        ?? 0);
+                $coSignUserId = (int)($_POST['co_sign_user_id'] ?? 0);
+                if ($adminId > 0 && $coSignUserId > 0) {
+                    $this->service->coSignAdministration($adminId, $coSignUserId);
+                }
+                break;
+
+            case 'import_rx':
+                $this->actionImportRx($facilityId, $postEpisodeId, $userId);
+                break;
         }
 
         $redirect = 'mar.php?facility_id=' . urlencode((string)$facilityId);
@@ -128,23 +158,48 @@ final class MarController
         $episode = $this->episodeRepo->fetchOne($episodeId);
         $startDt = (string)($episode['start_datetime'] ?? date('Y-m-d H:i:s'));
 
-        $frequency         = strtoupper(trim((string)($_POST['frequency'] ?? '')));
-        $isPrn             = ($frequency === 'PRN' || (bool)($_POST['is_prn'] ?? false));
+        $frequency           = $this->orderRepo->normalizeFrequency((string)($_POST['frequency'] ?? ''));
+        $isPrn               = ($frequency === 'PRN' || (bool)($_POST['is_prn'] ?? false));
         $isHighAlertOverride = (bool)($_POST['is_high_alert'] ?? false);
+        $isStat              = !$isPrn && (bool)($_POST['is_stat'] ?? false);
 
         $this->service->placeOrder(
             $episodeId, $pid, $facilityId,
-            (string)($_POST['drug_name']    ?? ''),
-            (string)($_POST['dose']         ?? ''),
-            (string)($_POST['unit']         ?? ''),
-            (string)($_POST['route']        ?? ''),
-            $frequency,
+            trim((string)($_POST['drug_name'] ?? '')),
+            trim((string)($_POST['dose'] ?? '')),
+            $this->orderRepo->normalizeUnit((string)($_POST['unit'] ?? '')),
+            $this->orderRepo->normalizeRoute((string)($_POST['route'] ?? '')),
+            $frequency !== '' ? $frequency : 'QD',
             $isPrn,
             $isHighAlertOverride,
             $userId,
             ($_POST['instructions'] ?? null) ?: null,
             $startDt,
-            24
+            24,
+            $isStat
+        );
+    }
+
+    private function actionUpdateOrder(?int $userId): void
+    {
+        $orderId = (int)($_POST['order_id'] ?? 0);
+        if ($orderId <= 0) {
+            return;
+        }
+
+        $frequency = $this->orderRepo->normalizeFrequency((string)($_POST['frequency'] ?? ''));
+        $isPrn = ($frequency === 'PRN' || (bool)($_POST['is_prn'] ?? false));
+        $this->service->updateOrder(
+            $orderId,
+            (string)($_POST['drug_name'] ?? ''),
+            (string)($_POST['dose'] ?? ''),
+            (string)($_POST['unit'] ?? ''),
+            (string)($_POST['route'] ?? ''),
+            $frequency,
+            $isPrn,
+            ($_POST['instructions'] ?? null) ?: null,
+            (bool)($_POST['is_high_alert'] ?? false),
+            !$isPrn && (bool)($_POST['is_stat'] ?? false)
         );
     }
 
@@ -154,6 +209,8 @@ final class MarController
         if ($adminId <= 0) {
             return;
         }
+        $witnessUserId = isset($_POST['witness_user_id']) && (int)$_POST['witness_user_id'] > 0
+            ? (int)$_POST['witness_user_id'] : null;
         $this->service->recordAdministration(
             $adminId,
             (string)($_POST['outcome']             ?? 'GIVEN'),
@@ -165,7 +222,11 @@ final class MarController
             ($_POST['lot_number']                   ?? null) ?: null,
             $userId,
             ($_POST['hold_reason']                  ?? null) ?: null,
-            ($_POST['note']                         ?? null) ?: null
+            ($_POST['note']                         ?? null) ?: null,
+            $witnessUserId,
+            ($_POST['waste_amount']                 ?? null) ?: null,
+            ($_POST['waste_unit']                   ?? null) ?: null,
+            $this->collectExceptionFollowUp()
         );
     }
 
@@ -175,6 +236,8 @@ final class MarController
         if ($adminId <= 0) {
             return;
         }
+        $witnessUserId = isset($_POST['witness_user_id']) && (int)$_POST['witness_user_id'] > 0
+            ? (int)$_POST['witness_user_id'] : null;
         $this->service->amendAdministration(
             $adminId,
             (string)($_POST['outcome']             ?? 'GIVEN'),
@@ -186,7 +249,11 @@ final class MarController
             ($_POST['lot_number']                   ?? null) ?: null,
             $userId,
             ($_POST['hold_reason']                  ?? null) ?: null,
-            ($_POST['note']                         ?? null) ?: null
+            ($_POST['note']                         ?? null) ?: null,
+            $witnessUserId,
+            ($_POST['waste_amount']                 ?? null) ?: null,
+            ($_POST['waste_unit']                   ?? null) ?: null,
+            $this->collectExceptionFollowUp()
         );
     }
 
@@ -214,6 +281,33 @@ final class MarController
 
     // ------------------------------------------------------------------ GET view models
 
+    private function actionImportRx(int $facilityId, ?int $episodeId, ?int $userId): void
+    {
+        $episodeId = (int)($episodeId ?? 0);
+        $pid       = (int)($_POST['pid'] ?? 0);
+        if ($episodeId <= 0 || $pid <= 0) return;
+        $rxIds = array_filter(array_map('intval', (array)($_POST['rx_ids'] ?? [])));
+        if (empty($rxIds)) return;
+        $allRx = $this->orderRepo->listActivePrescriptions($pid);
+        $rxById = [];
+        foreach ($allRx as $rx) { $rxById[(int)$rx['id']] = $rx; }
+        foreach ($rxIds as $rxId) {
+            if (!isset($rxById[$rxId])) continue;
+            $rx = $rxById[$rxId];
+            $rx['_display_drug'] = trim((string)((($_POST['rx_display_drug'] ?? [])[$rxId] ?? '') ?: ($rx['_display_drug'] ?? $rx['drug'] ?? '')));
+            $rx['_dose'] = trim((string)((($_POST['rx_dose'] ?? [])[$rxId] ?? '') ?: ($rx['size'] ?? '')));
+            $rx['_unit'] = $this->orderRepo->normalizeUnit((string)((($_POST['rx_unit'] ?? [])[$rxId] ?? '') ?: ($rx['_unit'] ?? $rx['unit'] ?? '')));
+            $rx['_route'] = $this->orderRepo->normalizeRoute((string)((($_POST['rx_route'] ?? [])[$rxId] ?? '') ?: ($rx['_route'] ?? $rx['route'] ?? '')));
+            $rx['_freq'] = $this->orderRepo->normalizeFrequency((string)((($_POST['rx_frequency'] ?? [])[$rxId] ?? '') ?: ($rx['_freq'] ?? $rx['interval'] ?? '')));
+            $rx['_sig'] = trim((string)((($_POST['rx_sig'] ?? [])[$rxId] ?? '') ?: ($rx['_sig'] ?? $rx['note'] ?? '')));
+            $orderId = $this->orderRepo->importFromPrescription(
+                $episodeId, $pid, $facilityId, $rx, $userId,
+                $this->service->isHighAlert((string)($rx['_display_drug'] ?? $rx['drug'] ?? ''))
+            );
+            if ($orderId > 0) { $this->service->extendOrderSlots($orderId, 24, $userId); }
+        }
+    }
+
     /**
      * @return array<string,mixed>
      */
@@ -236,6 +330,29 @@ final class MarController
             }
         }
 
+        $rxPrescriptions = [];
+        $importedRxIds   = [];
+        if (!$print && $episode !== null) {
+            $pid2 = (int)($episode['pid'] ?? 0);
+            if ($pid2 > 0) {
+                $rxPrescriptions = $this->orderRepo->listActivePrescriptions($pid2);
+                $importedRxIds   = $this->orderRepo->listImportedRxIds($episodeId);
+            }
+        }
+
+        $rxSourceMap = [];
+        foreach ($rxPrescriptions as $rxRow) {
+            $rxSourceMap[(int)($rxRow['id'] ?? 0)] = $rxRow;
+        }
+        foreach ($grid as &$orderRow) {
+            $rxId = (int)($orderRow['rx_id'] ?? 0);
+            if ($rxId > 0 && isset($rxSourceMap[$rxId])) {
+                $orderRow['_source_rx'] = $rxSourceMap[$rxId];
+            }
+        }
+        unset($orderRow);
+
+        $workspace = $print ? [] : $this->buildWorkspaceForEpisode($episodeId);
         return [
             'view'             => 'episode',
             'print'            => $print,
@@ -243,9 +360,15 @@ final class MarController
             'episode_id'       => $episodeId,
             'facility_id'      => $facilityId,
             'grid'             => $grid,
+            'workspace'        => $workspace,
+            'order_vocab'      => $this->orderRepo->getOrderVocabulary(),
+            'drug_lookup'      => $this->orderRepo->listDrugLookupOptions(),
             'allergy_warnings' => $allergyWarnings,
             'hold_reasons'     => MarService::HOLD_REASONS,
             'csrf'             => CsrfUtils::collectCsrfToken(),
+            'rx_prescriptions' => $rxPrescriptions,
+            'imported_rx_ids'  => $importedRxIds,
+            'rx_source_map'    => $rxSourceMap,
         ];
     }
 
@@ -260,9 +383,99 @@ final class MarController
             'view'             => 'facility',
             'facility_id'      => $facilityId,
             'overdue'          => $overdue,
+            'workspace'        => $this->buildWorkspaceForFacility($facilityId),
             'allergy_warnings' => [],
             'hold_reasons'     => MarService::HOLD_REASONS,
             'csrf'             => CsrfUtils::collectCsrfToken(),
+            'rx_prescriptions' => [],
+            'imported_rx_ids'  => [],
         ];
     }
+
+
+    /**
+     * @return array<string,array<int,array<string,mixed>>>
+     */
+    private function buildWorkspaceForEpisode(int $episodeId): array
+    {
+        return $this->shapeWorkspace(
+            $this->adminRepo->listPendingWorkspaceByEpisode($episodeId),
+            $this->adminRepo->listAwaitingCoSignByEpisode($episodeId),
+            $this->adminRepo->listRecentPrnByEpisode($episodeId),
+            $this->taskRepo?->listOpenMarFollowUpByEpisode($episodeId) ?? []
+        );
+    }
+
+    /**
+     * @return array<string,array<int,array<string,mixed>>>
+     */
+    private function buildWorkspaceForFacility(int $facilityId): array
+    {
+        return $this->shapeWorkspace(
+            $this->adminRepo->listPendingWorkspaceByFacility($facilityId),
+            $this->adminRepo->listAwaitingCoSignByFacility($facilityId),
+            $this->adminRepo->listRecentPrnByFacility($facilityId),
+            $this->taskRepo?->listOpenMarFollowUpByFacility($facilityId) ?? []
+        );
+    }
+
+    /**
+     * @param array<int,array<string,mixed>> $pending
+     * @param array<int,array<string,mixed>> $awaitingCoSign
+     * @param array<int,array<string,mixed>> $recentPrn
+     * @param array<int,array<string,mixed>> $exceptionFollowUp
+     * @return array<string,array<int,array<string,mixed>>>
+     */
+    private function shapeWorkspace(array $pending, array $awaitingCoSign, array $recentPrn, array $exceptionFollowUp = []): array
+    {
+        $now = time();
+        $dueNow = [];
+        $dueSoon = [];
+        $overdue = [];
+        foreach ($pending as $row) {
+            $ts = !empty($row['scheduled_datetime']) ? (strtotime((string)$row['scheduled_datetime']) ?: 0) : 0;
+            if ($ts <= 0) {
+                $dueNow[] = $row;
+                continue;
+            }
+            if ($ts < $now) {
+                $overdue[] = $row;
+            } elseif ($ts <= $now + (15 * 60)) {
+                $dueNow[] = $row;
+            } elseif ($ts <= $now + (60 * 60)) {
+                $dueSoon[] = $row;
+            }
+        }
+        return [
+            'due_now' => array_slice($dueNow, 0, 12),
+            'due_soon' => array_slice($dueSoon, 0, 12),
+            'overdue' => array_slice($overdue, 0, 12),
+            'awaiting_cosign' => array_slice($awaitingCoSign, 0, 12),
+            'recent_prn' => array_slice($recentPrn, 0, 12),
+            'exception_followup' => array_slice($exceptionFollowUp, 0, 12),
+        ];
+    }
+
+    /**
+     * @return array<string,mixed>
+     */
+    private function collectExceptionFollowUp(): array
+    {
+        $retryLater = !empty($_POST['retry_later']);
+        $retryMinutes = $retryLater ? max(0, min(480, (int)($_POST['retry_minutes'] ?? 0))) : 0;
+        return [
+            'provider_notified' => !empty($_POST['provider_notified']),
+            'pharmacy_follow_up' => !empty($_POST['pharmacy_follow_up']),
+            'retry_minutes' => $retryMinutes,
+        ];
+    }
+
 }
+
+
+
+
+
+
+
+

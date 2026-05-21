@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/AdtLite/Controller/LocationsController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\AdtLite\Controller;
 
 use OpenEMR\Common\Csrf\CsrfUtils;
@@ -41,5 +53,8 @@ final class LocationsController
         return ['rows' => $this->repo->listAll($facilityId), 'csrf' => CsrfUtils::collectCsrfToken()];
     }
 }
+
+
+
 
 

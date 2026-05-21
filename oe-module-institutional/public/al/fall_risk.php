@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/fall_risk.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/fall_risk.php — Morse Fall Scale Reassessment
  *
@@ -34,8 +47,9 @@ $patient    = $data['patient'];
 $mfsItems   = $data['mfs_items'];
 $prefill    = $data['prefill'];
 
+$_oei_csrf = CsrfUtils::collectCsrfToken();
 $pageTitle = xlt('Fall Risk Assessment (Morse)');
-$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
+$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark';
 
 $activePage  = 'fall_risk';
 $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
@@ -46,6 +60,7 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
   <style>
     .mfs-item-card  { border-left: 3px solid #e76f51; }
     .score-preview  { font-size:2.5rem; font-weight:700; line-height:1; }
@@ -59,7 +74,7 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 <div class="container-fluid p-3">
 <?php
 // AL resident nav — tabs + context strip
-require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php';
 ?>
 <!-- Header -->
 <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
@@ -69,7 +84,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       <?php if ($patient): ?>
         — <?= htmlspecialchars($patient['fname'] . ' ' . $patient['lname']) ?>
         <span class="badge bg-<?= htmlspecialchars(FallRiskLevel::badge($patient['current_risk_level'])) ?> ms-1">
-          <?= htmlspecialchars(FallRiskLevel::label($patient['current_risk_level'])) ?>
+            <?= htmlspecialchars(FallRiskLevel::label($patient['current_risk_level'])) ?>
         </span>
       <?php endif; ?>
     </h5>
@@ -81,7 +96,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
 
 <?php if ($data['flash']): ?>
 <div class="alert alert-<?= str_contains($data['flash'], xlt('Error')) ? 'danger' : 'success' ?> py-2">
-  <?= htmlspecialchars($data['flash']) ?>
+    <?= htmlspecialchars($data['flash']) ?>
 </div>
 <?php endif; ?>
 
@@ -103,16 +118,16 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       </div>
       <div class="card-body">
         <form method="POST" id="mfsForm">
-          <?= CsrfUtils::collectCsrfToken() ?>
+          <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($_oei_csrf) ?>">
           <input type="hidden" name="episode_id" value="<?= $episodeId ?>">
 
           <?php foreach ($mfsItems as $key => $item): ?>
-          <?php $fieldKey = str_replace('_', '', $key); ?>
+                <?php $fieldKey = str_replace('_', '', $key); ?>
           <div class="mb-3">
             <label class="form-label fw-semibold small">
-              <?= htmlspecialchars($item['label']) ?>
+                <?= htmlspecialchars($item['label']) ?>
             </label>
-            <?php foreach ($item['options'] as $score => $label): ?>
+                <?php foreach ($item['options'] as $score => $label): ?>
             <div class="form-check">
               <input class="form-check-input mfs-radio" type="radio"
                      name="<?= htmlspecialchars($key) ?>"
@@ -122,7 +137,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
                      <?= ((int)($prefill['mfs_' . $key] ?? 0)) === $score ? 'checked' : '' ?>>
               <label class="form-check-label small"
                      for="<?= htmlspecialchars($key) ?>_<?= $score ?>">
-                <?= htmlspecialchars($label) ?>
+                    <?= htmlspecialchars($label) ?>
               </label>
             </div>
             <?php endforeach; ?>
@@ -192,7 +207,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
             </td>
             <td class="text-muted"><?= htmlspecialchars($a['assessed_by']) ?></td>
             <td class="text-muted" style="max-width:160px;white-space:normal;">
-              <?= htmlspecialchars(mb_strimwidth($a['notes'], 0, 60, '…')) ?>
+                <?= htmlspecialchars(mb_strimwidth($a['notes'], 0, 60, '…')) ?>
             </td>
           </tr>
           <?php endforeach; ?>
@@ -243,3 +258,12 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

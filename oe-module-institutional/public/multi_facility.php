@@ -1,15 +1,30 @@
 <?php
 
+/**
+ * public/multi_facility.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\MultiFacility\Repository\MultiFacilityRepository;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Core\Service\FacilityProfileService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\MultiFacility\Repository\MultiFacilityRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('multi_facility')) {
     die(xlt('Multi-Facility Dashboard is disabled by manifest'));
 }
 
-$facilityId = (int)($_GET['facility_id'] ?? ($GLOBALS['facility_default_id'] ?? 1));
+$userId = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : 0;
+$facilityProfiles = new FacilityProfileService();
+$facilityId = $facilityProfiles->resolveFacilityId(isset($_GET['facility_id']) ? (int)$_GET['facility_id'] : 0, $userId);
 $href       = institutional_bootstrap5_href($manifest);
 
 $settings = new SettingsRepository();
@@ -68,8 +83,9 @@ function fmt_d2r(?int $min): string
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     .live-dot { animation: pulse 2s infinite; }
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
@@ -131,6 +147,7 @@ function fmt_d2r(?int $min): string
             $occ         = occ_pct($fac['beds_occupied'], $fac['beds_total']);
             $occBar      = occ_bar_cls($occ);
             $fid         = (int)$fac['facility_id'];
+            $homePage    = $facilityProfiles->getHomePage($fid);
             ?>
     <div class="col-12 col-md-6 col-xl-4">
       <div class="card shadow-sm fac-card h-100 border <?= $cardCls ?>">
@@ -203,9 +220,9 @@ function fmt_d2r(?int $min): string
 
         </div>
         <div class="card-footer d-flex gap-2 py-2">
-          <a href="ed_board.php?facility_id=<?= $fid ?>"
+          <a href="<?= htmlspecialchars($homePage) ?>?facility_id=<?= $fid ?>"
              class="btn btn-sm btn-outline-primary flex-fill text-center">
-            <?= xlt('ED Board') ?>
+            <?= xlt('Open Facility') ?>
           </a>
           <a href="alerts.php?facility_id=<?= $fid ?>"
              class="btn btn-sm <?= $hasCritical ? 'btn-danger' : 'btn-outline-secondary' ?> flex-fill text-center">
@@ -213,7 +230,7 @@ function fmt_d2r(?int $min): string
           </a>
           <a href="cms_quality.php?facility_id=<?= $fid ?>"
              class="btn btn-sm btn-outline-secondary flex-fill text-center">
-            <?= xlt('CMS') ?>
+            <?= xlt('Quality') ?>
           </a>
         </div>
       </div>
@@ -241,3 +258,15 @@ function fmt_d2r(?int $min): string
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Manifest/Manifest.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Manifest;
 
 final class Manifest
@@ -56,11 +68,17 @@ final class Manifest
             }
 
             $menuId = (string)($i['menu_id'] ?? preg_replace('/[^a-z0-9_]+/i', '_', $feature ?: $label));
-            $out[] = ['label' => $label, 'url' => $url, 'menu_id' => $menuId, 'group' => (string)($i['group'] ?? ''), 'sort' => (int)($i['sort'] ?? 0)];
+            $out[] = ['label' => $label, 'url' => $url, 'menu_id' => $menuId,
+                      'group' => (string)($i['group'] ?? ''), 'sort' => (int)($i['sort'] ?? 0),
+                      'feature' => $feature];
         }
 
         return $out;
     }
 }
+
+
+
+
 
 

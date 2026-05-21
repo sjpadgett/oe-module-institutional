@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/AssistedLiving/Submodule/ResidentProfile/Controller/ResidentProfileController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentProfile\Controller;
@@ -8,6 +20,7 @@ use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentProfile\Repos
 use OpenEMR\Modules\Institutional\AssistedLiving\Domain\CareLevel;
 use OpenEMR\Modules\Institutional\AssistedLiving\Domain\FallRiskLevel;
 use OpenEMR\Modules\Institutional\AssistedLiving\Domain\AdlLevel;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Observations\Repository\SharedObservationRepository;
 
 /**
  * ResidentProfileController
@@ -19,7 +32,8 @@ use OpenEMR\Modules\Institutional\AssistedLiving\Domain\AdlLevel;
 final class ResidentProfileController
 {
     public function __construct(
-        private readonly ResidentProfileRepository $repo = new ResidentProfileRepository()
+        private readonly ResidentProfileRepository $repo = new ResidentProfileRepository(),
+        private readonly SharedObservationRepository $obsRepo = new SharedObservationRepository()
     ) {}
 
     /**
@@ -81,6 +95,8 @@ final class ResidentProfileController
         $fallRiskLabel     = FallRiskLevel::label($header['fall_risk_level']);
         $fallRiskBadge     = FallRiskLevel::badge($header['fall_risk_level']);
 
+        $observations = $this->obsRepo->latestPerType($episodeId);
+
         return [
             'error'           => null,
             'header'          => $header,
@@ -102,6 +118,7 @@ final class ResidentProfileController
             'latest_fall_risk'=> $latestFallRisk,
             'fall_risk_next_due' => $fallRiskNextDue,
             'care_team'       => $careTeam,
+            'observations'    => $observations,
             'adl_level_labels'=> array_map(
                 fn(string $d) => AdlLevel::DOMAINS[$d] ?? $d,
                 AdlLevel::validDomains()
@@ -109,3 +126,9 @@ final class ResidentProfileController
         ];
     }
 }
+
+
+
+
+
+

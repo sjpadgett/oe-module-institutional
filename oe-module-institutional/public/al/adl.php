@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/adl.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/adl.php — ADL Charting (Activities of Daily Living)
  *
@@ -39,6 +52,7 @@ $levelOptions = [
     AdlLevel::DID_NOT_OCCUR    => xlt('8 — Did Not Occur'),
 ];
 
+$_oei_csrf = CsrfUtils::collectCsrfToken();
 $pageTitle = xlt('ADL Charting');
 
 $activePage  = 'adl';
@@ -50,16 +64,17 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid p-3">
 <?php
 // AL resident nav — tabs + context strip
-require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php';
 ?>
 <?php if ($data['flash']): ?>
 <div class="alert <?= str_contains($data['flash'], 'saved') ? 'alert-success' : 'alert-danger' ?> py-2">
-  <?= htmlspecialchars($data['flash']) ?>
+    <?= htmlspecialchars($data['flash']) ?>
 </div>
 <?php endif; ?>
 
@@ -71,17 +86,17 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       <div class="card-header bg-primary text-white"><strong>📊 <?= xlt('New ADL Chart') ?></strong></div>
       <div class="card-body">
         <form method="POST">
-          <?= CsrfUtils::collectCsrfToken() ?>
+          <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($_oei_csrf) ?>">
           <input type="hidden" name="episode_id" value="<?= $episodeId ?>">
           <?php foreach ($data['domains'] as $domain => $label): ?>
           <div class="mb-3">
             <label class="form-label fw-semibold">
-              <?= htmlspecialchars($label) ?>
+                <?= htmlspecialchars($label) ?>
             </label>
             <select name="adl_<?= htmlspecialchars($domain) ?>" class="form-select form-select-sm">
-              <?php foreach ($levelOptions as $val => $optLabel): ?>
+                <?php foreach ($levelOptions as $val => $optLabel): ?>
               <option value="<?= $val ?>" <?= ($val === AdlLevel::INDEPENDENT) ? 'selected' : '' ?>>
-                <?= htmlspecialchars($optLabel) ?>
+                    <?= htmlspecialchars($optLabel) ?>
               </option>
               <?php endforeach; ?>
             </select>
@@ -133,7 +148,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
               <div class="d-flex flex-wrap gap-2 p-2">
                 <?php foreach ($rec['domain_labels'] as $dom => $lbl): ?>
                 <span class="badge bg-secondary">
-                  <?= htmlspecialchars(AdlLevel::DOMAINS[$dom] ?? $dom) ?>: <?= htmlspecialchars($lbl) ?>
+                    <?= htmlspecialchars(AdlLevel::DOMAINS[$dom] ?? $dom) ?>: <?= htmlspecialchars($lbl) ?>
                 </span>
                 <?php endforeach; ?>
                 <?php if ($rec['notes']): ?>
@@ -158,7 +173,16 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
   </a>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?= institutional_bootstrap5_js_tag() ?>
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

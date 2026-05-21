@@ -1,4 +1,16 @@
 /**
+ * public/sw.js
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
+/**
  * sw.js — OEI Institutional Module Service Worker
  *
  * Strategy
@@ -21,7 +33,7 @@
 
 'use strict';
 
-const SHELL_CACHE = 'oei-shell-v1';
+const SHELL_CACHE = 'oei-shell-v2';
 const SNAPSHOT_CACHE = 'oei-snapshot-v1';
 const SNAPSHOT_TTL = 5 * 60 * 1000; // 5 minutes in ms
 
@@ -34,6 +46,12 @@ const SHELL_URLS = [
     './alerts.php',
     './diversion.php',
     './downtime_snapshot.php',
+    // ── HBC pages (v0.24.0) ───────────────────────────────────────
+    './hbc/board.php',
+    './hbc/visit.php',
+    './hbc/schedule.php',
+    './hbc/vitals.php',
+    './hbc/profile.php',
 ];
 
 // ── Lifecycle ────────────────────────────────────────────────────────────────
@@ -86,6 +104,9 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('sync', (event) => {
     if (event.tag === 'oei-sync-queue') {
         event.waitUntil(flushIndexedDbQueue());
+    }
+    if (event.tag === 'oei-hbc-sync') {
+        event.waitUntil(flushHbcVisitQueue());
     }
 });
 
@@ -237,7 +258,7 @@ async function flushIndexedDbQueue() {
 
 function openIdb() {
     return new Promise((resolve, reject) => {
-        const req = indexedDB.open('oei-downtime', 1);
+        const req = indexedDB.open('oei-downtime', 2);
         req.onupgradeneeded = (e) => {
             const db = e.target.result;
             if (!db.objectStoreNames.contains('pendingQueue')) {
@@ -245,6 +266,10 @@ function openIdb() {
             }
             if (!db.objectStoreNames.contains('meta')) {
                 db.createObjectStore('meta');
+            }
+            // v2 — HBC visit offline queue
+            if (!db.objectStoreNames.contains('hbcVisitQueue')) {
+                db.createObjectStore('hbcVisitQueue', {keyPath: 'idb_id', autoIncrement: true});
             }
         };
         req.onsuccess = (e) => resolve(e.target.result);
@@ -278,3 +303,72 @@ function idbDelete(db, storeName, key) {
         req.onerror = () => reject(req.error);
     });
 }
+
+function idbAdd(db, storeName, value) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const req = tx.objectStore(storeName).add(value);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+/**
+ * Flush the HBC visit queue to the server.
+ * Entries written by visit.php when the finalise POST fails offline.
+ * Each entry carries all visit fields needed to reconstruct the write.
+ */
+async function flushHbcVisitQueue() {
+    let db;
+    try {
+        db = await openIdb();
+        const entries = await idbGetAll(db, 'hbcVisitQueue');
+        if (entries.length === 0) return;
+
+        const csrfToken = await idbGet(db, 'meta', 'csrf_token') ?? '';
+
+        // Group by facility_id
+        const byFacility = {};
+        for (const e of entries) {
+            const fid = e.facility_id ?? 1;
+            (byFacility[fid] = byFacility[fid] ?? []).push(e);
+        }
+
+        for (const [facilityId, batch] of Object.entries(byFacility)) {
+            const resp = await fetch(
+                `./hbc/hbc_visit_sync.php?facility_id=${facilityId}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': csrfToken,
+                    },
+                    body: JSON.stringify({facility_id: parseInt(facilityId), entries: batch}),
+                }
+            );
+
+            if (resp.ok) {
+                const data = await resp.json();
+                const ids = batch.map((e) => e.idb_id).filter(Boolean);
+                for (const id of ids) {
+                    await idbDelete(db, 'hbcVisitQueue', id);
+                }
+                broadcastToClients({
+                    type: 'oei:hbc-sync-complete',
+                    synced: ids.length,
+                    results: data.results ?? [],
+                });
+            }
+        }
+    } catch (err) {
+        console.warn('[OEI-SW] flushHbcVisitQueue error:', err);
+    } finally {
+        if (db) db.close();
+    }
+}
+
+
+
+
+
+

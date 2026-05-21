@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/downtime.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * downtime.php
  *
@@ -15,15 +28,15 @@
 require_once __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 
-use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\EpisodeLocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\LocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\Diversion\Repository\DiversionRepository;
-use OpenEMR\Modules\Institutional\Submodule\Downtime\Controller\DowntimeController;
-use OpenEMR\Modules\Institutional\Submodule\Downtime\Service\DowntimeSnapshotService;
-use OpenEMR\Modules\Institutional\Submodule\Downtime\Service\DowntimeSyncService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\BedMgmt\Repository\EpisodeLocationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\BedMgmt\Repository\LocationRepository;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Diversion\Repository\DiversionRepository;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Downtime\Controller\DowntimeController;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Downtime\Service\DowntimeSnapshotService;
+use OpenEMR\Modules\Institutional\EmergencyDepartment\Submodule\Downtime\Service\DowntimeSyncService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository;
 
 if (!$manifest->featureEnabled('downtime')) {
     die(xlt('Downtime Mode is disabled by manifest'));
@@ -102,8 +115,9 @@ $syncUrl     = "downtime_sync.php?facility_id={$facilityId}";
     body.oei-offline #oei-online-content  { display: none; }
     .oei-elapsed-warn { color: #dc3545; font-weight: 600; }
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 
 <!-- Offline banner — controlled by JS -->
@@ -319,7 +333,7 @@ $syncUrl     = "downtime_sync.php?facility_id={$facilityId}";
 </div><!-- /container-fluid -->
 
 <?php if ($href): ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?= institutional_bootstrap5_js_tag() ?>
 <?php endif; ?>
 
 <script>
@@ -724,3 +738,9 @@ function showModal(title, bodyHtml, onSave) {
     </script>
 </body>
 </html>
+
+
+
+
+
+

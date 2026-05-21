@@ -1,13 +1,25 @@
 <?php
 
+/**
+ * public/bh_boarding.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\BhBoarding\Repository\BhBoardingRepository;
-use OpenEMR\Modules\Institutional\Submodule\BhBoarding\Controller\BhBoardingController;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhBoarding\Repository\BhBoardingRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhBoarding\Controller\BhBoardingController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
 
 if (!$manifest->featureEnabled('bh_boarding')) {
     die(xlt("Institutional BH Boarding is disabled by manifest"));
@@ -61,6 +73,8 @@ if (is_string($data) && $data !== '') {
         }
     }
 }
+$_bhbPids = array_values(array_unique(array_filter(array_map(fn($e)=>(int)($e['pid']??0), $episodes??[]))));
+$_bhbPatientNames = oei_patient_names($_bhbPids);
 $href = institutional_bootstrap5_href($manifest);
 
 $bh = $data['bh'] ?? [];
@@ -104,8 +118,9 @@ $risks = [
   <title>BH Boarding</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -131,7 +146,7 @@ $risks = [
                href="bh_boarding.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$e['id']) ?>">
               <div class="d-flex justify-content-between">
                 <div>
-                  <div class="fw-semibold">#<?= htmlspecialchars((string)$e['id']) ?> • PID <?= htmlspecialchars((string)$e['pid']) ?></div>
+                  <div class="fw-semibold">#<?= htmlspecialchars((string)$e['id']) ?> <?= oei_fmt_patient((int)($e['pid'] ?? 0), $_bhbPatientNames) ?></div>
                   <div class="small opacity-75"><?= htmlspecialchars((string)($e['chief_complaint'] ?? '')) ?></div>
                 </div>
                 <div class="text-end">
@@ -295,3 +310,12 @@ $risks = [
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

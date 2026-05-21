@@ -1,11 +1,23 @@
 <?php
 
+/**
+ * public/bh_packet.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
-use OpenEMR\Modules\Institutional\Submodule\BhBoarding\Repository\BhBoardingRepository;
-use OpenEMR\Modules\Institutional\Submodule\EpisodeDocuments\Repository\EpisodeDocumentRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhBoarding\Repository\BhBoardingRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EpisodeDocuments\Repository\EpisodeDocumentRepository;
 
 if (!$manifest->featureEnabled('bh_boarding')) {
     die(xlt('Institutional BH Boarding is disabled by manifest'));
@@ -147,3 +159,6 @@ function mimeIconPkt(string $mime): string
 </div>
 </body>
 </html>
+
+
+

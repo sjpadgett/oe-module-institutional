@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Handoff/Repository/HandoffRepository.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\Submodule\Handoff\Repository;
@@ -15,7 +27,8 @@ namespace OpenEMR\Modules\Institutional\Submodule\Handoff\Repository;
  *   Status:      workflow_status
  *   Vitals:      bp_systolic, bp_diastolic, hr, rr, temp_f, spo2, gcs, noted_datetime
  *   Task:        next_task_type, next_task_due
- *   MAR:         pending_mar_count
+ *   MAR:         pending_mar_count, awaiting_cosign_count, mar_followup_count,
+ *                last_mar_outcome, last_mar_datetime, last_mar_drug
  *   Assignments: nurse_name, provider_name
  */
 final class HandoffRepository
@@ -91,6 +104,51 @@ final class HandoffRepository
                       AND ma.scheduled_datetime <= NOW()
                 ) AS pending_mar_count,
 
+                (
+                    SELECT COUNT(*)
+                    FROM oei_mar_administration ma
+                    WHERE ma.episode_id = e.id
+                      AND ma.outcome = 'GIVEN'
+                      AND ma.is_high_alert = 1
+                      AND (ma.co_sign_user_id IS NULL OR ma.co_sign_user_id = 0)
+                ) AS awaiting_cosign_count,
+
+                (
+                    SELECT COUNT(*)
+                    FROM oei_task t
+                    WHERE t.episode_id = e.id
+                      AND t.status = 'OPEN'
+                      AND t.task_type IN ('MAR_RETRY_DOSE','MAR_PHARMACY_FOLLOWUP','MAR_EXCEPTION_REVIEW')
+                ) AS mar_followup_count,
+
+                (
+                    SELECT ma2.outcome
+                    FROM oei_mar_administration ma2
+                    WHERE ma2.episode_id = e.id
+                      AND ma2.outcome <> 'PENDING'
+                    ORDER BY COALESCE(ma2.administered_datetime, ma2.scheduled_datetime) DESC, ma2.id DESC
+                    LIMIT 1
+                ) AS last_mar_outcome,
+
+                (
+                    SELECT COALESCE(ma2.administered_datetime, ma2.scheduled_datetime)
+                    FROM oei_mar_administration ma2
+                    WHERE ma2.episode_id = e.id
+                      AND ma2.outcome <> 'PENDING'
+                    ORDER BY COALESCE(ma2.administered_datetime, ma2.scheduled_datetime) DESC, ma2.id DESC
+                    LIMIT 1
+                ) AS last_mar_datetime,
+
+                (
+                    SELECT mo.drug_name
+                    FROM oei_mar_administration ma2
+                    JOIN oei_mar_order mo ON mo.id = ma2.mar_order_id
+                    WHERE ma2.episode_id = e.id
+                      AND ma2.outcome <> 'PENDING'
+                    ORDER BY COALESCE(ma2.administered_datetime, ma2.scheduled_datetime) DESC, ma2.id DESC
+                    LIMIT 1
+                ) AS last_mar_drug,
+
                 CONCAT(COALESCE(nu.fname, ''), ' ', COALESCE(nu.lname, '')) AS nurse_name,
                 CONCAT(COALESCE(pu.fname, ''), ' ', COALESCE(pu.lname, '')) AS provider_name
 
@@ -140,3 +198,9 @@ final class HandoffRepository
         return $rows;
     }
 }
+
+
+
+
+
+

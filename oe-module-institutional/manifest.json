@@ -1,333 +1,471 @@
 {
-  "module_id": "oe-module-institutional",
-  "version": "0.14.0",
-  "features": {
-    "context_manager": true,
-    "edt_board": true,
-    "adt_lite": true,
-    "bed_mgmt": true,
-    "intake": true,
-    "triage": true,
-    "tasks": true,
-    "obs_stay": true,
-    "obs_protocols": true,
-    "obs_start_picker": true,
-    "obs_episodes": true,
-    "bh_safety": true,
-    "bh_boarding": true,
-    "transfer_tracking": true,
-    "disposition": true,
-    "throughput": true,
-    "scorecard": true,
-    "alerts": true,
-    "settings": true,
-    "facility_directory": true,
-    "hl7_adt": true,
-    "admin_exports": true,
-    "episode_documents": true,
-    "mar": true,
-    "ereferral": true,
-    "timeline": true,
-    "assignment": true,
-    "handoff": true,
-    "cms_quality": true,
-    "obs_billing": true,
-    "multi_facility": true,
-    "command_center": true,
-    "mts_triage": true,
-    "al_board": true,
-    "al_care_plan": true,
-    "al_adl": true,
-    "al_incident": true,
-    "al_intake": true,
-    "al_profile": true,
-    "al_vitals": true,
-    "al_fall_risk": true,
-    "al_mar": true,
-    "al_discharge": true,
-    "al_activity": true,
-    "al_handoff": true
-  },
-  "ui": {
-    "bootstrap5_mode": "cdn"
-  },
-  "migrations": [
-    "table.sql",
-    "sql/context.sql",
-    "sql/assisted_living.sql",
-    "sql/al_phase2.sql",
-    "sql/al_discharge_seed.sql",
-    "sql/al_activity.sql"
-  ],
-  "menus": {
-    "top_label": "Institutional",
-    "items": [
-      {
-        "label": "Context Manager",
-        "url": "/public/context_manager.php",
-        "feature": "context_manager",
-        "group": "Admin",
-        "sort": 10
-      },
-      {
-        "label": "Bed Management",
-        "url": "/public/bed_management.php",
-        "feature": "bed_mgmt",
-        "group": "Admin",
-        "sort": 20
-      },
-      {
-        "label": "ADT Lite",
-        "url": "/public/adt.php",
-        "feature": "adt_lite",
-        "group": "Admin",
-        "sort": 30
-      },
-      {
-        "label": "Facility Directory",
-        "url": "/public/facility_directory.php",
-        "feature": "facility_directory",
-        "group": "Admin",
-        "sort": 40
-      },
-      {
-        "label": "HL7 ADT Log",
-        "url": "/public/hl7_log.php",
-        "feature": "hl7_adt",
-        "group": "Admin",
-        "sort": 50
-      },
-      {
-        "label": "Admin Exports",
-        "url": "/public/admin_exports.php",
-        "feature": "admin_exports",
-        "group": "Admin",
-        "sort": 60
-      },
-      {
-        "label": "Settings",
-        "url": "/public/settings.php",
-        "feature": "settings",
-        "group": "Admin",
-        "sort": 70
-      },
-      {
-        "label": "Resident Board",
-        "url": "/public/al/board.php",
-        "feature": "al_board",
-        "group": "Assisted Living",
-        "sort": 10
-      },
-      {
-        "label": "Resident Intake",
-        "url": "/public/al/intake.php",
-        "feature": "al_intake",
-        "group": "Assisted Living",
-        "sort": 20
-      },
-      {
-        "label": "Care Plans",
-        "url": "/public/al/care_plan.php",
-        "feature": "al_care_plan",
-        "group": "Assisted Living",
-        "sort": 30
-      },
-      {
-        "label": "ADL Tracking",
-        "url": "/public/al/adl.php",
-        "feature": "al_adl",
-        "group": "Assisted Living",
-        "sort": 40
-      },
-      {
-        "label": "Incident Reports",
-        "url": "/public/al/incident.php",
-        "feature": "al_incident",
-        "group": "Assisted Living",
-        "sort": 50
-      },
-      {
-        "label": "Discharge Planning",
-        "url": "/public/al/discharge.php",
-        "feature": "al_discharge",
-        "group": "Assisted Living",
-        "sort": 60
-      },
-      {
-        "label": "Activity Log",
-        "url": "/public/al/activity.php",
-        "feature": "al_activity",
-        "group": "Assisted Living",
-        "sort": 70
-      },
-      {
-        "label": "Shift Handoff",
-        "url": "/public/al/handoff.php",
-        "feature": "al_handoff",
-        "group": "Assisted Living",
-        "sort": 80
-      },
-      {
-        "label": "Patient Intake",
-        "url": "/public/intake.php",
-        "feature": "intake",
-        "group": "Operations",
-        "sort": 10
-      },
-      {
-        "label": "Triage",
-        "url": "/public/triage.php",
-        "feature": "triage",
-        "group": "Operations",
-        "sort": 20
-      },
-      {
-        "label": "Tasks",
-        "url": "/public/tasks.php",
-        "feature": "tasks",
-        "group": "Operations",
-        "sort": 30
-      },
-      {
-        "label": "MAR",
-        "url": "/public/mar.php",
-        "feature": "mar",
-        "group": "Operations",
-        "sort": 40
-      },
-      {
-        "label": "Disposition",
-        "url": "/public/disposition.php",
-        "feature": "disposition",
-        "group": "Operations",
-        "sort": 50
-      },
-      {
-        "label": "eReferral",
-        "url": "/public/ereferral.php",
-        "feature": "ereferral",
-        "group": "Operations",
-        "sort": 60
-      },
-      {
-        "label": "Documents",
-        "url": "/public/episode_documents.php",
-        "feature": "episode_documents",
-        "group": "Operations",
-        "sort": 70
-      },
-      {
-        "label": "Staff Assignments",
-        "url": "/public/assignments.php",
-        "feature": "assignment",
-        "group": "Operations",
-        "sort": 80
-      },
-      {
-        "label": "BH Safety",
-        "url": "/public/bh_safety.php",
-        "feature": "bh_safety",
-        "group": "Operations",
-        "sort": 90
-      },
-      {
-        "label": "BH Boarding",
-        "url": "/public/bh_boarding.php",
-        "feature": "bh_boarding",
-        "group": "Operations",
-        "sort": 100
-      },
-      {
-        "label": "Transfers",
-        "url": "/public/transfer_tracking.php",
-        "feature": "transfer_tracking",
-        "group": "Operations",
-        "sort": 110
-      },
-      {
-        "label": "OBS Protocols",
-        "url": "/public/obs_protocols.php",
-        "feature": "obs_protocols",
-        "group": "Protocols",
-        "sort": 10
-      },
-      {
-        "label": "OBS Episodes",
-        "url": "/public/obs_episodes.php",
-        "feature": "obs_episodes",
-        "group": "Protocols",
-        "sort": 20
-      },
-      {
-        "label": "OBS Billing",
-        "url": "/public/obs_billing.php",
-        "feature": "obs_billing",
-        "group": "Protocols",
-        "sort": 30
-      },
-      {
-        "label": "CMS Quality Measures",
-        "url": "/public/cms_quality.php",
-        "feature": "cms_quality",
-        "group": "Reporting",
-        "sort": 10
-      },
-      {
-        "label": "ED Tracking Board",
-        "url": "/public/ed_board.php",
-        "feature": "edt_board",
-        "group": "Tracking",
-        "sort": 10
-      },
-      {
-        "label": "Charge Nurse Alerts",
-        "url": "/public/alerts.php",
-        "feature": "alerts",
-        "group": "Tracking",
-        "sort": 20
-      },
-      {
-        "label": "Throughput",
-        "url": "/public/throughput.php",
-        "feature": "throughput",
-        "group": "Tracking",
-        "sort": 30
-      },
-      {
-        "label": "Scorecard",
-        "url": "/public/scorecard.php",
-        "feature": "scorecard",
-        "group": "Tracking",
-        "sort": 40
-      },
-      {
-        "label": "Timeline",
-        "url": "/public/timeline.php",
-        "feature": "timeline",
-        "group": "Tracking",
-        "sort": 50
-      },
-      {
-        "label": "Handoff",
-        "url": "/public/handoff.php",
-        "feature": "handoff",
-        "group": "Tracking",
-        "sort": 60
-      },
-      {
-        "label": "Command Center",
-        "url": "/public/command_center.php",
-        "feature": "command_center",
-        "group": "Tracking",
-        "sort": 70
-      },
-      {
-        "label": "Multi-Facility",
-        "url": "/public/multi_facility.php",
-        "feature": "multi_facility",
-        "group": "Tracking",
-        "sort": 80
-      }
-    ]
-  }
+    "module_id": "oe-module-institutional",
+    "version": "0.40.0",
+    "features": {
+        "context_manager": true,
+        "edt_board": true,
+        "adt_lite": true,
+        "bed_mgmt": true,
+        "intake": true,
+        "triage": true,
+        "tasks": true,
+        "obs_stay": true,
+        "obs_protocols": true,
+        "obs_start_picker": true,
+        "obs_episodes": true,
+        "bh_safety": true,
+        "bh_boarding": true,
+        "transfer_tracking": true,
+        "disposition": true,
+        "throughput": true,
+        "scorecard": true,
+        "alerts": true,
+        "settings": true,
+        "facility_directory": true,
+        "hl7_adt": true,
+        "admin_exports": true,
+        "episode_documents": true,
+        "mar": true,
+        "ereferral": true,
+        "timeline": true,
+        "assignment": true,
+        "handoff": true,
+        "cms_quality": true,
+        "obs_billing": true,
+        "institutional_billing": true,
+        "multi_facility": true,
+        "command_center": true,
+        "mts_triage": true,
+        "al_board": true,
+        "al_care_plan": true,
+        "al_adl": true,
+        "al_incident": true,
+        "al_intake": true,
+        "al_profile": true,
+        "al_vitals": true,
+        "al_fall_risk": true,
+        "al_mar": true,
+        "al_discharge": true,
+        "al_activity": true,
+        "al_handoff": true,
+        "smoke_test": true,
+        "trends": true,
+        "diversion": true,
+        "downtime": true,
+        "care_plan": true,
+        "care_plan_launch": true,
+        "clinical_notes": true,
+        "clinical_notes_launch": true,
+        "clinical_notes_documents": true,
+        "clinical_notes_results": true,
+        "care_team": true,
+        "care_team_launch": true,
+        "ip_board": true,
+        "ip_admission": true,
+        "ip_profile": true,
+        "ip_vitals": true,
+        "ip_discharge": true,
+        "ip_fall_risk": true,
+        "hbc_board": true,
+        "hbc_intake": true,
+        "hbc_profile": true,
+        "hbc_discharge": true,
+        "hbc_visit": true,
+        "hbc_vitals": true,
+        "hbc_fall_risk": true,
+        "hbc_schedule": true,
+        "hbc_handoff": true,
+        "observations": true,
+        "hbc_comm_log": true
+    },
+    "ui": {
+        "bootstrap5_mode": "local"
+    },
+    "migrations": [
+        "table.sql"
+    ],
+    "menus": {
+        "top_label": "Institutional",
+        "items": [
+            {
+                "label": "Context Manager",
+                "url": "/public/context_manager.php",
+                "feature": "context_manager",
+                "group": "Admin",
+                "sort": 10
+            },
+            {
+                "label": "Bed Management",
+                "url": "/public/bed_management.php",
+                "feature": "bed_mgmt",
+                "group": "Admin",
+                "sort": 20
+            },
+            {
+                "label": "ADT Lite",
+                "url": "/public/adt.php",
+                "feature": "adt_lite",
+                "group": "Admin",
+                "sort": 30
+            },
+            {
+                "label": "Facility Directory",
+                "url": "/public/facility_directory.php",
+                "feature": "facility_directory",
+                "group": "Admin",
+                "sort": 40
+            },
+            {
+                "label": "HL7 ADT Log",
+                "url": "/public/hl7_log.php",
+                "feature": "hl7_adt",
+                "group": "Admin",
+                "sort": 50
+            },
+            {
+                "label": "Admin Exports",
+                "url": "/public/admin_exports.php",
+                "feature": "admin_exports",
+                "group": "Admin",
+                "sort": 60
+            },
+            {
+                "label": "Settings",
+                "url": "/public/settings.php",
+                "feature": "settings",
+                "group": "Admin",
+                "sort": 70
+            },
+            {
+                "label": "Resident Board",
+                "url": "/public/al/board.php",
+                "feature": "al_board",
+                "group": "Assisted Living",
+                "sort": 10
+            },
+            {
+                "label": "Resident Intake",
+                "url": "/public/al/intake.php",
+                "feature": "al_intake",
+                "group": "Assisted Living",
+                "sort": 20
+            },
+            {
+                "label": "ADL Tracking",
+                "url": "/public/al/adl.php",
+                "feature": "al_adl",
+                "group": "Assisted Living",
+                "sort": 40
+            },
+            {
+                "label": "Incident Reports",
+                "url": "/public/al/incident.php",
+                "feature": "al_incident",
+                "group": "Assisted Living",
+                "sort": 50
+            },
+            {
+                "label": "Activity Log",
+                "url": "/public/al/activity.php",
+                "feature": "al_activity",
+                "group": "Assisted Living",
+                "sort": 70
+            },
+            {
+                "label": "Shift Handoff",
+                "url": "/public/al/handoff.php",
+                "feature": "al_handoff",
+                "group": "Assisted Living",
+                "sort": 80
+            },
+            {
+                "label": "Patient Intake",
+                "url": "/public/intake.php",
+                "feature": "intake",
+                "group": "Operations",
+                "sort": 10
+            },
+            {
+                "label": "Triage",
+                "url": "/public/triage.php",
+                "feature": "triage",
+                "group": "Operations",
+                "sort": 20
+            },
+            {
+                "label": "Tasks",
+                "url": "/public/tasks.php",
+                "feature": "tasks",
+                "group": "Operations",
+                "sort": 30
+            },
+            {
+                "label": "MAR",
+                "url": "/public/mar.php",
+                "feature": "mar",
+                "group": "Operations",
+                "sort": 40
+            },
+            {
+                "label": "Disposition",
+                "url": "/public/disposition.php",
+                "feature": "disposition",
+                "group": "Operations",
+                "sort": 50
+            },
+            {
+                "label": "eReferral",
+                "url": "/public/ereferral.php",
+                "feature": "ereferral",
+                "group": "Operations",
+                "sort": 60
+            },
+            {
+                "label": "Billing Workbench",
+                "url": "/public/billing_workbench.php",
+                "feature": "institutional_billing",
+                "group": "Operations",
+                "sort": 65
+            },
+            {
+                "label": "Documents",
+                "url": "/public/episode_documents.php",
+                "feature": "episode_documents",
+                "group": "Operations",
+                "sort": 70
+            },
+            {
+                "label": "Staff Assignments",
+                "url": "/public/assignments.php",
+                "feature": "assignment",
+                "group": "Operations",
+                "sort": 80
+            },
+            {
+                "label": "BH Safety",
+                "url": "/public/bh_safety.php",
+                "feature": "bh_safety",
+                "group": "Operations",
+                "sort": 90
+            },
+            {
+                "label": "BH Boarding",
+                "url": "/public/bh_boarding.php",
+                "feature": "bh_boarding",
+                "group": "Operations",
+                "sort": 100
+            },
+            {
+                "label": "Transfers",
+                "url": "/public/transfer_tracking.php",
+                "feature": "transfer_tracking",
+                "group": "Operations",
+                "sort": 110
+            },
+            {
+                "label": "OBS Protocols",
+                "url": "/public/obs_protocols.php",
+                "feature": "obs_protocols",
+                "group": "Protocols",
+                "sort": 10
+            },
+            {
+                "label": "OBS Episodes",
+                "url": "/public/obs_episodes.php",
+                "feature": "obs_episodes",
+                "group": "Protocols",
+                "sort": 20
+            },
+            {
+                "label": "OBS Billing",
+                "url": "/public/obs_billing.php",
+                "feature": "obs_billing",
+                "group": "Protocols",
+                "sort": 30
+            },
+            {
+                "label": "Institutional Quality",
+                "url": "/public/cms_quality.php",
+                "feature": "cms_quality",
+                "group": "Reporting",
+                "sort": 10
+            },
+            {
+                "label": "ED Tracking Board",
+                "url": "/public/ed_board.php",
+                "feature": "edt_board",
+                "group": "Tracking",
+                "sort": 10
+            },
+            {
+                "label": "Charge Nurse Alerts",
+                "url": "/public/alerts.php",
+                "feature": "alerts",
+                "group": "Tracking",
+                "sort": 20
+            },
+            {
+                "label": "Throughput",
+                "url": "/public/throughput.php",
+                "feature": "throughput",
+                "group": "Tracking",
+                "sort": 30
+            },
+            {
+                "label": "Scorecard",
+                "url": "/public/scorecard.php",
+                "feature": "scorecard",
+                "group": "Tracking",
+                "sort": 40
+            },
+            {
+                "label": "Timeline",
+                "url": "/public/timeline.php",
+                "feature": "timeline",
+                "group": "Tracking",
+                "sort": 50
+            },
+            {
+                "label": "Handoff",
+                "url": "/public/handoff.php",
+                "feature": "handoff",
+                "group": "Tracking",
+                "sort": 60
+            },
+            {
+                "label": "Command Center",
+                "url": "/public/command_center.php",
+                "feature": "command_center",
+                "group": "Tracking",
+                "sort": 70
+            },
+            {
+                "label": "Multi-Facility",
+                "url": "/public/multi_facility.php",
+                "feature": "multi_facility",
+                "group": "Tracking",
+                "sort": 80
+            },
+            {
+                "label": "Smoke Tests",
+                "url": "/public/smoke_test.php",
+                "feature": "smoke_test",
+                "menu_id": "smoke_test",
+                "group": "Admin",
+                "sort": 80
+            },
+            {
+                "label": "Floor Board",
+                "url": "/public/ip/board.php",
+                "feature": "ip_board",
+                "group": "Inpatient",
+                "sort": 10
+            },
+            {
+                "label": "Admit Patient",
+                "url": "/public/ip/admission.php",
+                "feature": "ip_admission",
+                "group": "Inpatient",
+                "sort": 20
+            },
+            {
+                "label": "Advanced Feature Overrides",
+                "url": "/public/manifest_editor.php",
+                "feature": "settings",
+                "group": "Admin",
+                "sort": 65
+            },
+            {
+                "label": "Setup Checklist",
+                "url": "/public/onboarding.php",
+                "feature": "settings",
+                "group": "Admin",
+                "sort": 66
+            },
+            {
+                "label": "Help",
+                "url": "/public/help.php",
+                "feature": "settings",
+                "group": "Admin",
+                "sort": 68
+            },
+            {
+                "label": "Shift Summary",
+                "url": "/public/shift_summary.php",
+                "feature": "mar",
+                "group": "Operations",
+                "sort": 45
+            },
+            {
+                "label": "Downtime Mode",
+                "url": "/public/downtime.php",
+                "icon": "wifi-off",
+                "feature": "downtime",
+                "group": "Tracking"
+            },
+            {
+                "label": "Diversion Status",
+                "url": "/public/diversion.php",
+                "feature": "diversion",
+                "group": "Tracking",
+                "sort": 15
+            },
+            {
+                "label": "Operational Trends",
+                "url": "/public/trends.php",
+                "feature": "trends",
+                "group": "Reporting",
+                "sort": 20
+            },
+            {
+                "label": "Visit Board",
+                "url": "/public/hbc/board.php",
+                "feature": "hbc_board",
+                "group": "Home-Based Care",
+                "sort": 10
+            },
+            {
+                "label": "New Referral",
+                "url": "/public/hbc/intake.php",
+                "feature": "hbc_intake",
+                "group": "Home-Based Care",
+                "sort": 20
+            },
+
+
+            {
+                "label": "HBC Handoff",
+                "url": "/public/hbc/handoff.php",
+                "icon": "clipboard-list",
+                "feature": "hbc_handoff",
+                "group": "Home-Based Care"
+            },
+            {
+                "label": "Comm Log",
+                "url": "/public/hbc/comm_log.php",
+                "icon": "telephone",
+                "feature": "hbc_comm_log",
+                "group": "Home-Based Care"
+            },
+            {
+                "label": "Observations",
+                "url": "/public/shared/observations.php",
+                "icon": "broadcast",
+                "feature": "observations",
+                "group": "Tracking",
+                "sort": 55
+            }
+        ],
+        "item_count": 52
+    },
+    "feature_count": 73
 }
+
+
+
+
+
+
+
+
+

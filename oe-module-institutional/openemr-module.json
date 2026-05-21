@@ -1,13 +1,17 @@
 {
-    "name": "Institutional",
+    "name": "oe-module-institutional",
+    "display_name": "Institutional",
     "namespace": "OpenEMR\\Modules\\Institutional",
-    "description": "Institutional workflows (ED/Observation/BH safety) with manifest-driven submodules.",
-    "version": "0.3.0",
-    "author": "OpenEMR Community",
-    "license": "GPL-3.0-or-later",
+    "description": "Institutional workflows \u2014 Emergency Department, Observation Stay, Behavioral Health, and Assisted Living \u2014 with manifest-driven submodules, context-aware menus, and versioned schema migrations.",
+    "version": "0.39.0",
+    "author": "Jerry Padgett",
+    "license": "Private",
     "type": "module",
-    "settings": {
-        "facility_default_id": 1
-    }
+    "min_oe_version": "8.0.0",
+    "php_min": "8.1.0",
+    "acl_section": "admin",
+    "install_sql": "table.sql",
+    "upgrade_sql_dir": "sql/migrations",
+    "setup_class": "OpenEMR\\Modules\\Institutional\\Bootstrap",
+    "setup_method": "subscribeToEvents"
 }
-

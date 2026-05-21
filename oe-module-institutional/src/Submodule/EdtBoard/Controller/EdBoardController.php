@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/EdtBoard/Controller/EdBoardController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\Submodule\EdtBoard\Controller;
@@ -8,6 +20,7 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\Core\Domain\Disposition;
 use OpenEMR\Modules\Institutional\Core\Domain\EpisodeStatus;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
+use OpenEMR\Modules\Institutional\Core\Ui\Flash;
 use OpenEMR\Modules\Institutional\Submodule\AdtLite\Service\AdtService;
 use OpenEMR\Modules\Institutional\Submodule\BedMgmt\Repository\LocationRepository;  // was AdtLite
 use OpenEMR\Modules\Institutional\Submodule\ObsStay\Service\ObsService;
@@ -78,9 +91,16 @@ final class EdBoardController
 
             case 'assign_location':
                 $locIdRaw = (string)($_POST['location_id'] ?? '');
-                $locId    = is_numeric($locIdRaw) && $locIdRaw !== '' ? (int)$locIdRaw : null;
+                $locId = is_numeric($locIdRaw) && $locIdRaw !== '' ? (int)$locIdRaw : null;
                 if ($episodeId > 0 && $pid > 0) {
-                    $this->adtService->assignLocation($episodeId, $pid, $eid, $facilityId, $locId);
+                    try {
+                        $this->adtService->assignLocation($episodeId, $pid, $eid, $facilityId, $locId, 'ROOMED', $userId);
+                        Flash::addSuccess(xlt('Location assigned.'));
+                    } catch (\RuntimeException $e) {
+                        Flash::addError($e->getMessage());
+                    } catch (\Throwable) {
+                        Flash::addError(xlt('Unable to assign location.'));
+                    }
                 }
                 break;
 
@@ -107,3 +127,6 @@ final class EdBoardController
         }
     }
 }
+
+
+

@@ -1,10 +1,22 @@
 <?php
 
+/**
+ * public/scorecard.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\Scorecard\Repository\ScorecardRepository;
-use OpenEMR\Modules\Institutional\Submodule\Scorecard\Service\ScorecardService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Scorecard\Repository\ScorecardRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Scorecard\Service\ScorecardService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('scorecard')) {
     die(xlt('Provider Scorecard is disabled by manifest'));
@@ -106,8 +118,9 @@ $sortLink = fn(string $col, string $label): string =>
     th a { white-space: nowrap; }
     .provider-row:hover { background: #f8f9ff !important; }
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
@@ -331,3 +344,9 @@ document.querySelectorAll('canvas.sparkline').forEach(function(canvas) {
 </script>
 </body>
 </html>
+
+
+
+
+
+

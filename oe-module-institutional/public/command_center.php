@@ -1,14 +1,26 @@
 <?php
 
+/**
+ * public/command_center.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Alerts\Service\AlertService;
-use OpenEMR\Modules\Institutional\Submodule\Alerts\Repository\AlertAckRepository;
-use OpenEMR\Modules\Institutional\Submodule\Cms\Repository\CmsMeasureRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsBilling\Service\ObsBillingService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Service\AlertService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Repository\AlertAckRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\CmsQuality\Repository\CmsMeasureRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsBilling\Service\ObsBillingService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository;
 
 if (!$manifest->featureEnabled('command_center')) {
     die(xlt('Command Center is disabled by manifest'));
@@ -37,7 +49,7 @@ $ackRepo     = new AlertAckRepository();
 $allAlerts   = $alertSvc->computeAll($boardRows, $latestVitals, $facilityId);
 $snoozed      = $ackRepo->activeSnoozed($facilityId);   // array<string,true>
 $activeAlerts = array_values(array_filter($allAlerts, function (array $a) use ($snoozed): bool {
-    $key = \OpenEMR\Modules\Institutional\Submodule\Alerts\Repository\AlertAckRepository::key(
+    $key = \OpenEMR\Modules\Institutional\Shared\Submodule\Alerts\Repository\AlertAckRepository::key(
         (string)($a['type'] ?? ''),
         (int)($a['episode_id'] ?? 0)
     );
@@ -790,7 +802,7 @@ function cc_alert_icon(string $type): string {
     <!-- ── Right: CMS Mini-Gauges ──────────────────────────────────────── -->
     <div class="cc-panel">
       <div class="cc-panel-header">
-        <span class="cc-panel-title">CMS Quality · 30d</span>
+        <span class="cc-panel-title">Institutional Quality · 30d</span>
         <a href="cms_quality.php?facility_id=<?= $facilityId ?>" class="cc-nav-link" style="font-size:10px;">Details →</a>
       </div>
       <div class="cc-panel-body">
@@ -861,7 +873,7 @@ function cc_alert_icon(string $type): string {
     <div class="obs-pill <?= $cls ?>">
       <span class="obs-pill-ep">#<?= (int)$r['episode_id'] ?></span>
       <span class="obs-pill-status"><?= htmlspecialchars($statusText) ?></span>
-      <span class="obs-pill-elapsed"><?= htmlspecialchars(\OpenEMR\Modules\Institutional\Submodule\ObsBilling\Service\ObsBillingService::formatElapsed($r['elapsed_hours'])) ?></span>
+      <span class="obs-pill-elapsed"><?= htmlspecialchars(\OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsBilling\Service\ObsBillingService::formatElapsed($r['elapsed_hours'])) ?></span>
     </div>
     <?php endforeach; ?>
   </div>
@@ -896,3 +908,9 @@ function cc_alert_icon(string $type): string {
 </script>
 </body>
 </html>
+
+
+
+
+
+

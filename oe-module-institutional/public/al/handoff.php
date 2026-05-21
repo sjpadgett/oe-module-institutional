@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/handoff.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/handoff.php — AL Shift Handoff Report
  *
@@ -45,7 +58,7 @@ $vm         = $controller->handle($facilityId, $shift);
 $rows    = $vm['rows'];
 $summary = $vm['summary'];
 
-$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
+$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark';
 
 // Flag icon helpers
 $flagIcons = [
@@ -78,6 +91,7 @@ $dispLabel = [
   <title><?= xlt('AL Shift Handoff') ?> — <?= htmlspecialchars(date('F j, Y')) ?></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
   <style>
     /* ── Screen ─────────────────────────────────────────────── */
     .row-normal  { border-left: 3px solid transparent; }
@@ -121,7 +135,7 @@ $dispLabel = [
       <?php foreach ($shiftLabels as $sk => $sl): ?>
       <a href="?facility_id=<?= $facilityId ?>&shift=<?= $sk ?>"
          class="btn btn-sm btn-outline-secondary shift-btn <?= $sk === $shift ? 'active' : '' ?>">
-        <?= htmlspecialchars($sk === 'day' ? '☀️ Day' : ($sk === 'evening' ? '🌆 Eve' : '🌙 Night')) ?>
+            <?= htmlspecialchars($sk === 'day' ? '☀️ Day' : ($sk === 'evening' ? '🌆 Eve' : '🌙 Night')) ?>
       </a>
       <?php endforeach; ?>
       <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">🖨 <?= xlt('Print') ?></button>
@@ -146,7 +160,7 @@ $dispLabel = [
           ['label' => 'Meds Overdue',    'val' => $summary['total_pending_mar'],   'col' => ($summary['total_pending_mar'] > 0 ? 'danger' : 'success')],
           ['label' => 'D/C Planned',     'val' => $summary['pending_discharges'], 'col' => 'info'],
       ];
-    ?>
+        ?>
     <?php foreach ($summaryItems as $si): ?>
     <div class="col">
       <div class="card text-center py-2">
@@ -189,15 +203,15 @@ $dispLabel = [
               $lastUnit = null;
             ?>
             <?php foreach ($rows as $r): ?>
-              <?php
+                <?php
                 $unit = $r['unit'] ?? '';
                 $sv   = $r['severity'];
                 $rowClass = $sv === 2 ? 'row-alert' : ($sv === 1 ? 'row-caution' : 'row-normal');
                 $cl   = $r['care_level'] ?? 'TIER_1';
                 $fr   = $r['fall_risk_level'] ?? 'LOW';
-              ?>
-              <?php if ($unit !== $lastUnit): ?>
-                <?php $lastUnit = $unit; ?>
+                ?>
+                <?php if ($unit !== $lastUnit): ?>
+                    <?php $lastUnit = $unit; ?>
                 <tr class="table-secondary no-print">
                   <td colspan="11" class="small fw-semibold py-1 px-2">
                     🏢 <?= htmlspecialchars($unit ?: xlt('Unassigned')) ?>
@@ -234,7 +248,7 @@ $dispLabel = [
                   <?php if ($r['fall_risk_level'] ?? ''): ?>
                   <span class="badge bg-<?= $riskBadge[$fr] ?? 'secondary' ?>"
                         title="Score <?= (int)($r['fall_risk_score'] ?? 0) ?>">
-                    <?= htmlspecialchars(substr($fr, 0, 3)) ?>
+                        <?= htmlspecialchars(substr($fr, 0, 3)) ?>
                   </span>
                   <?php else: ?>—<?php endif; ?>
                 </td>
@@ -247,7 +261,7 @@ $dispLabel = [
                   <div class="vitals-str"><?= htmlspecialchars($r['vitals_summary']) ?></div>
                   <?php if ($r['vitals_datetime'] ?? ''): ?>
                   <div style="font-size:.65rem" class="text-muted">
-                    <?= htmlspecialchars(date('M j H:i', strtotime($r['vitals_datetime']))) ?>
+                        <?= htmlspecialchars(date('M j H:i', strtotime($r['vitals_datetime']))) ?>
                   </div>
                   <?php endif; ?>
                 </td>
@@ -255,7 +269,7 @@ $dispLabel = [
                 <!-- ADL -->
                 <td class="text-center small">
                   <?php if ($r['last_adl_score'] !== null): ?>
-                    <?= (int)$r['last_adl_score'] ?>/28
+                        <?= (int)$r['last_adl_score'] ?>/28
                     <div style="font-size:.65rem" class="text-muted"><?= htmlspecialchars($r['adl_label']) ?></div>
                   <?php else: ?>—<?php endif; ?>
                 </td>
@@ -281,13 +295,13 @@ $dispLabel = [
                 <!-- Discharge plan -->
                 <td class="small">
                   <?php if ($r['pending_disposition'] ?? ''): ?>
-                    <?php $dispCode = $r['pending_disposition']; ?>
+                        <?php $dispCode = $r['pending_disposition']; ?>
                     <span class="badge bg-<?= in_array($dispCode, ['HOSPITAL_EVAL','HOSPITAL_TRANSFER']) ? 'danger' : 'secondary' ?>">
-                      <?= htmlspecialchars($dispLabel[$dispCode] ?? $dispCode) ?>
+                        <?= htmlspecialchars($dispLabel[$dispCode] ?? $dispCode) ?>
                     </span>
-                    <?php if ($r['pending_destination'] ?? ''): ?>
+                        <?php if ($r['pending_destination'] ?? ''): ?>
                     <div style="font-size:.65rem" class="text-muted text-truncate" style="max-width:100px">
-                      <?= htmlspecialchars($r['pending_destination']) ?>
+                            <?= htmlspecialchars($r['pending_destination']) ?>
                     </div>
                     <?php endif; ?>
                   <?php else: ?>—<?php endif; ?>
@@ -297,14 +311,14 @@ $dispLabel = [
                 <td>
                   <?php if ($r['care_plan_goal'] ?? ''): ?>
                   <div class="goal-text text-muted">
-                    <?= htmlspecialchars(substr($r['care_plan_goal'], 0, 100)) ?>
-                    <?= strlen($r['care_plan_goal']) > 100 ? '…' : '' ?>
+                        <?= htmlspecialchars(substr($r['care_plan_goal'], 0, 100)) ?>
+                        <?= strlen($r['care_plan_goal']) > 100 ? '…' : '' ?>
                   </div>
                   <?php endif; ?>
                   <?php foreach ($r['flags'] as $fKey => $_): ?>
-                    <?php if (isset($flagIcons[$fKey])): ?>
+                        <?php if (isset($flagIcons[$fKey])): ?>
                     <span class="flag-chip" title="<?= htmlspecialchars($flagIcons[$fKey][1]) ?>">
-                      <?= $flagIcons[$fKey][0] ?> <?= htmlspecialchars(xlt($flagIcons[$fKey][1])) ?>
+                            <?= $flagIcons[$fKey][0] ?> <?= htmlspecialchars(xlt($flagIcons[$fKey][1])) ?>
                     </span>
                     <?php endif; ?>
                   <?php endforeach; ?>
@@ -342,3 +356,9 @@ $dispLabel = [
 </div><!-- /container -->
 </body>
 </html>
+
+
+
+
+
+

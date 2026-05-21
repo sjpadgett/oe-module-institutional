@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/care_plan.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/care_plan.php — AL Care Plan viewer / editor
  *
@@ -9,7 +22,6 @@
 
 require_once __DIR__ . '/../_bootstrap.php';
 
-use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\CarePlan\Controller\CarePlanController;
 
 if (!$manifest->featureEnabled('al_care_plan')) {
@@ -47,15 +59,16 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid p-3">
 <?php
 // AL resident nav — tabs + context strip
-require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php';
 ?>
 <?php if ($data['flash']): ?>
-<div class="alert alert-success py-2"><?= htmlspecialchars($data['flash']) ?></div>
+<div class="alert alert-<?= htmlspecialchars($data['flashType'] ?? 'success') ?> py-2"><?= htmlspecialchars($data['flash']) ?></div>
 <?php endif; ?>
 
 <div class="row g-3">
@@ -70,13 +83,18 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       <ul class="list-group list-group-flush">
         <?php foreach ($data['goals'] as $g): ?>
         <li class="list-group-item">
-          <div class="d-flex justify-content-between">
+          <div class="d-flex justify-content-between align-items-start">
             <span><?= htmlspecialchars($g['description']) ?></span>
-            <span class="badge bg-<?= $g['plan_status'] === 'active' ? 'success' : 'secondary' ?> ms-2">
-              <?= htmlspecialchars($g['plan_status']) ?>
-            </span>
+            <div class="d-flex gap-1 ms-2 flex-shrink-0">
+              <?php if (!empty($g['encounter']) && isset($data['episodeEncounter']) && $g['encounter'] !== $data['episodeEncounter']): ?>
+              <span class="badge bg-info text-dark" title="<?= xlt('Created via OpenEMR') ?>"><?= xlt('OE') ?></span>
+              <?php endif; ?>
+              <span class="badge bg-<?= $g['plan_status'] === 'active' ? 'success' : 'secondary' ?>">
+                <?= htmlspecialchars($g['plan_status']) ?>
+              </span>
+            </div>
           </div>
-          <?php if ($g['proposed_date']): ?>
+            <?php if ($g['proposed_date']): ?>
           <small class="text-muted">Target: <?= htmlspecialchars($g['proposed_date']) ?></small>
           <?php endif; ?>
         </li>
@@ -88,7 +106,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       <!-- Add goal form -->
       <div class="card-footer">
         <form method="POST">
-          <?= CsrfUtils::collectCsrfToken() ?>
+          <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($data['csrf']) ?>">
           <input type="hidden" name="action" value="add_goal">
           <input type="hidden" name="episode_id" value="<?= $episodeId ?>">
           <input type="hidden" name="pid" value="<?= $pid ?>">
@@ -113,13 +131,18 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       <ul class="list-group list-group-flush">
         <?php foreach ($data['activities'] as $a): ?>
         <li class="list-group-item">
-          <div class="d-flex justify-content-between">
+          <div class="d-flex justify-content-between align-items-start">
             <span><?= htmlspecialchars($a['description']) ?></span>
-            <span class="badge bg-<?= $a['plan_status'] === 'active' ? 'primary' : 'secondary' ?> ms-2">
-              <?= htmlspecialchars($a['plan_status']) ?>
-            </span>
+            <div class="d-flex gap-1 ms-2 flex-shrink-0">
+              <?php if (!empty($a['encounter']) && isset($data['episodeEncounter']) && $a['encounter'] !== $data['episodeEncounter']): ?>
+              <span class="badge bg-info text-dark" title="<?= xlt('Created via OpenEMR') ?>"><?= xlt('OE') ?></span>
+              <?php endif; ?>
+              <span class="badge bg-<?= $a['plan_status'] === 'active' ? 'primary' : 'secondary' ?>">
+                <?= htmlspecialchars($a['plan_status']) ?>
+              </span>
+            </div>
           </div>
-          <?php if ($a['proposed_date']): ?>
+            <?php if ($a['proposed_date']): ?>
           <small class="text-muted">By: <?= htmlspecialchars($a['proposed_date']) ?></small>
           <?php endif; ?>
         </li>
@@ -130,7 +153,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       </ul>
       <div class="card-footer">
         <form method="POST">
-          <?= CsrfUtils::collectCsrfToken() ?>
+          <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($data['csrf']) ?>">
           <input type="hidden" name="action" value="add_activity">
           <input type="hidden" name="episode_id" value="<?= $episodeId ?>">
           <input type="hidden" name="pid" value="<?= $pid ?>">
@@ -152,16 +175,16 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
         <strong>👥 <?= xlt('Care Team') ?></strong>
         <?php if ($data['care_team']['team']): ?>
         <span class="small text-muted">
-          <?= htmlspecialchars($data['care_team']['team']['team_name'] ?? '') ?>
+            <?= htmlspecialchars($data['care_team']['team']['team_name'] ?? '') ?>
           &nbsp;·&nbsp;
-          <?= xlt('Updated') ?>
-          <?= htmlspecialchars(date('M j', strtotime($data['care_team']['team']['date_updated']))) ?>
+            <?= xlt('Updated') ?>
+            <?= htmlspecialchars(date('M j', strtotime($data['care_team']['team']['date_updated']))) ?>
         </span>
         <?php endif; ?>
       </div>
       <?php if (empty($data['care_team']['members'])): ?>
         <div class="card-body text-muted small">
-          <?= xlt('No care team on file. Assign via the patient chart Care Teams section.') ?>
+            <?= xlt('No care team on file. Assign via the patient chart Care Teams section.') ?>
         </div>
       <?php else: ?>
       <div class="table-responsive">
@@ -194,7 +217,16 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
   </a>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?= institutional_bootstrap5_js_tag() ?>
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

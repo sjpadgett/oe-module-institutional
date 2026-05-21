@@ -1,14 +1,26 @@
 <?php
 
+/**
+ * public/obs_episode.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ProtocolRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ObsPlanRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Service\ObsProtocolEngine;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Controller\ObsEpisodeController;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ProtocolRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ObsPlanRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Service\ObsProtocolEngine;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Controller\ObsEpisodeController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
 
 if (!$manifest->featureEnabled('obs_protocols')) {
     die(xlt("Institutional Obs Protocols is disabled by manifest"));
@@ -183,8 +195,9 @@ $type = (string)($episodeRow['type'] ?? '');
   <title>Obs Episode</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -286,3 +299,9 @@ $type = (string)($episodeRow['type'] ?? '');
 </div>
 </body>
 </html>
+
+
+
+
+
+

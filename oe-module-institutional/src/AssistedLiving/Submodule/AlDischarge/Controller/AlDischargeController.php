@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/AssistedLiving/Submodule/AlDischarge/Controller/AlDischargeController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Controller;
@@ -7,7 +19,7 @@ namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Con
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Repository\AlDischargeRepository;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
 
 /**
  * AlDischargeController
@@ -186,3 +198,6 @@ final class AlDischargeController
         return [$flash, ''];
     }
 }
+
+
+

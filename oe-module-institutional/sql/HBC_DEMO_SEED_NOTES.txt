@@ -1,0 +1,12 @@
+HBC demo seed summary
+
+Demo patients:
+- PID 60 / Episode 24: NEW referral in HBC queue
+- PID 61 / Episode 25: SCHEDULED first visit with arrival window / route / travel notes
+- PID 62 / Episode 26: ACTIVE HBC case with completed visit history, structured visit fields, vitals, fall risk, tasks, MAR, incident, eReferral, and discharge plan
+
+Main files:
+- institutional-demo-seed-stable-hbc.sql : full seed file with appended HBC section
+- institutional-demo-seed-hbc-upsert.sql : HBC-only idempotent refresh for existing installs
+- institutional_all_source_recorded.txt : recorded source-truth snapshot from this request
+- table_recorded.sql : recorded install schema snapshot from this request

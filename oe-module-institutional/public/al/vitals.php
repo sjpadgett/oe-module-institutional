@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/vitals.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/vitals.php — Periodic Vitals Monitoring (AL)
  *
@@ -32,8 +45,9 @@ $controller = new AlVitalsController();
 $data       = $controller->handle($episodeId, $pid, $facilityId, $userId);
 $patient    = $data['patient'];
 
+$_oei_csrf = CsrfUtils::collectCsrfToken();
 $pageTitle = xlt('Vitals Monitoring');
-$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
+$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark';
 
 $activePage  = 'vitals';
 $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
@@ -44,6 +58,7 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
   <style>
     .vital-card { border-left:3px solid #52b788; }
     .history-table td { font-size:.83rem; }
@@ -54,7 +69,7 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 <div class="container-fluid p-3">
 <?php
 // AL resident nav — tabs + context strip
-require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php';
 ?>
 <!-- Header -->
 <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
@@ -64,7 +79,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       <?php if ($patient): ?>
         — <?= htmlspecialchars($patient['fname'] . ' ' . $patient['lname']) ?>
         <span class="badge bg-secondary ms-1">
-          <?= xlt('Room') ?> <?= htmlspecialchars($patient['room']) ?>
+            <?= xlt('Room') ?> <?= htmlspecialchars($patient['room']) ?>
         </span>
       <?php endif; ?>
     </h5>
@@ -80,7 +95,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
 
 <?php if ($data['flash']): ?>
 <div class="alert alert-<?= str_contains($data['flash'], xlt('Error')) ? 'danger' : (str_contains($data['flash'], xlt('alert')) ? 'warning' : 'success') ?> py-2">
-  <?= htmlspecialchars($data['flash']) ?>
+    <?= htmlspecialchars($data['flash']) ?>
 </div>
 <?php endif; ?>
 
@@ -105,7 +120,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       </div>
       <div class="card-body">
         <form method="POST">
-          <?= CsrfUtils::collectCsrfToken() ?>
+          <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($_oei_csrf) ?>">
           <input type="hidden" name="episode_id" value="<?= $episodeId ?>">
           <input type="hidden" name="pid"        value="<?= $pid ?>">
 
@@ -178,12 +193,12 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
           <div class="fw-semibold text-muted mb-1"><?= xlt('Previous reading') ?>
             (<?= htmlspecialchars(substr($lv['noted_datetime'], 5, 11)) ?>)
           </div>
-          <?php if ($lv['bp_systolic']): ?>
+            <?php if ($lv['bp_systolic']): ?>
           <div>BP <?= $lv['bp_systolic'] ?>/<?= $lv['bp_diastolic'] ?> · HR <?= $lv['hr'] ?></div>
           <?php endif; ?>
-          <?php if ($lv['spo2']): ?>
+            <?php if ($lv['spo2']): ?>
           <div>SpO₂ <?= $lv['spo2'] ?>%
-            <?php if ($lv['weight_kg']): ?> · Wt <?= number_format($lv['weight_kg'], 1) ?> kg<?php endif; ?>
+                <?php if ($lv['weight_kg']): ?> · Wt <?= number_format($lv['weight_kg'], 1) ?> kg<?php endif; ?>
           </div>
           <?php endif; ?>
         </div>
@@ -226,19 +241,19 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
           <tr>
             <td class="text-nowrap"><?= htmlspecialchars(substr($v['noted_datetime'], 0, 16)) ?></td>
             <td class="<?= ($v['bp_systolic'] !== null && ($v['bp_systolic'] > 160 || $v['bp_systolic'] < 90)) ? 'text-danger fw-semibold' : '' ?>">
-              <?= $v['bp_systolic'] !== null ? $v['bp_systolic'] . '/' . $v['bp_diastolic'] : '—' ?>
+                <?= $v['bp_systolic'] !== null ? $v['bp_systolic'] . '/' . $v['bp_diastolic'] : '—' ?>
             </td>
             <td class="<?= ($v['hr'] !== null && ($v['hr'] > 100 || $v['hr'] < 50)) ? 'text-danger' : '' ?>">
-              <?= $v['hr'] ?? '—' ?>
+                <?= $v['hr'] ?? '—' ?>
             </td>
             <td class="<?= ($v['spo2'] !== null && $v['spo2'] < 93) ? 'text-danger fw-semibold' : '' ?>">
-              <?= $v['spo2'] !== null ? $v['spo2'] . '%' : '—' ?>
+                <?= $v['spo2'] !== null ? $v['spo2'] . '%' : '—' ?>
             </td>
             <td><?= $v['weight_kg'] !== null ? number_format($v['weight_kg'], 1) : '—' ?></td>
             <td><?= $v['rr'] ?? '—' ?></td>
             <td><?= $v['temp_f'] !== null ? number_format($v['temp_f'], 1) . '°' : '—' ?></td>
             <td class="text-muted" style="max-width:180px;white-space:normal;">
-              <?= htmlspecialchars(mb_strimwidth($v['notes'], 0, 60, '…')) ?>
+                <?= htmlspecialchars(mb_strimwidth($v['notes'], 0, 60, '…')) ?>
             </td>
           </tr>
           <?php endforeach; ?>
@@ -310,3 +325,12 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

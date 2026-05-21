@@ -1,8 +1,20 @@
 <?php
 
+/**
+ * public/obs_billing.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\ObsBilling\Service\ObsBillingService;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsBilling\Service\ObsBillingService;
 
 if (!$manifest->featureEnabled('obs_billing')) {
     die(xlt('Observation Billing Flags is disabled by manifest'));
@@ -65,8 +77,9 @@ function midnight_pips(int $count): string
     .rule-note { border-left: 4px solid #0d6efd; background: #f0f6ff; }
     .progress-midnight { height: 8px; border-radius: 4px; }
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
@@ -77,7 +90,7 @@ function midnight_pips(int $count): string
     </div>
     <div class="d-flex gap-2">
       <a class="btn btn-sm btn-outline-secondary" href="obs_episodes.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('Obs Episodes') ?></a>
-      <a class="btn btn-sm btn-outline-secondary" href="cms_quality.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('CMS Measures') ?></a>
+      <a class="btn btn-sm btn-outline-secondary" href="cms_quality.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('Institutional Quality') ?></a>
     </div>
   </div>
 
@@ -222,3 +235,12 @@ function midnight_pips(int $count): string
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

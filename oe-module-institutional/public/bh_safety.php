@@ -1,13 +1,25 @@
 <?php
 
+/**
+ * public/bh_safety.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
-use OpenEMR\Modules\Institutional\Submodule\BhSafety\Repository\BhSafetyRepository;
-use OpenEMR\Modules\Institutional\Submodule\BhSafety\Service\BhSafetyService;
-use OpenEMR\Modules\Institutional\Submodule\BhSafety\Controller\BhSafetyController;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhSafety\Repository\BhSafetyRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhSafety\Service\BhSafetyService;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhSafety\Controller\BhSafetyController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
 
 if (!$manifest->featureEnabled('bh_safety')) {
     die(xlt("Institutional BH Safety is disabled by manifest"));
@@ -39,6 +51,8 @@ if (is_string($data) && $data !== '') {
         }
     }
 }
+$_bhsPids = array_values(array_unique(array_filter(array_map(fn($r)=>(int)($r['pid']??0), $data['rows']??[]))));
+$_bhsPatientNames = oei_patient_names($_bhsPids);
 $href = institutional_bootstrap5_href($manifest);
 ?>
 <!doctype html>
@@ -48,8 +62,9 @@ $href = institutional_bootstrap5_href($manifest);
   <title>BH Safety</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -69,7 +84,7 @@ $href = institutional_bootstrap5_href($manifest);
           <tr>
             <th><?= xlt("Updated") ?></th>
             <th><?= xlt("Episode") ?></th>
-            <th><?= xlt("PID") ?></th>
+            <th><?= xlt('Patient') ?></th>
             <th><?= xlt("Level") ?></th>
             <th><?= xlt("Invol") ?></th>
             <th><?= xlt("Violence") ?></th>
@@ -82,7 +97,7 @@ $href = institutional_bootstrap5_href($manifest);
           <tr>
             <td><?= htmlspecialchars((string)$r['updated_datetime']) ?></td>
             <td><?= htmlspecialchars((string)$r['episode_id']) ?></td>
-            <td><?= htmlspecialchars((string)$r['pid']) ?></td>
+            <td><?= oei_fmt_patient((int)($r['pid']??0), $_bhsPatientNames) ?></td>
             <td><span class="badge text-bg-warning"><?= htmlspecialchars((string)$r['observation_level']) ?></span></td>
             <td><?= !empty($r['is_involuntary']) ? 'Y' : '' ?></td>
             <td><?= !empty($r['risk_violence']) ? 'Y' : '' ?></td>
@@ -101,3 +116,12 @@ $href = institutional_bootstrap5_href($manifest);
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

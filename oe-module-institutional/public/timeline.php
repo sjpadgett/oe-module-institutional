@@ -1,11 +1,23 @@
 <?php
 
+/**
+ * public/timeline.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Timeline\Controller\TimelineController;
-use OpenEMR\Modules\Institutional\Submodule\Timeline\Repository\TimelineRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Timeline\Controller\TimelineController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Timeline\Repository\TimelineRepository;
 
 if (!$manifest->featureEnabled('timeline')) {
     die(xlt("Episode Timeline is disabled by manifest"));
@@ -18,6 +30,8 @@ $episodeId  = isset($_GET['episode_id']) && is_numeric($_GET['episode_id'])
 $controller = new TimelineController(new EpisodeRepository(), new TimelineRepository());
 $data       = $controller->handle($facilityId, $episodeId);
 
+$_tlPids = array_values(array_unique(array_filter(array_map(fn($e)=>(int)($e['pid']??0), $data['boardRows']??[]))));
+$_tlPatientNames = oei_patient_names($_tlPids);
 $href = institutional_bootstrap5_href($manifest);
 
 // ── helpers ───────────────────────────────────────────────────────────────────
@@ -104,8 +118,9 @@ function tl_elapsed(string $dt1, string $dt2): string {
     .tl-gap   { font-size: .7rem; color: #adb5bd; padding: .15rem 0 .15rem 2.25rem; }
     .source-badge { font-size: .65rem; }
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
@@ -137,7 +152,7 @@ function tl_elapsed(string $dt1, string $dt2): string {
              href="timeline.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$eId) ?>">
             <div class="d-flex justify-content-between align-items-start">
               <div>
-                <div class="fw-semibold small">#<?= htmlspecialchars((string)$eId) ?> &middot; PID <?= htmlspecialchars((string)$e['pid']) ?></div>
+                <div class="fw-semibold small">#<?= htmlspecialchars((string)$eId) ?> <?= oei_fmt_patient((int)($e['pid']??0), $_tlPatientNames) ?></div>
                 <div class="small opacity-75 text-truncate" style="max-width:160px;">
                   <?= htmlspecialchars((string)($e['chief_complaint'] ?? '')) ?>
                 </div>
@@ -269,3 +284,12 @@ function tl_elapsed(string $dt1, string $dt2): string {
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

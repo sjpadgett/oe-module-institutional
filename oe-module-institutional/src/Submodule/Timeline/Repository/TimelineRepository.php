@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Timeline/Repository/TimelineRepository.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\Timeline\Repository;
 
 /**
@@ -365,3 +377,6 @@ final class TimelineRepository
         return (int)($row['c'] ?? 0) > 0;
     }
 }
+
+
+

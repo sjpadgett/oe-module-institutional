@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Hl7Adt/Builder/AdtMessageBuilder.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\Hl7Adt\Builder;
 
 /**
@@ -431,5 +443,8 @@ final class AdtMessageBuilder
         return 'OEI' . date('YmdHis') . sprintf('%04d', random_int(0, 9999));
     }
 }
+
+
+
 
 

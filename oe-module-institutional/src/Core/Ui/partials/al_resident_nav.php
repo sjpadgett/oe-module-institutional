@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * src/Core/Ui/partials/al_resident_nav.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * al_resident_nav.php — Shared resident context strip for all AL sub-pages.
  *
@@ -95,7 +108,7 @@ $activeLabel = $pageTabMap[$activePage] ?? '';
       <span class="fw-semibold"><?= htmlspecialchars($navName) ?></span>
       <?php if ($navRoom || $navUnit): ?>
         <span class="text-muted small">
-          <?= htmlspecialchars($navUnit) ?><?= ($navUnit && $navRoom) ? ' / ' : '' ?><?= htmlspecialchars($navRoom) ?>
+            <?= htmlspecialchars($navUnit) ?><?= ($navUnit && $navRoom) ? ' / ' : '' ?><?= htmlspecialchars($navRoom) ?>
         </span>
       <?php endif; ?>
       <span class="badge bg-<?= $clBadge[$navCL] ?? 'secondary' ?>">
@@ -115,8 +128,8 @@ $activeLabel = $pageTabMap[$activePage] ?? '';
   <!-- Tab row -->
   <div class="oei-al-nav-tabs d-flex flex-wrap gap-1 px-3 pb-2">
     <?php foreach ($navTabs as [$feature, $label, $icon, $url]): ?>
-      <?php if (!$manifest->featureEnabled($feature)): continue; endif; ?>
-      <?php $isActive = ($label === $activeLabel); ?>
+        <?php if (!$manifest->featureEnabled($feature)): continue; endif; ?>
+        <?php $isActive = ($label === $activeLabel); ?>
       <a href="<?= htmlspecialchars($url) ?>"
          class="oei-al-tab <?= $isActive ? 'oei-al-tab-active' : '' ?>">
         <?= $icon ?> <?= $label ?>
@@ -173,3 +186,6 @@ $activeLabel = $pageTabMap[$activePage] ?? '';
 }
 .oei-fr-badge { font-size: .68rem; }
 </style>
+
+
+

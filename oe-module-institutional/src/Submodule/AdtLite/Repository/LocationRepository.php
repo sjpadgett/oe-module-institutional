@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/AdtLite/Repository/LocationRepository.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\AdtLite\Repository;
 
 /**
@@ -82,6 +94,24 @@ final class LocationRepository
         $slug = substr($slug ?: 'LOC', 0, 8);
         return $slug . sprintf('%03d', random_int(0, 999));
     }
+
+    /**
+     * Find a single location by id.
+     * Used by AdtService for HL7 A02 notification payload.
+     * @return array<string,mixed>|null
+     */
+    public function findById(int $id): ?array
+    {
+        if (!function_exists('sqlQuery')) return null;
+        $row = sqlQuery(
+            "SELECT id, code, name, location_type, unit_name, sort_order, notes
+             FROM oei_location WHERE id = ? LIMIT 1",
+            [$id]
+        );
+        return $row ?: null;
+    }
+
 }
+
 
 

@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/EReferral/Controller/EReferralController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\Submodule\EReferral\Controller;
@@ -10,6 +22,7 @@ use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\DispositionRe
 use OpenEMR\Modules\Institutional\Submodule\EReferral\Repository\EReferralRepository;
 use OpenEMR\Modules\Institutional\Submodule\EReferral\Service\EReferralService;
 use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Repository\MarOrderRepository;
 
 /**
  * E-Referral Controller.
@@ -109,6 +122,7 @@ final class EReferralController
 
         $directory = $this->directoryRepo->listActive($facilityId);
 
+        $pid2 = (int)($episode['pid'] ?? 0);
         return [
             'episode'     => $episode,
             'episode_id'  => $episodeId,
@@ -116,6 +130,7 @@ final class EReferralController
             'referral'    => $referral,
             'disposition' => $disposition,
             'directory'   => $directory,
+            'allergies'   => $this->service->fetchAllergies($pid2),
             'csrf'        => CsrfUtils::collectCsrfToken(),
             'message'     => $message,
             'error'       => $error,
@@ -146,3 +161,9 @@ final class EReferralController
         return $row ?: null;
     }
 }
+
+
+
+
+
+

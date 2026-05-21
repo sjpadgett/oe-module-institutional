@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * src/Submodule/Intake/Controller/IntakeController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\Intake\Controller;
 
 use OpenEMR\Common\Csrf\CsrfUtils;
@@ -46,5 +59,8 @@ final class IntakeController
         ];
     }
 }
+
+
+
 
 

@@ -1,12 +1,24 @@
 <?php
 
+/**
+ * public/triage.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Repository\TriageRepository;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService;
-use OpenEMR\Modules\Institutional\Submodule\Triage\Controller\TriageController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Repository\TriageRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Controller\TriageController;
 
 if (!$manifest->featureEnabled('triage')) {
     die(xlt('Triage is disabled by manifest'));
@@ -38,6 +50,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (int)($data['episodeId'] ?? 0) > 0)
     exit;
 }
 
+$_trigPids = array_values(array_unique(array_filter([
+    (int)($data['selected']['pid'] ?? 0),
+    ...array_map(fn($e)=>(int)($e['pid']??0), $data['boardRows']??[])
+])));
+$_trigPatientNames = oei_patient_names($_trigPids);
 $href = institutional_bootstrap5_href($manifest);
 
 /** Format a nullable numeric value for display, with optional unit */
@@ -52,7 +69,7 @@ function tv(mixed $v, string $unit = ''): string
 /** Map severity to Bootstrap badge class */
 function vitalsBadge(array $row): string
 {
-    $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($row);
+    $sev = \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService::boardSeverity($row);
     return match ($sev) {
         'danger'  => 'text-bg-danger',
         'warning' => 'text-bg-warning',
@@ -79,8 +96,9 @@ $latest    = $data['latest'];
     .trend-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0 1px; }
     <?= $triageStandard->cssRules() ?>
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
@@ -121,7 +139,7 @@ $latest    = $data['latest'];
                href="triage.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$eId) ?>">
               <div class="d-flex justify-content-between align-items-start">
                 <div>
-                  <div class="fw-semibold small">#<?= htmlspecialchars((string)$eId) ?> &middot; PID <?= htmlspecialchars((string)$e['pid']) ?></div>
+                  <div class="fw-semibold small">#<?= htmlspecialchars((string)$eId) ?> <?= oei_fmt_patient((int)($e['pid']??0), $_trigPatientNames) ?></div>
                   <div class="small opacity-75 text-truncate" style="max-width: 160px;">
                     <?= htmlspecialchars((string)($e['chief_complaint'] ?? '')) ?>
                   </div>
@@ -151,10 +169,10 @@ $latest    = $data['latest'];
 
       <!-- Latest vitals summary banner -->
           <?php if ($latest): ?>
-                <?php $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($latest); ?>
+                <?php $sev = \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService::boardSeverity($latest); ?>
         <div class="alert <?= $sev === 'danger' ? 'alert-danger' : ($sev === 'warning' ? 'alert-warning' : 'alert-secondary') ?> py-2 mb-3 d-flex align-items-center gap-3 flex-wrap">
           <strong><?= xlt('Latest') ?>:</strong>
-          <span><?= \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::formatForBoard($latest) ?></span>
+          <span><?= \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService::formatForBoard($latest) ?></span>
                 <?php if (!empty($latest['pain_score'])): ?>
             <span class="badge text-bg-secondary"><?= xlt('Pain') ?> <?= htmlspecialchars((string)$latest['pain_score']) ?>/10</span>
           <?php endif; ?>
@@ -170,7 +188,7 @@ $latest    = $data['latest'];
         <div class="card-header d-flex align-items-center justify-content-between">
           <span><?= xlt('Record Vitals') ?> &mdash; <?= xlt('Episode') ?> #<?= htmlspecialchars((string)$episodeId) ?></span>
           <?php if ($selected): ?>
-            <span class="text-muted small"><?= xlt('PID') ?> <?= htmlspecialchars((string)$selected['pid']) ?></span>
+            <span class="text-muted small"><?= oei_fmt_patient((int)($data['selected']['pid']??0), $_trigPatientNames) ?></span>
           <?php endif; ?>
         </div>
         <div class="card-body">
@@ -316,7 +334,7 @@ $latest    = $data['latest'];
             </thead>
             <tbody>
             <?php foreach (array_reverse($history) as $row):
-                $sev = \OpenEMR\Modules\Institutional\Submodule\Triage\Service\TriageService::boardSeverity($row);
+                $sev = \OpenEMR\Modules\Institutional\Shared\Submodule\Triage\Service\TriageService::boardSeverity($row);
                 $trClass = $sev === 'danger' ? 'set-row-critical' : ($sev === 'warning' ? 'set-row-warning' : '');
                 ?>
               <tr class="<?= $trClass ?>">
@@ -396,3 +414,12 @@ $latest    = $data['latest'];
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

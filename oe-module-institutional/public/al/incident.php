@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/incident.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/incident.php — AL Incident Reports
  *
@@ -24,6 +37,7 @@ $episodeId  = (int)($_GET['episode_id'] ?? 0);
 $controller = new IncidentController();
 $data = $controller->handle($facilityId, $userId);
 
+$_oei_csrf = CsrfUtils::collectCsrfToken();
 $pageTitle = xlt('Incident Reports');
 
 $activePage  = 'incident';
@@ -35,12 +49,13 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid p-3">
 <?php
 // AL resident nav — tabs + context strip
-require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php';
 ?>
 <?php if ($data['flash']): ?>
 <div class="alert alert-success py-2"><?= htmlspecialchars($data['flash']) ?></div>
@@ -83,7 +98,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       </td>
       <td>
         <span class="badge bg-<?= match($inc['severity']){
-          'CRITICAL'=>'danger','HIGH'=>'warning','MODERATE'=>'info',default=>'secondary'} ?>">
+            'CRITICAL'=>'danger','HIGH'=>'warning','MODERATE'=>'info',default=>'secondary'} ?>">
           <?= htmlspecialchars($inc['severity']) ?>
         </span>
       </td>
@@ -92,7 +107,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
           <span class="text-success">✔ <?= xlt('Sent') ?></span>
         <?php elseif ($inc['mandatory_required']): ?>
           <form method="POST" class="d-inline">
-            <?= CsrfUtils::collectCsrfToken() ?>
+            <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($_oei_csrf) ?>">
             <input type="hidden" name="action" value="mark_reported">
             <input type="hidden" name="incident_id" value="<?= (int)$inc['id'] ?>">
             <button class="btn btn-xs btn-warning btn-sm py-0"><?= xlt('Mark Sent') ?></button>
@@ -118,7 +133,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <form method="POST">
-        <?= CsrfUtils::collectCsrfToken() ?>
+        <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($_oei_csrf) ?>">
         <input type="hidden" name="action" value="create">
         <div class="modal-body row g-3">
           <div class="col-md-6">
@@ -133,8 +148,8 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
               <option value=""><?= xlt('— Select —') ?></option>
               <?php foreach ($data['incident_types'] as $type): ?>
               <option value="<?= htmlspecialchars($type) ?>">
-                <?= htmlspecialchars(IncidentType::label($type)) ?>
-                <?= IncidentType::requiresMandatoryReport($type) ? ' ⚠' : '' ?>
+                    <?= htmlspecialchars(IncidentType::label($type)) ?>
+                    <?= IncidentType::requiresMandatoryReport($type) ? ' ⚠' : '' ?>
               </option>
               <?php endforeach; ?>
             </select>
@@ -178,7 +193,16 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?= institutional_bootstrap5_js_tag() ?>
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * src/AssistedLiving/Submodule/IncidentReport/Service/IncidentService.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\IncidentReport\Service;
 
@@ -37,3 +50,6 @@ final class IncidentService
     public function incidentTypes(): array { return IncidentType::all(); }
     public function typeLabel(string $t): string { return IncidentType::label($t); }
 }
+
+
+

@@ -1,13 +1,25 @@
 <?php
 
+/**
+ * public/bh_safety_set.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 use OpenEMR\Common\Csrf\CsrfUtils;
-use OpenEMR\Modules\Institutional\Submodule\BhSafety\Repository\BhSafetyRepository;
-use OpenEMR\Modules\Institutional\Submodule\BhSafety\Service\BhSafetyService;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhSafety\Repository\BhSafetyRepository;
+use OpenEMR\Modules\Institutional\BehavioralHealth\Submodule\BhSafety\Service\BhSafetyService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header("Location: ed_board.php");
@@ -41,3 +53,6 @@ $bhService->setBhSafety($episodeId, $pid, $eid, $facilityId, $level, 0, 0, 0, 0,
 
 header("Location: ed_board.php?facility_id=" . urlencode((string)$facilityId));
 exit;
+
+
+

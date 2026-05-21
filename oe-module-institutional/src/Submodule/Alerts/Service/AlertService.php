@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Alerts/Service/AlertService.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\Alerts\Service;
 
 use OpenEMR\Modules\Institutional\Submodule\Mar\Repository\MarAdministrationRepository;
@@ -580,5 +592,8 @@ final class AlertService
         return ['critical' => $critical, 'warning' => $warning, 'by_group' => $byGroup];
     }
 }
+
+
+
 
 

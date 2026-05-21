@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/MultiFacility/Repository/MultiFacilityRepository.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\Submodule\MultiFacility\Repository;
@@ -247,79 +259,41 @@ final class MultiFacilityRepository
     /**
      * Build the list of facilities to show on the dashboard.
      *
-     * Discovery:  DISTINCT facility_id from oei_episode  (always our data)
-     * Naming tier 1:  oei_settings facility_name  (set via our Settings page)
-     * Naming tier 2:  OpenEMR facility table  (if available, inactive=0)
-     * Naming tier 3:  "Facility N"  (always works)
+     * Primary source: active OpenEMR facilities with Institutional profiles
+     * or existing Institutional data. This keeps facilities visible even
+     * before they have live census data.
      *
      * @return array<int,array{id:int,name:string}>
      */
     private function loadFacilityList(): array
     {
-        // ── Step 1: discover all facility IDs from our own episode data ───────
-        $res = sqlStatement(
-            "SELECT DISTINCT facility_id AS id
-             FROM oei_episode
-             ORDER BY facility_id ASC"
+        $profiles = new \OpenEMR\Modules\Institutional\Core\Service\FacilityProfileService(
+            new \OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository()
         );
-        $facilityIds = [];
-        while ($r = sqlFetchArray($res)) {
-            $facilityIds[] = (int)$r['id'];
-        }
 
-        if (empty($facilityIds)) {
+        $facilities = $profiles->listInstitutionalFacilities();
+        if (empty($facilities)) {
             return [];
         }
 
-        // ── Step 2: load names from oei_settings (facility_name key) ─────────
-        $placeholders = implode(',', array_fill(0, count($facilityIds), '?'));
-        $res = sqlStatement(
-            "SELECT facility_id, setting_value
-             FROM oei_settings
-             WHERE setting_key = 'facility_name'
-               AND setting_value != ''
-               AND facility_id IN ({$placeholders})",
-            $facilityIds
-        );
-        $nameMap = [];
-        while ($r = sqlFetchArray($res)) {
-            $nameMap[(int)$r['facility_id']] = (string)$r['setting_value'];
-        }
-
-        // ── Step 3: fill remaining from OpenEMR facility table (optional) ─────
-        $needNames = array_diff($facilityIds, array_keys($nameMap));
-        if (!empty($needNames)) {
-            $checkTable = sqlQuery(
-                "SELECT COUNT(*) AS c
-                 FROM information_schema.tables
-                 WHERE table_schema = DATABASE() AND table_name = 'facility'
-                 LIMIT 1"
-            );
-            if ((int)($checkTable['c'] ?? 0) > 0) {
-                $ph2 = implode(',', array_fill(0, count($needNames), '?'));
-                $res = sqlStatement(
-                    "SELECT id, name FROM facility
-                     WHERE inactive = 0 AND id IN ({$ph2})
-                     ORDER BY name ASC",
-                    array_values($needNames)
-                );
-                while ($r = sqlFetchArray($res)) {
-                    $nameMap[(int)$r['id']] = (string)$r['name'];
-                }
-            }
-        }
-
-        // ── Step 4: assemble final list, "Facility N" for anything still unresolved
         $result = [];
-        foreach ($facilityIds as $fid) {
+        foreach ($facilities as $facility) {
+            $fid = (int)($facility['id'] ?? 0);
+            if ($fid <= 0) {
+                continue;
+            }
             $result[] = [
                 'id'   => $fid,
-                'name' => $nameMap[$fid] ?? 'Facility ' . $fid,
+                'name' => (string)($facility['display_name'] ?? $facility['name'] ?? ('Facility ' . $fid)),
             ];
         }
 
         return $result;
     }
+
 }
+
+
+
 
 

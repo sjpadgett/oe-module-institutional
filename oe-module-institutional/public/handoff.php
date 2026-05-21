@@ -1,11 +1,23 @@
 <?php
 
+/**
+ * public/handoff.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\Handoff\Controller\HandoffController;
-use OpenEMR\Modules\Institutional\Submodule\Handoff\Repository\HandoffRepository;
-use OpenEMR\Modules\Institutional\Submodule\Handoff\Service\HandoffService;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Handoff\Controller\HandoffController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Handoff\Repository\HandoffRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Handoff\Service\HandoffService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('handoff')) {
     die(xlt('Handoff Report is disabled by manifest'));
@@ -57,6 +69,16 @@ $href = institutional_bootstrap5_href($manifest);
       .qsofa-3 { background: #f8d7da; }
       .task-overdue { color: #dc3545; font-weight: 600; }
       .mar-pending { color: #856404; font-weight: 600; }
+      .mar-badges { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
+      .mar-meta { font-size:.7rem; color:#6c757d; line-height:1.2; margin-top:2px; }
+      .mar-chip { display:inline-block; padding:.1rem .35rem; border-radius:999px; font-size:.65rem; font-weight:600; }
+      .mar-chip.pending { background:#fff3cd; color:#664d03; }
+      .mar-chip.cosign { background:#f8d7da; color:#842029; }
+      .mar-chip.follow { background:#212529; color:#fff; }
+      .mar-chip.given { background:#d1e7dd; color:#0f5132; }
+      .mar-chip.held { background:#fff3cd; color:#664d03; }
+      .mar-chip.refused, .mar-chip.missed { background:#f8d7da; color:#842029; }
+      .mar-chip.na { background:#e2e3e5; color:#41464b; }
       .sep-row { background: #f0f4ff; font-size: .7rem; color: #6c757d; text-transform: uppercase; letter-spacing: .06em; }
       .vitals-age { font-size: .7rem; color: #6c757d; display: block; }
       <?= $triageStandard->cssRules() ?>
@@ -73,6 +95,12 @@ $href = institutional_bootstrap5_href($manifest);
         <button class="btn btn-light btn-sm" onclick="window.print()">🖨 <?= xlt('Print') ?></button>
         <a class="btn btn-outline-light btn-sm"
            href="ed_board.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('ED Board') ?></a>
+        <?php if ($manifest->featureEnabled('ip_board')): ?>
+        <a class="btn btn-outline-light btn-sm"
+           href="ip/board.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('Floor Board') ?></a>
+        <?php endif; ?>
+        <a class="btn btn-outline-light btn-sm"
+           href="shift_summary.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('Shift Summary') ?></a>
         <a class="btn btn-outline-light btn-sm"
            href="handoff.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('Refresh') ?></a>
     </div>
@@ -101,13 +129,20 @@ $href = institutional_bootstrap5_href($manifest);
             <?php if ($summary['overdue_tasks'] > 0): ?>
                 <span class="badge text-bg-danger"><?= $summary['overdue_tasks'] ?> <?= xlt('Tasks Overdue') ?></span>
             <?php endif; ?>
+            <?php if (($summary['cosign_needed'] ?? 0) > 0): ?>
+                <span class="badge text-bg-danger"><?= (int)$summary['cosign_needed'] ?> <?= xlt('Co-Sign Needed') ?></span>
+            <?php endif; ?>
+            <?php if (($summary['mar_followup'] ?? 0) > 0): ?>
+                <span class="badge text-bg-dark"><?= (int)$summary['mar_followup'] ?> <?= xlt('MAR Follow-Up') ?></span>
+            <?php endif; ?>
         </div>
 
         <div class="table-responsive">
             <table class="table table-bordered table-sm handoff-table align-middle">
                 <thead>
                 <tr>
-                    <th style="width:60px;"><?= xlt('Room') ?></th>
+                    <th style="width:70px;"><?= xlt('Room/Bed') ?></th>
+                    <th style="width:50px;"><?= xlt('Type') ?></th>
                     <th style="width:60px;"><?= xlt('Episode') ?></th>
                     <th style="width:50px;"><?= htmlspecialchars($triageStandard->columnLabel()) ?></th>
                     <th style="width:50px;"><?= xlt('Time') ?></th>
@@ -116,7 +151,7 @@ $href = institutional_bootstrap5_href($manifest);
                     <th style="min-width:240px;"><?= xlt('Last Vitals') ?></th>
                     <th style="width:80px;"><?= xlt('qSOFA') ?></th>
                     <th><?= xlt('Next Task') ?></th>
-                    <th style="width:60px;"><?= xlt('MAR') ?></th>
+                    <th style="min-width:170px;"><?= xlt('MAR') ?></th>
                     <th><?= xlt('Nurse') ?></th>
                     <th><?= xlt('Provider') ?></th>
                 </tr>
@@ -125,7 +160,10 @@ $href = institutional_bootstrap5_href($manifest);
                 <?php
                 $lastRoom = null;
                 foreach ($rows as $r):
-                    $room   = (string)($r['location_name'] ?? '');
+                    $isIp   = ((string)($r['type'] ?? '')) === 'IP';
+                    $room   = $isIp
+                        ? trim((string)($r['ip_unit'] ?? '') . ($r['ip_bed'] ? ' / ' . $r['ip_bed'] : ''))
+                        : (string)($r['location_name'] ?? '');
                     $qsofa  = $service->qsofa($r);
                     $rowCls = match (true) {
                         $qsofa >= 3 => 'qsofa-3',
@@ -137,14 +175,28 @@ $href = institutional_bootstrap5_href($manifest);
                         $lastRoom = $room;
                         ?>
                         <tr class="sep-row">
-                            <td colspan="12"><?= $room !== '' ? htmlspecialchars($room) : xlt('Unassigned') ?></td>
+                            <td colspan="13"><?= $room !== '' ? htmlspecialchars($room) : xlt('Unassigned') ?></td>
                         </tr>
                     <?php endif; ?>
 
                     <tr class="<?= $rowCls ?>">
                         <td class="fw-semibold"><?= htmlspecialchars($room ?: '—') ?></td>
+                        <td class="text-center">
+                            <?php if ($isIp): ?>
+                                <span class="badge text-bg-info" style="font-size:.65rem;">IP</span>
+                            <?php elseif ((string)($r['type'] ?? '') === 'OBS'): ?>
+                                <span class="badge text-bg-success" style="font-size:.65rem;">OBS</span>
+                            <?php else: ?>
+                                <span class="badge text-bg-secondary" style="font-size:.65rem;">ED</span>
+                            <?php endif; ?>
+                        </td>
                         <td>
-                            <a href="ed_board.php?facility_id=<?= urlencode((string)$facilityId) ?>#ep<?= (int)$r['id'] ?>"
+                            <?php
+                            $epUrl = $isIp
+                                ? 'ip/board.php?facility_id=' . urlencode((string)$facilityId)
+                                : 'ed_board.php?facility_id=' . urlencode((string)$facilityId);
+                            ?>
+                            <a href="<?= $epUrl ?>#ep<?= (int)$r['id'] ?>"
                                class="no-print text-decoration-none">#<?= (int)$r['id'] ?></a>
                             <span class="d-none d-print-inline">#<?= (int)$r['id'] ?></span>
                             <div class="text-muted" style="font-size:.7rem;">PID <?= (int)$r['pid'] ?></div>
@@ -201,11 +253,43 @@ $href = institutional_bootstrap5_href($manifest);
                                 <span class="text-muted">—</span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-center">
-                            <?php $mc = (int)($r['pending_mar_count'] ?? 0); ?>
-                            <?php if ($mc > 0): ?>
-                                <span class="badge text-bg-warning text-dark mar-pending"><?= $mc ?></span>
-                            <?php else: ?>
+                        <td>
+                            <?php
+                            $mc       = (int)($r['pending_mar_count'] ?? 0);
+                            $cosign   = (int)($r['awaiting_cosign_count'] ?? 0);
+                            $follow   = (int)($r['mar_followup_count'] ?? 0);
+                            $lastDrug = trim((string)($r['last_mar_drug'] ?? ''));
+                            $lastWhen = trim((string)($r['last_mar_datetime'] ?? ''));
+                            $lastOut  = strtoupper(trim((string)($r['last_mar_outcome'] ?? '')));
+                            $lastCls  = match ($lastOut) {
+                                'GIVEN'         => 'given',
+                                'HELD'          => 'held',
+                                'REFUSED'       => 'refused',
+                                'NOT_AVAILABLE' => 'na',
+                                'MISSED'        => 'missed',
+                                default         => '',
+                            };
+                            ?>
+                            <?php if ($mc > 0 || $cosign > 0 || $follow > 0): ?>
+                                <div class="mar-badges">
+                                    <?php if ($mc > 0): ?><span class="mar-chip pending"><?= $mc ?> <?= xlt('Due') ?></span><?php endif; ?>
+                                    <?php if ($cosign > 0): ?><span class="mar-chip cosign"><?= $cosign ?> <?= xlt('Co-Sign') ?></span><?php endif; ?>
+                                    <?php if ($follow > 0): ?><span class="mar-chip follow"><?= $follow ?> <?= xlt('Follow-Up') ?></span><?php endif; ?>
+                                </div>
+                            <?php endif; ?>
+                            <?php if ($lastDrug !== '' || $lastWhen !== ''): ?>
+                                <div class="mar-meta">
+                                    <?php if ($lastOut !== ''): ?>
+                                        <span class="mar-chip <?= htmlspecialchars($lastCls) ?>"><?= htmlspecialchars($lastOut) ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($lastDrug !== ''): ?>
+                                        <span class="fw-semibold"><?= htmlspecialchars($lastDrug) ?></span>
+                                    <?php endif; ?>
+                                    <?php if ($lastWhen !== ''): ?>
+                                        <div><?= htmlspecialchars(substr($lastWhen, 5, 11)) ?></div>
+                                    <?php endif; ?>
+                                </div>
+                            <?php elseif ($mc === 0 && $cosign === 0 && $follow === 0): ?>
                                 <span class="text-muted">—</span>
                             <?php endif; ?>
                         </td>
@@ -233,3 +317,12 @@ $href = institutional_bootstrap5_href($manifest);
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

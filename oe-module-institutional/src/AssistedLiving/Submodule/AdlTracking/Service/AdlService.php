@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * src/AssistedLiving/Submodule/AdlTracking/Service/AdlService.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AdlTracking\Service;
 
@@ -35,3 +48,6 @@ final class AdlService
     public function levels(): array  { return AdlLevel::validLevels(); }
     public function levelLabel(int $l): string { return AdlLevel::label($l); }
 }
+
+
+

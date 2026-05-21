@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * src/Submodule/ObsProtocols/Controller/ObsEpisodesController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Controller;
 
 use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ObsPlanRepository;
@@ -17,5 +30,8 @@ final class ObsEpisodesController
         return ['rows' => $this->plans->listActive($facilityId)];
     }
 }
+
+
+
 
 

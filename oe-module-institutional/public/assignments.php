@@ -1,11 +1,23 @@
 <?php
 
+/**
+ * public/assignments.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 
 use OpenEMR\Modules\Institutional\Core\Service\AuditService;
-use OpenEMR\Modules\Institutional\Submodule\Assignment\Controller\AssignmentController;
-use OpenEMR\Modules\Institutional\Submodule\Assignment\Repository\AssignmentRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Assignment\Controller\AssignmentController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Assignment\Repository\AssignmentRepository;
 
 if (!$manifest->featureEnabled('assignment')) {
     die(xlt("Staff Assignment is disabled by manifest"));
@@ -25,6 +37,8 @@ $audit = new AuditService();
 $controller = new AssignmentController(new AssignmentRepository(), $audit);
 $data = $controller->handle($facilityId, $userId);
 
+$_asPids = array_values(array_unique(array_filter(array_map(fn($r)=>(int)($r['pid']??0), $data['rows']??[]))));
+$_asPatientNames = oei_patient_names($_asPids);
 $href = institutional_bootstrap5_href($manifest);
 ?>
 <!doctype html>
@@ -39,8 +53,9 @@ $href = institutional_bootstrap5_href($manifest);
     .assign-select { min-width: 140px; }
     .unassigned { color: #adb5bd; font-style: italic; }
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
@@ -72,7 +87,7 @@ $href = institutional_bootstrap5_href($manifest);
         <thead class="table-dark">
           <tr>
             <th><?= xlt('Episode') ?></th>
-            <th><?= xlt('PID') ?></th>
+            <th><?= xlt('Patient') ?></th>
             <th><?= xlt('Location') ?></th>
             <th><?= xlt('ESI') ?></th>
             <th><?= xlt('Status') ?></th>
@@ -86,7 +101,7 @@ $href = institutional_bootstrap5_href($manifest);
         <?php foreach ($data['rows'] as $r): ?>
         <tr>
           <td><strong>#<?= htmlspecialchars((string)$r['id']) ?></strong></td>
-          <td><?= htmlspecialchars((string)$r['pid']) ?></td>
+          <td><?= oei_fmt_patient((int)($r['pid']??0), $_asPatientNames) ?></td>
           <td><?= htmlspecialchars((string)($r['location_name'] ?? '—')) ?></td>
           <td>
             <?php if (!empty($r['acuity_esi'])): ?>
@@ -196,7 +211,7 @@ $href = institutional_bootstrap5_href($manifest);
   <?php endif; ?>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?= institutional_bootstrap5_js_tag() ?>
 <script>
 (function () {
   const modal = document.getElementById('assignModal');
@@ -226,3 +241,12 @@ $href = institutional_bootstrap5_href($manifest);
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

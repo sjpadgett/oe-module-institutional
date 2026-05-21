@@ -1,11 +1,23 @@
 <?php
 
+/**
+ * public/episode_documents.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\EpisodeDocuments\Controller\EpisodeDocumentController;
-use OpenEMR\Modules\Institutional\Submodule\EpisodeDocuments\Repository\EpisodeDocumentRepository;
-use OpenEMR\Modules\Institutional\Submodule\EpisodeDocuments\Service\EpisodeDocumentService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EpisodeDocuments\Controller\EpisodeDocumentController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EpisodeDocuments\Repository\EpisodeDocumentRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\EpisodeDocuments\Service\EpisodeDocumentService;
 use OpenEMR\Common\Csrf\CsrfUtils;
 
 if (!$manifest->featureEnabled('episode_documents')) {
@@ -39,6 +51,29 @@ if (!$selected) {
 
 $pid = (int)($selected['pid'] ?? 0);
 
+// ── Episode type resolution for context-aware nav ─────────────────────────
+$episodeType  = strtoupper((string)($selected['type'] ?? 'ED'));
+$_oei_ip_base = rtrim($GLOBALS['webroot'] ?? '', '/')
+    . '/interface/modules/custom_modules/oe-module-institutional/public/ip/';
+$_oei_pub_base = rtrim($GLOBALS['webroot'] ?? '', '/')
+    . '/interface/modules/custom_modules/oe-module-institutional/public/';
+// Variables needed by ip_patient_nav.php when $episodeType === 'IP'
+$activePage = 'documents';
+
+// Context-aware back URL — resolves to the correct profile page
+$_oei_edoc_backUrl = match ($episodeType) {
+    'AL'  => $_oei_pub_base . 'al/profile.php?episode_id=' . $episodeId . '&pid=' . $pid . '&facility_id=' . $facilityId,
+    'IP'  => $_oei_ip_base  . 'profile.php?episode_id='    . $episodeId . '&pid=' . $pid . '&facility_id=' . $facilityId,
+    'HBC' => $_oei_pub_base . 'hbc/profile.php?episode_id='. $episodeId . '&pid=' . $pid . '&facility_id=' . $facilityId,
+    default => $_oei_pub_base . 'ed_board.php?facility_id=' . $facilityId,
+};
+$_oei_edoc_backLabel = match ($episodeType) {
+    'AL'  => xlt('Resident Profile'),
+    'IP'  => xlt('IP Profile'),
+    'HBC' => xlt('HBC Profile'),
+    default => xlt('ED Board'),
+};
+
 // Boot controller
 $repo       = new EpisodeDocumentRepository();
 $service    = new EpisodeDocumentService($repo);
@@ -46,6 +81,8 @@ $controller = new EpisodeDocumentController($repo, $service);
 $data       = $controller->handle($episodeId, $pid, $facilityId, $userId);
 
 $csrf = CsrfUtils::collectCsrfToken();
+$_edocPids = array_values(array_unique(array_filter(array_map(fn($e)=>(int)($e['pid']??0), $episodes??[]))));
+$_edocPatientNames = oei_patient_names($_edocPids);
 $href = institutional_bootstrap5_href($manifest);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -87,10 +124,14 @@ function mimeIcon(string $mime): string
     .drop-zone.dragover { border-color: #0d6efd; background: #f0f5ff; }
     .type-badge { font-size: .72rem; }
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
+<?php if ($episodeType === 'IP'): ?>
+    <?php require __DIR__ . '/../src/Inpatient/Ui/partials/ip_patient_nav.php'; ?>
+<?php endif; ?>
 
   <div class="d-flex align-items-center justify-content-between mb-3">
     <h1 class="h4 mb-0"><?= xlt('Episode Documents') ?></h1>
@@ -100,7 +141,9 @@ function mimeIcon(string $mime): string
            href="bh_packet.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$episodeId) ?>"><?= xlt('BH Packet') ?></a>
       <?php endif; ?>
       <a class="btn btn-sm btn-outline-secondary"
-         href="ed_board.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('ED Board') ?></a>
+         href="<?= htmlspecialchars($_oei_edoc_backUrl) ?>">
+        ← <?= htmlspecialchars($_oei_edoc_backLabel) ?>
+      </a>
     </div>
   </div>
 
@@ -132,7 +175,7 @@ function mimeIcon(string $mime): string
                href="episode_documents.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$e['id']) ?>">
               <div class="d-flex justify-content-between align-items-start">
                 <div>
-                  <div class="fw-semibold small">#<?= htmlspecialchars((string)$e['id']) ?> · PID <?= htmlspecialchars((string)$e['pid']) ?></div>
+                  <div class="fw-semibold small">#<?= htmlspecialchars((string)$e['id']) ?> <?= oei_fmt_patient((int)($e['pid']??0), $_edocPatientNames) ?></div>
                   <div class="small opacity-75 text-truncate" style="max-width:140px;">
                     <?= htmlspecialchars((string)($e['chief_complaint'] ?? '—')) ?>
                   </div>
@@ -330,3 +373,18 @@ dropZone.addEventListener('drop', e => {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

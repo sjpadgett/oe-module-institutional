@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/discharge.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/discharge.php — AL Discharge / Transfer Planning
  *
@@ -19,7 +32,7 @@ use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Controller\AlDischargeController;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\AlDischarge\Repository\AlDischargeRepository;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
 
 if (!$manifest->featureEnabled('al_discharge')) {
     oei_exit_with_alert(xlt('Discharge Planning is not enabled.'), 'info');
@@ -86,6 +99,7 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
   <style>
     .discharge-card         { border-left: 4px solid #6c757d; }
     .discharge-card.planned { border-left-color: #fd7e14; }
@@ -114,12 +128,12 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid px-3 pt-2">
 
-<?php require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php'; ?>
+<?php require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php'; ?>
 
 <?php if ($data['flash']): ?>
 <div class="alert alert-success alert-dismissible py-2 mx-1" role="alert">
   ✔ <?= htmlspecialchars($data['flash']) ?>
-  <?php if ($closed && !$isDeceased): ?>
+    <?php if ($closed && !$isDeceased): ?>
   &nbsp;·&nbsp;
   <a href="../board.php?facility_id=<?= $facilityId ?>">← <?= xlt('Return to Board') ?></a>
   <?php endif; ?>
@@ -221,14 +235,14 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
           <strong><?= xlt('Discharge / Transfer Plan') ?></strong>
           <?php if ($plan): ?>
           <span class="badge bg-warning text-dark ms-auto">
-            <?= htmlspecialchars($codes[$currentCode]['icon'] ?? '') ?>
-            <?= htmlspecialchars($codes[$currentCode]['label'] ?? $currentCode) ?>
+                <?= htmlspecialchars($codes[$currentCode]['icon'] ?? '') ?>
+                <?= htmlspecialchars($codes[$currentCode]['label'] ?? $currentCode) ?>
           </span>
           <?php endif; ?>
         </div>
         <div class="card-body">
           <form method="POST" id="planForm">
-            <?= CsrfUtils::collectCsrfToken() ?>
+            <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($data['csrf']) ?>">
             <input type="hidden" name="action"     value="save_plan">
             <input type="hidden" name="episode_id" value="<?= $episodeId ?>">
 
@@ -239,12 +253,12 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
               </label>
               <div class="code-grid" id="codeGrid">
                 <?php foreach ($codes as $codeKey => $cInfo): ?>
-                  <?php
+                    <?php
                     $isSelected  = ($codeKey === $currentCode);
                     $selClass    = $isSelected
                         ? ($codeKey === 'DECEASED' ? 'sel-deceased' : 'selected')
                         : '';
-                  ?>
+                    ?>
                   <label class="code-option <?= $selClass ?>"
                          data-code="<?= htmlspecialchars($codeKey) ?>"
                          id="opt-<?= htmlspecialchars($codeKey) ?>">
@@ -258,7 +272,7 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
                     </div>
                     <?php if ($cInfo['urgent']): ?>
                     <div class="text-danger" style="font-size:.7rem">
-                      <?= xlt('Pending — resident may return') ?>
+                        <?= xlt('Pending — resident may return') ?>
                     </div>
                     <?php endif; ?>
                   </label>
@@ -286,7 +300,7 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
                 if (!empty($plan['decision_datetime'])) {
                     $decVal = date('Y-m-d\TH:i', strtotime($plan['decision_datetime']));
                 }
-              ?>
+                ?>
               <input type="datetime-local" name="decision_datetime" class="form-control"
                      value="<?= htmlspecialchars($decVal ?: date('Y-m-d\TH:i')) ?>">
             </div>
@@ -342,25 +356,25 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
         <div class="card-body">
           <?php if (!$plan): ?>
           <p class="text-muted small mb-0">
-            <?= xlt('Save a discharge plan above before confirming the actual departure.') ?>
+                <?= xlt('Save a discharge plan above before confirming the actual departure.') ?>
           </p>
           <?php else: ?>
 
-          <?php if ($isPending): ?>
+              <?php if ($isPending): ?>
           <div class="alert alert-warning py-2 small" role="alert">
             ⚠ <?= xlt('HOSPITAL_EVAL is a pending transfer. Confirm departure only when resident has actually left the facility. If they return, the episode remains open.') ?>
           </div>
           <?php endif; ?>
 
           <p class="text-muted small mb-3">
-            <?= $isDeceased
+              <?= $isDeceased
                 ? xlt('Record date and time of death. This permanently closes the episode.')
                 : xlt('Record the actual departure date/time. This closes the episode and fires the HL7 A03 Discharge event.') ?>
           </p>
 
           <form method="POST" id="confirmForm"
                 onsubmit="return confirmDeparture(this)">
-            <?= CsrfUtils::collectCsrfToken() ?>
+              <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($data['csrf']) ?>">
             <input type="hidden" name="action"     value="confirm_departure">
             <input type="hidden" name="episode_id" value="<?= $episodeId ?>">
 
@@ -373,7 +387,7 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
                 $departVal = !empty($plan['depart_datetime'])
                     ? date('Y-m-d\TH:i', strtotime($plan['depart_datetime']))
                     : date('Y-m-d\TH:i');
-              ?>
+                ?>
               <input type="datetime-local" name="depart_datetime"
                      class="form-control" required
                      value="<?= htmlspecialchars($departVal) ?>">
@@ -394,13 +408,13 @@ $pageTitle   = xlt('Discharge / Transfer Planning');
             </div>
           </form>
 
-          <?php if ($plan['updated_by_fname'] ?? ''): ?>
+              <?php if ($plan['updated_by_fname'] ?? ''): ?>
           <div class="text-muted small mt-3">
-            <?= xlt('Last updated by') ?>
-            <?= htmlspecialchars($plan['updated_by_fname'] . ' ' . $plan['updated_by_lname']) ?>
-            <?php if ($plan['updated_datetime'] ?? ''): ?>
-              <?= xlt('on') ?>
-              <?= htmlspecialchars(date('M j, Y H:i', strtotime($plan['updated_datetime']))) ?>
+                    <?= xlt('Last updated by') ?>
+                    <?= htmlspecialchars($plan['updated_by_fname'] . ' ' . $plan['updated_by_lname']) ?>
+                    <?php if ($plan['updated_datetime'] ?? ''): ?>
+                        <?= xlt('on') ?>
+                        <?= htmlspecialchars(date('M j, Y H:i', strtotime($plan['updated_datetime']))) ?>
             <?php endif; ?>
           </div>
           <?php endif; ?>
@@ -485,3 +499,12 @@ function confirmDeparture(form) {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

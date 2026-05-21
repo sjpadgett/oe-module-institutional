@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * src/AssistedLiving/Submodule/ResidentIntake/Service/ResidentIntakeService.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentIntake\Service;
 
@@ -51,9 +64,46 @@ final class ResidentIntakeService
             return ['success' => false, 'episode_id' => 0, 'error' => 'Database error during admission.'];
         }
 
+        // Verify the encounter number was created and linked.
+        // If encounter_id is 0 the Care Plan tab will be silently empty.
+        // Surface this as a hard failure so it is caught during testing
+        // rather than discovered when a clinician tries to add a care goal.
+        $encounterNum = $this->repo->getEncounterId($episodeId);
+        if ($encounterNum === 0) {
+            error_log(
+                '[OEI] AL admission succeeded but encounter number is 0 (oei_al_episode.encounter_id)'
+                . " — episode={$episodeId} pid={$pid} facility={$facilityId}"
+                . ' — Care Plan will not function. Check form_encounter table permissions.'
+            );
+            return [
+                'success'     => false,
+                'episode_id'  => $episodeId,
+                'error'       => 'Resident admitted but the OpenEMR encounter could not be created.'
+                                . ' Care Plan will not function. Contact your administrator.'
+                                . ' (episode_id=' . $episodeId . ' was created — do not re-admit).',
+            ];
+        }
+
         return ['success' => true, 'episode_id' => $episodeId, 'error' => ''];
     }
 
     public function careLevels(): array   { return CareLevel::all(); }
     public function fallLevels(): array   { return FallRiskLevel::all(); }
+
+    /**
+     * Active locations for the admission form room/unit selector.
+     * @return array<int,array{id:int,code:string,name:string,type:string,unit:string}>
+     */
+    public function listLocations(int $facilityId): array
+    {
+        return $this->repo->listLocations($facilityId);
+    }
 }
+
+
+
+
+
+
+
+

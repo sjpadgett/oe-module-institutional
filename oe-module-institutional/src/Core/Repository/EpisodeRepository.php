@@ -1,14 +1,28 @@
 <?php
 
+/**
+ * src/Core/Repository/EpisodeRepository.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Core\Repository;
 
-use OpenEMR\Modules\Institutional\Submodule\Hl7Adt\Service\AdtNotificationService;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Hl7Adt\Service\AdtNotificationService;
 
 final class EpisodeRepository
 {
     public function __construct(
         private readonly ?AdtNotificationService $adt = null
-    ) {}
+    )
+    {
+    }
 
     public function createArrival(int $pid, int $facilityId, ?string $chiefComplaint, ?int $esi, ?int $userId): int
     {
@@ -24,7 +38,7 @@ final class EpisodeRepository
             [$pid, $facilityId, $now, $chiefComplaint, $esi, $now]
         );
 
-        $idRow     = sqlQuery("SELECT LAST_INSERT_ID() AS id");
+        $idRow = sqlQuery("SELECT LAST_INSERT_ID() AS id");
         $episodeId = (int)($idRow['id'] ?? 0);
 
         $this->appendStatusHistory($episodeId, 'WAITING', $userId, null, $now);
@@ -132,6 +146,8 @@ final class EpisodeRepository
                     bhs.elopement_risk AS bh_elopement_risk,
                     bhs.is_involuntary AS bh_involuntary,
                     op.protocol_key AS obs_protocol_key,
+                    disp.disposition_code AS plan_disposition_code,
+                    disp.destination      AS plan_destination,
                     (
                         SELECT t.task_type FROM oei_task t
                         WHERE t.episode_id = e.id AND t.status = 'OPEN'
@@ -161,6 +177,8 @@ final class EpisodeRepository
                   ON bhs.episode_id = e.id
                 LEFT JOIN oei_obs_plan op
                   ON op.episode_id = e.id AND op.status = 'ACTIVE'
+                LEFT JOIN oei_episode_disposition disp
+                  ON disp.episode_id = e.id
                 WHERE e.facility_id = ? AND e.status = 'ACTIVE'
                 ORDER BY e.start_datetime DESC
                 LIMIT " . (int)$limit;
@@ -168,7 +186,7 @@ final class EpisodeRepository
         if (!function_exists('sqlStatement')) {
             return [];
         }
-        $res  = sqlStatement($sql, [$facilityId]);
+        $res = sqlStatement($sql, [$facilityId]);
         $rows = [];
         while ($row = sqlFetchArray($res)) {
             $rows[] = $row;
@@ -178,6 +196,7 @@ final class EpisodeRepository
 
     /**
      * Fetch episodes by date range (start_datetime).
+     *
      * @return array<int,array<string,mixed>>
      */
     public function fetchByDateRange(int $facilityId, string $start, string $end, int $limit = 1000): array
@@ -196,7 +215,7 @@ final class EpisodeRepository
                 ORDER BY e.start_datetime DESC
                 LIMIT " . (int)$limit;
 
-        $res  = sqlStatement($sql, [$facilityId, $start, $end]);
+        $res = sqlStatement($sql, [$facilityId, $start, $end]);
         $rows = [];
         while ($row = sqlFetchArray($res)) {
             $rows[] = $row;
@@ -204,5 +223,9 @@ final class EpisodeRepository
         return $rows;
     }
 }
+
+
+
+
 
 

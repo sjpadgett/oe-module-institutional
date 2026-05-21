@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Settings/Repository/SettingsRepository.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\Settings\Repository;
 
 /**
@@ -17,6 +29,11 @@ final class SettingsRepository
         return [
             // Identity — our own table, no OpenEMR dependency
             'facility_name'               => '',
+            'institutional_enabled'       => '0',
+            'facility_operational_mode'   => '',
+            'facility_default_context'    => 'FULL',
+            'facility_enabled_contexts_json' => '',
+            'facility_home_page'          => '',
 
             // Clinical thresholds
             'facility_default_id'         => '1',
@@ -104,3 +121,9 @@ final class SettingsRepository
         return $result;
     }
 }
+
+
+
+
+
+

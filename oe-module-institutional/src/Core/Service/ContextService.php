@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Core/Service/ContextService.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\Core\Service;
@@ -13,19 +25,13 @@ use OpenEMR\Modules\Institutional\Core\Repository\ContextRepository;
  * Single point of truth for the active care context in a request.
  *
  * Resolution order:
- *   1. $_SESSION['oei_context'][facility_id]   — hot cache, set on switch
- *   2. oei_user_context table                  — persisted preference
- *   3. CareContext::DEFAULT_CONTEXT             — fallback (ED_ACUTE)
+ *   1. oei_user_context table                   — persisted preference (authoritative)
+ *   2. $_SESSION['oei_context'][user_facility] — hot cache / fallback
+ *   3. facility default context                — profile fallback
  *
- * The session cache means only the first page load per login hits the DB.
- * Switching context writes both DB and session atomically.
- *
- * Usage in _bootstrap.php:
- *   $contextSvc    = new ContextService(new ContextRepository());
- *   $activeContext = $contextSvc->resolve($userId, $facilityId);
- *
- * Usage anywhere:
- *   CareContext::featureSurfaced($activeContext, 'bh_safety')
+ * The persisted DB row is treated as authoritative so the next request after a
+ * context switch reflects the newly selected context consistently across
+ * environments, even when session timing/locking differs.
  */
 final class ContextService
 {
@@ -37,24 +43,37 @@ final class ContextService
 
     /**
      * Resolve the active context key for this user+facility.
-     * Uses session cache; falls back to DB; falls back to default.
      */
     public function resolve(int $userId, int $facilityId): string
     {
-        // ── Session cache ────────────────────────────────────────────────
+        $facilityProfiles = new FacilityProfileService();
         $cacheKey = $userId . '_' . $facilityId;
         $cache    = $_SESSION[self::SESSION_KEY] ?? [];
-        if (isset($cache[$cacheKey]) && CareContext::isValid((string)$cache[$cacheKey])) {
-            return (string)$cache[$cacheKey];
+
+        // ── DB lookup (authoritative) ───────────────────────────────────
+        $stored = $this->repo->get($userId, $facilityId);
+        if (is_string($stored) && CareContext::isValid($stored) && $facilityProfiles->isContextEnabled($facilityId, $stored)) {
+            if (($cache[$cacheKey] ?? null) !== $stored) {
+                $this->writeSession($cacheKey, $stored);
+            }
+            return $stored;
         }
 
-        // ── DB lookup ────────────────────────────────────────────────────
-        $stored = $this->repo->get($userId, $facilityId);
-        $active = $stored ?? CareContext::DEFAULT_CONTEXT;
+        // ── Session cache fallback ──────────────────────────────────────
+        if (isset($cache[$cacheKey]) && CareContext::isValid((string)$cache[$cacheKey])) {
+            $cached = (string)$cache[$cacheKey];
+            if ($facilityProfiles->isContextEnabled($facilityId, $cached)) {
+                return $cached;
+            }
+        }
 
-        // Write back to session
+        // ── Facility default fallback ────────────────────────────────────
+        $active = $facilityProfiles->getDefaultContext($facilityId);
+        if (!CareContext::isValid($active) || !$facilityProfiles->isContextEnabled($facilityId, $active)) {
+            $active = CareContext::DEFAULT_CONTEXT;
+        }
+
         $this->writeSession($cacheKey, $active);
-
         return $active;
     }
 
@@ -63,8 +82,9 @@ final class ContextService
      */
     public function switch(int $userId, int $facilityId, string $contextKey): string
     {
-        if (!CareContext::isValid($contextKey)) {
-            $contextKey = CareContext::DEFAULT_CONTEXT;
+        $facilityProfiles = new FacilityProfileService();
+        if (!CareContext::isValid($contextKey) || !$facilityProfiles->isContextEnabled($facilityId, $contextKey)) {
+            $contextKey = $facilityProfiles->getDefaultContext($facilityId);
         }
 
         $this->repo->set($userId, $facilityId, $contextKey);
@@ -98,7 +118,7 @@ final class ContextService
      * Passes through the original features array, marking each as surfaced/hidden.
      *
      * @param  array<string,bool> $manifestFeatures
-     * @return array<string,bool>  Same keys, values AND-ed with context surface rule
+     * @return array<string,bool>
      */
     public function applyToFeatures(string $contextKey, array $manifestFeatures): array
     {
@@ -112,8 +132,6 @@ final class ContextService
         return $result;
     }
 
-    // ── Private ──────────────────────────────────────────────────────────
-
     private function writeSession(string $cacheKey, string $contextKey): void
     {
         if (!isset($_SESSION)) {
@@ -125,5 +143,6 @@ final class ContextService
         $_SESSION[self::SESSION_KEY][$cacheKey] = $contextKey;
     }
 }
+
 
 

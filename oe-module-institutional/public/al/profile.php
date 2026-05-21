@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/profile.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/profile.php — Resident Profile Hub
  *
@@ -46,7 +59,7 @@ $qEpPid  = $qEp . '&pid=' . $pid;
 
 $pageTitle = xlt('Resident Profile') . ' — ' . htmlspecialchars($h['fname'] . ' ' . $h['lname']);
 
-$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
+$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark';
 
 $activePage  = 'profile';
 $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
@@ -57,6 +70,7 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
   <meta charset="utf-8">
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
   <style>
     .oei-profile-header { background: linear-gradient(135deg,#2d6a4f,#40916c); color:#fff; border-radius:.5rem; }
     .panel-card         { border-left:3px solid #40916c; }
@@ -78,7 +92,7 @@ $__bgClass   = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 <div class="container-fluid p-3">
 <?php
 // AL resident nav — tabs + context strip
-require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
+require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php';
 ?>
 <?php if (($_GET['flash'] ?? '') === 'admitted'): ?>
 <div class="alert alert-success alert-dismissible py-2 mx-2 mt-2" role="alert">
@@ -107,7 +121,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
       </div>
       <?php if ($h['chief_complaint']): ?>
       <div class="mt-1 text-white-50" style="font-size:.85rem;">
-        <?= xlt('Admission reason') ?>: <?= htmlspecialchars($h['chief_complaint']) ?>
+            <?= xlt('Admission reason') ?>: <?= htmlspecialchars($h['chief_complaint']) ?>
       </div>
       <?php endif; ?>
     </div>
@@ -179,7 +193,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
           </div>
 
           <!-- Weight sparkline -->
-          <?php if (count($data['spark_weights']) > 1): ?>
+            <?php if (count($data['spark_weights']) > 1): ?>
           <div class="mt-2">
             <div class="text-muted" style="font-size:.72rem;"><?= xlt('Weight trend') ?></div>
             <canvas id="sparkWeight" height="30" style="width:100%"></canvas>
@@ -187,7 +201,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
           <?php endif; ?>
 
           <!-- SpO2 sparkline -->
-          <?php if (count($data['spark_spo2']) > 1): ?>
+            <?php if (count($data['spark_spo2']) > 1): ?>
           <div class="mt-2">
             <div class="text-muted" style="font-size:.72rem;"><?= xlt('SpO₂ trend') ?></div>
             <canvas id="sparkSpo2" height="30" style="width:100%"></canvas>
@@ -231,7 +245,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
           <div class="mb-2">
             <?php foreach (AdlLevel::DOMAINS as $domain => $label):
                 $level = (int)($la['domain_levels'][$domain] ?? 8);
-            ?>
+                ?>
             <span title="<?= htmlspecialchars($label) ?>: <?= htmlspecialchars(AdlLevel::label($level)) ?>">
               <span class="adl-dot bg-<?= htmlspecialchars(AdlLevel::badge($level)) ?>"></span>
             </span>
@@ -242,7 +256,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
           </div>
 
           <!-- ADL score sparkline -->
-          <?php if (count($data['adl_trend']) > 1): ?>
+            <?php if (count($data['adl_trend']) > 1): ?>
           <canvas id="sparkAdl" height="30" style="width:100%"></canvas>
           <?php endif; ?>
 
@@ -296,16 +310,16 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
         <?php if ($m['pending_drugs']): ?>
         <div class="small">
           <div class="text-muted mb-1 fw-semibold"><?= xlt('Upcoming / Overdue') ?></div>
-          <?php foreach ($m['pending_drugs'] as $drug): ?>
+            <?php foreach ($m['pending_drugs'] as $drug): ?>
           <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
             <span class="<?= $drug['is_high_alert'] ? 'text-danger fw-semibold' : '' ?>">
-              <?= $drug['is_high_alert'] ? '⚠ ' : '' ?>
-              <?= htmlspecialchars($drug['drug_name']) ?>
+                <?= $drug['is_high_alert'] ? '⚠ ' : '' ?>
+                <?= htmlspecialchars($drug['drug_name']) ?>
               <span class="text-muted"><?= htmlspecialchars($drug['dose'] . ' ' . $drug['unit']) ?></span>
             </span>
             <span class="<?= $drug['overdue'] ? 'text-danger fw-semibold' : 'text-muted' ?>">
-              <?= htmlspecialchars($drug['scheduled_time']) ?>
-              <?= $drug['overdue'] ? ' ⚠' : '' ?>
+                <?= htmlspecialchars($drug['scheduled_time']) ?>
+                <?= $drug['overdue'] ? ' ⚠' : '' ?>
             </span>
           </div>
           <?php endforeach; ?>
@@ -343,24 +357,24 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
             · <?= $cp['counts']['completed'] ?> <?= xlt('completed') ?>
           </div>
 
-          <?php if ($total > 0): ?>
+            <?php if ($total > 0): ?>
           <div class="care-plan-bar mb-3">
             <div class="care-plan-bar-fill"
                  style="width:<?= $total ? round($cp['counts']['completed'] / $total * 100) : 0 ?>%"></div>
           </div>
           <?php endif; ?>
 
-          <?php foreach (array_slice($cp['goals'], 0, 3) as $goal): ?>
+            <?php foreach (array_slice($cp['goals'], 0, 3) as $goal): ?>
           <div class="d-flex align-items-start gap-1 mb-1 small">
             <span class="badge bg-<?= $goal['status'] === 'completed' ? 'success' : 'primary' ?> mt-1" style="font-size:.6rem;">
-              <?= xlt('Goal') ?>
+                <?= xlt('Goal') ?>
             </span>
             <span class="<?= $goal['status'] === 'completed' ? 'text-decoration-line-through text-muted' : '' ?>">
-              <?= htmlspecialchars(mb_strimwidth($goal['description'], 0, 80, '…')) ?>
+                <?= htmlspecialchars(mb_strimwidth($goal['description'], 0, 80, '…')) ?>
             </span>
           </div>
           <?php endforeach; ?>
-          <?php if (count($cp['goals']) > 3): ?>
+            <?php if (count($cp['goals']) > 3): ?>
           <div class="text-muted small mt-1">
             +<?= count($cp['goals']) - 3 ?> <?= xlt('more goals') ?> …
             <a href="<?= $base ?>care_plan.php<?= $qEpPid ?>"><?= xlt('view all') ?></a>
@@ -397,11 +411,11 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
             <?= xlt('Assessed') ?>: <?= htmlspecialchars(substr($fr['assessed_datetime'], 0, 10)) ?>
           </div>
 
-          <?php if ($data['fall_risk_next_due']): ?>
-            <?php $overdue = $data['fall_risk_next_due'] < date('Y-m-d'); ?>
+            <?php if ($data['fall_risk_next_due']): ?>
+                <?php $overdue = $data['fall_risk_next_due'] < date('Y-m-d'); ?>
             <div class="alert alert-<?= $overdue ? 'danger' : 'info' ?> py-1 small mb-0">
-              <?= $overdue ? '⚠ ' . xlt('Reassessment overdue') : xlt('Next due') ?>:
-              <?= htmlspecialchars($data['fall_risk_next_due']) ?>
+                <?= $overdue ? '⚠ ' . xlt('Reassessment overdue') : xlt('Next due') ?>:
+                <?= htmlspecialchars($data['fall_risk_next_due']) ?>
             </div>
           <?php endif; ?>
 
@@ -452,7 +466,7 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
             </tr>
           </thead>
           <tbody>
-          <?php foreach ($data['incidents'] as $inc): ?>
+            <?php foreach ($data['incidents'] as $inc): ?>
           <tr>
             <td><?= htmlspecialchars(substr($inc['incident_datetime'], 0, 10)) ?></td>
             <td><?= htmlspecialchars(str_replace('_', ' ', $inc['incident_type'])) ?></td>
@@ -481,11 +495,73 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
     <div class="d-flex flex-wrap gap-2">
       <?php foreach ($data['care_team'] as $member): ?>
       <span class="badge bg-secondary team-pill">
-        <?= htmlspecialchars($member['role_label']) ?>:
-        <?= htmlspecialchars($member['member_name']) ?>
+            <?= htmlspecialchars($member['role_label']) ?>:
+            <?= htmlspecialchars($member['member_name']) ?>
       </span>
       <?php endforeach; ?>
     </div>
+  </div>
+</div>
+<?php endif; ?>
+
+
+<?php if ($manifest->featureEnabled('observations') && !empty($data['observations'])): ?>
+<div class="card panel-card mb-3">
+  <div class="card-header">
+    &#128225; <?= xlt('Extended Observations') ?>
+    <span class="badge bg-secondary ms-2 float-end" style="font-size:.7rem;font-weight:500">
+      <?= count($data['observations']) ?> <?= xlt('types') ?>
+    </span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0" style="font-size:.82rem">
+      <thead class="table-light">
+        <tr>
+          <th><?= xlt('Type') ?></th>
+          <th><?= xlt('Value') ?></th>
+          <th><?= xlt('When') ?></th>
+          <th><?= xlt('Source') ?></th>
+        </tr>
+      </thead>
+      <tbody>
+      <?php foreach ($data['observations'] as $_obsRow): ?>
+      <tr class="<?= !empty($_obsRow['is_flagged']) ? 'table-danger' : '' ?>">
+        <td class="fw-semibold">
+          <?= htmlspecialchars((string)($_obsRow['display_name'] ?? $_obsRow['obs_type_code'] ?? '')) ?>
+          <?php if (!empty($_obsRow['is_flagged'])): ?>
+            <span class="badge bg-danger ms-1" style="font-size:.65rem">&#9888; <?= xlt('Alert') ?></span>
+          <?php endif; ?>
+        </td>
+        <td class="<?= !empty($_obsRow['is_flagged']) ? 'text-danger fw-bold' : '' ?>">
+          <?php if ($_obsRow['value_numeric'] !== null): ?>
+            <?= htmlspecialchars(rtrim(rtrim(number_format((float)$_obsRow['value_numeric'], 3, '.', ''), '0'), '.')) ?>
+            <?php if (!empty($_obsRow['unit'])): ?>
+              <span class="text-muted"><?= htmlspecialchars((string)$_obsRow['unit']) ?></span>
+            <?php endif; ?>
+          <?php elseif (!empty($_obsRow['value_text'])): ?>
+            <?= htmlspecialchars((string)$_obsRow['value_text']) ?>
+          <?php else: ?>
+            <span class="text-muted">&#8212;</span>
+          <?php endif; ?>
+        </td>
+        <td class="text-muted text-nowrap">
+          <?= htmlspecialchars(substr((string)($_obsRow['observed_datetime'] ?? ''), 0, 16)) ?>
+        </td>
+        <td>
+          <?php
+          $_srcType  = (string)($_obsRow['source_type'] ?? 'MANUAL');
+          $_srcBadge = ($_srcType === 'FHIR')   ? 'bg-primary'
+                     : (($_srcType === 'DEVICE') ? 'bg-success'
+                     : (($_srcType === 'IMPORT') ? 'bg-info text-dark' : 'bg-secondary'));
+          ?>
+          <span class="badge <?= $_srcBadge ?>" style="font-size:.65rem">
+            <?= htmlspecialchars($_srcType) ?>
+          </span>
+        </td>
+      </tr>
+      <?php endforeach; ?>
+      </tbody>
+    </table>
   </div>
 </div>
 <?php endif; ?>
@@ -536,3 +612,12 @@ require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php';
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

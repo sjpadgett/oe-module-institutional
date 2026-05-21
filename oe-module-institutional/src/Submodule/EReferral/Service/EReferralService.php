@@ -1,11 +1,24 @@
 <?php
 
+/**
+ * src/Submodule/EReferral/Service/EReferralService.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\Submodule\EReferral\Service;
 
 use OpenEMR\Modules\Institutional\Submodule\EReferral\Repository\EReferralRepository;
 use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Mar\Repository\MarOrderRepository;
 
 /**
  * E-Referral Service.
@@ -24,7 +37,8 @@ final class EReferralService
 
     public function __construct(
         private readonly EReferralRepository $repo,
-        private readonly FacilityDirectoryRepository $directoryRepo
+        private readonly FacilityDirectoryRepository $directoryRepo,
+        private readonly MarOrderRepository $marOrderRepo = new MarOrderRepository()
     ) {}
 
     /**
@@ -84,7 +98,7 @@ final class EReferralService
             'reason_for_referral'      => $this->buildReason($dispCode, $episode, $disposition),
             'clinical_summary'         => $this->buildClinicalSummary($episode, $triage),
             'services_requested'       => $this->suggestServices($dispCode, $episode),
-            'medications_summary'      => null,
+            'medications_summary'      => $this->buildMedicationsSummary($episodeId),
             'followup_instructions'    => null,
         ];
 
@@ -250,4 +264,54 @@ final class EReferralService
         );
         return $row ?: null;
     }
+    // ── Medication and allergy helpers ───────────────────────────────────────
+
+    public function buildMedicationsSummary(int $episodeId): string
+    {
+        $orders = $this->marOrderRepo->listActiveByEpisode($episodeId);
+        if (empty($orders)) {
+            return '';
+        }
+        $lines = [];
+        foreach ($orders as $o) {
+            $drug  = (string)($o['drug_name'] ?? '');
+            $dose  = trim((string)($o['dose'] ?? '') . ' ' . (string)($o['unit'] ?? ''));
+            $route = (string)($o['route'] ?? '');
+            $freq  = (string)($o['frequency'] ?? '');
+            $prn   = (bool)($o['is_prn'] ?? false);
+            $ha    = (bool)($o['is_high_alert'] ?? false);
+            $line  = $drug;
+            if ($dose !== '')  $line .= ' ' . $dose;
+            if ($route !== '') $line .= ' ' . $route;
+            if ($freq !== '')  $line .= ' ' . ($prn ? 'PRN' : $freq);
+            if ($ha)           $line .= ' [HIGH ALERT]';
+            $lines[] = '• ' . $line;
+        }
+        return implode("\n", $lines);
+    }
+
+    public function fetchAllergies(int $pid): string
+    {
+        if (!function_exists('sqlStatement') || $pid <= 0) {
+            return '';
+        }
+        $res = sqlStatement(
+            "SELECT title, reaction, severity_al
+             FROM lists
+             WHERE pid = ? AND type = 'allergy' AND activity = 1
+             ORDER BY title ASC",
+            [$pid]
+        );
+        $lines = [];
+        while ($row = sqlFetchArray($res)) {
+            $entry = '• ' . (string)($row['title'] ?? '');
+            if (!empty($row['reaction']))    $entry .= ' — ' . (string)$row['reaction'];
+            if (!empty($row['severity_al'])) $entry .= ' (' . (string)$row['severity_al'] . ')';
+            $lines[] = $entry;
+        }
+        return empty($lines) ? 'NKDA' : implode("\n", $lines);
+    }
 }
+
+
+

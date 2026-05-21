@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Handoff/Service/HandoffService.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\Submodule\Handoff\Service;
@@ -101,17 +113,21 @@ final class HandoffService
      * Compute summary badge counts for the handoff header bar.
      *
      * @param  array<int,array<string,mixed>> $rows
-     * @return array{total:int, sepsis:int, pending_mar:int, overdue_tasks:int}
+     * @return array{total:int, sepsis:int, pending_mar:int, overdue_tasks:int, cosign_needed:int, mar_followup:int}
      */
     public function computeSummary(array $rows): array
     {
-        $pendingMar  = 0;
-        $sepsisCount = 0;
+        $pendingMar   = 0;
+        $sepsisCount  = 0;
         $overdueCount = 0;
+        $cosignNeeded = 0;
+        $marFollowup  = 0;
         $now = time();
 
         foreach ($rows as $r) {
-            $pendingMar += (int)($r['pending_mar_count'] ?? 0);
+            $pendingMar   += (int)($r['pending_mar_count'] ?? 0);
+            $cosignNeeded += (int)($r['awaiting_cosign_count'] ?? 0);
+            $marFollowup  += (int)($r['mar_followup_count'] ?? 0);
 
             if ($this->qsofa($r) >= 2) {
                 $sepsisCount++;
@@ -124,10 +140,18 @@ final class HandoffService
         }
 
         return [
-            'total'        => count($rows),
-            'sepsis'       => $sepsisCount,
-            'pending_mar'  => $pendingMar,
-            'overdue_tasks'=> $overdueCount,
+            'total'         => count($rows),
+            'sepsis'        => $sepsisCount,
+            'pending_mar'   => $pendingMar,
+            'overdue_tasks' => $overdueCount,
+            'cosign_needed' => $cosignNeeded,
+            'mar_followup'  => $marFollowup,
         ];
     }
 }
+
+
+
+
+
+

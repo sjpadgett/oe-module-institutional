@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/AssistedLiving/Submodule/ResidentBoard/Service/ResidentBoardService.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 declare(strict_types=1);
 
 namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentBoard\Service;
@@ -7,6 +19,7 @@ namespace OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentBoard\S
 use OpenEMR\Modules\Institutional\AssistedLiving\Domain\CareLevel;
 use OpenEMR\Modules\Institutional\AssistedLiving\Domain\FallRiskLevel;
 use OpenEMR\Modules\Institutional\AssistedLiving\Submodule\ResidentBoard\Repository\ResidentBoardRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Observations\Repository\SharedObservationRepository;
 
 /**
  * ResidentBoardService
@@ -39,6 +52,15 @@ final class ResidentBoardService
             $r['display_name']          = htmlspecialchars($r['fname'] . ' ' . $r['lname']);
             $r['age']                   = $this->computeAge($r['dob']);
             $r['adl_due']               = $this->isAdlDue($r['last_adl_datetime']);
+        }
+        unset($r);
+
+        // Batch-fetch flagged observation counts — one query for all episodes
+        $obsRepo   = new SharedObservationRepository();
+        $eIds      = array_column($residents, 'episode_id');
+        $obsCounts = $obsRepo->countFlaggedByEpisodes(array_map('intval', $eIds));
+        foreach ($residents as &$r) {
+            $r['obs_flagged_count'] = (int)($obsCounts[(int)$r['episode_id']] ?? 0);
         }
         unset($r);
 
@@ -83,3 +105,9 @@ final class ResidentBoardService
         return $ts === false || (time() - $ts) > (8 * 3600);
     }
 }
+
+
+
+
+
+

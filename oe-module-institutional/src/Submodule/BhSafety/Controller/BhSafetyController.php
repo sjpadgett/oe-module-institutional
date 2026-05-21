@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * src/Submodule/BhSafety/Controller/BhSafetyController.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\BhSafety\Controller;
 
 use OpenEMR\Modules\Institutional\Submodule\BhSafety\Repository\BhSafetyRepository;
@@ -17,5 +30,8 @@ final class BhSafetyController
         return ['rows' => $this->repo->listRecentByFacility($facilityId)];
     }
 }
+
+
+
 
 

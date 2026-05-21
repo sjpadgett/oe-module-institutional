@@ -1,14 +1,26 @@
 <?php
 
+/**
+ * public/obs_extend_runway.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 use OpenEMR\Common\Csrf\CsrfUtils;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ProtocolRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ObsPlanRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Service\ObsProtocolEngine;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ProtocolRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ObsPlanRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Service\ObsProtocolEngine;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -69,3 +81,6 @@ $planRepo->upsert($episodeId, $pid, $eid, $facilityId, (string)$protocolKey, $ta
 
 header("Location: obs_episode.php?facility_id=" . urlencode((string)$facilityId) . "&episode_id=" . urlencode((string)$episodeId) . "&msg=" . urlencode(xlt("Extended runway (generated " . (string)$generated . " tasks)") . ": " . (string)$extendHours . "h"));
 exit;
+
+
+

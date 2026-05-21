@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Assignment/Repository/AssignmentRepository.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\Assignment\Repository;
 
 use OpenEMR\Modules\Institutional\Core\Repository\UserRepository;
@@ -30,15 +42,15 @@ final class AssignmentRepository
             return;
         }
 
-        $sets   = [];
+        $sets = [];
         $params = [];
 
         if (array_key_exists('nurse', $fields)) {
-            $sets[]   = 'assigned_nurse_user_id = ?';
+            $sets[] = 'assigned_nurse_user_id = ?';
             $params[] = $fields['nurse'] ? (int)$fields['nurse'] : null;
         }
         if (array_key_exists('provider', $fields)) {
-            $sets[]   = 'assigned_provider_user_id = ?';
+            $sets[] = 'assigned_provider_user_id = ?';
             $params[] = $fields['provider'] ? (int)$fields['provider'] : null;
         }
 
@@ -55,6 +67,7 @@ final class AssignmentRepository
 
     /**
      * Return current assignments for one episode.
+     *
      * @return array{nurse_id:int|null,provider_id:int|null}
      */
     public function getForEpisode(int $episodeId): array
@@ -68,7 +81,7 @@ final class AssignmentRepository
             [$episodeId]
         );
         return [
-            'nurse_id'    => $row ? ((int)($row['assigned_nurse_user_id']    ?? 0) ?: null) : null,
+            'nurse_id' => $row ? ((int)($row['assigned_nurse_user_id'] ?? 0) ?: null) : null,
             'provider_id' => $row ? ((int)($row['assigned_provider_user_id'] ?? 0) ?: null) : null,
         ];
     }
@@ -126,3 +139,6 @@ final class AssignmentRepository
         return $this->users->fetchStaff();
     }
 }
+
+
+

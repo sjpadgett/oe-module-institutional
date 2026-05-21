@@ -1,10 +1,22 @@
 <?php
 
+/**
+ * public/hl7_log.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 use OpenEMR\Modules\Institutional\Core\Service\AclGuard;
-use OpenEMR\Modules\Institutional\Submodule\Hl7Adt\Repository\Hl7OutboundLogRepository;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Hl7Adt\Repository\Hl7OutboundLogRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 AclGuard::requireAdmin();
 
@@ -28,6 +40,8 @@ if (isset($_GET['raw']) && is_numeric($_GET['raw'])) {
 
 $rows    = $logRepo->listRecent($facilityId, 200);
 $summary = $logRepo->summary24h($facilityId);
+$_hlPids = array_values(array_unique(array_filter(array_map(fn($r)=>(int)($r['pid']??0), $rows??[]))));
+$_hlPatientNames = oei_patient_names($_hlPids);
 $href    = institutional_bootstrap5_href($manifest);
 
 // Settings summary for header
@@ -50,8 +64,9 @@ $hlEndpoint  = $hlTransport === 'HTTP'
     .badge-nack  { background:#fd7e14; color:#fff; }
     pre { background:#1e1e2e; color:#cdd6f4; font-size:.78rem; border-radius:6px; padding:1rem; overflow-x:auto; white-space:pre-wrap; }
   </style>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
@@ -115,7 +130,7 @@ $hlEndpoint  = $hlTransport === 'HTTP'
             <th><?= xlt('Time') ?></th>
             <th><?= xlt('Event') ?></th>
             <th><?= xlt('Episode') ?></th>
-            <th><?= xlt('PID') ?></th>
+            <th><?= xlt('Patient') ?></th>
             <th><?= xlt('Transport') ?></th>
             <th><?= xlt('Endpoint') ?></th>
             <th><?= xlt('Status') ?></th>
@@ -132,7 +147,7 @@ $hlEndpoint  = $hlTransport === 'HTTP'
             <td class="text-nowrap small"><?= htmlspecialchars((string)$r['sent_datetime']) ?></td>
             <td><code><?= htmlspecialchars((string)$r['event_type']) ?></code></td>
             <td><?= htmlspecialchars((string)$r['episode_id']) ?></td>
-            <td><?= htmlspecialchars((string)$r['pid']) ?></td>
+            <td><?= oei_fmt_patient((int)($r['pid']??0), $_hlPatientNames) ?></td>
             <td class="small"><?= htmlspecialchars((string)$r['transport_type']) ?></td>
             <td class="small text-muted text-truncate" style="max-width:180px;"><?= htmlspecialchars((string)$r['endpoint']) ?></td>
             <td><span class="badge <?= $badgeCls ?>"><?= htmlspecialchars(strtoupper($st)) ?></span></td>
@@ -171,7 +186,7 @@ $hlEndpoint  = $hlTransport === 'HTTP'
 </div>
 
 <?php if ($href): ?>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<?= institutional_bootstrap5_js_tag() ?>
 <?php endif; ?>
 <script>
 function showRaw(logId, facilityId) {
@@ -186,3 +201,12 @@ function showRaw(logId, facilityId) {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * src/Submodule/Hl7Adt/Repository/Hl7OutboundLogRepository.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 namespace OpenEMR\Modules\Institutional\Submodule\Hl7Adt\Repository;
 
 final class Hl7OutboundLogRepository
@@ -109,5 +121,8 @@ final class Hl7OutboundLogRepository
         return $out;
     }
 }
+
+
+
 
 

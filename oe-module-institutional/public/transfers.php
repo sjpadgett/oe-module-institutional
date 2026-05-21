@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * public/transfers.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
@@ -7,9 +19,9 @@ $pageTitle = xlt('Transfers');
 require __DIR__ . '/../src/Core/Ui/partials/page_title.php';
 use OpenEMR\Common\Csrf\CsrfUtils;
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\TransferTracking\Repository\TransferRepository;
-use OpenEMR\Modules\Institutional\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\TransferTracking\Repository\TransferRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\FacilityDirectory\Repository\FacilityDirectoryRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
 
 if (!$manifest->featureEnabled('transfer_tracking')) {
     die(xlt("Transfers is disabled by manifest"));
@@ -101,6 +113,8 @@ $requestedVal = !empty($transfer['requested_datetime']) ? str_replace(' ', 'T', 
 $acceptedVal = !empty($transfer['accepted_datetime']) ? str_replace(' ', 'T', substr((string)$transfer['accepted_datetime'], 0, 16)) : '';
 $transportVal = !empty($transfer['transport_datetime']) ? str_replace(' ', 'T', substr((string)$transfer['transport_datetime'], 0, 16)) : '';
 
+$_trPids = array_values(array_unique(array_filter(array_map(fn($e)=>(int)($e['pid']??0), $episodes??[]))));
+$_trPatientNames = oei_patient_names($_trPids);
 $href = institutional_bootstrap5_href($manifest);
 
 $statuses = [
@@ -143,7 +157,7 @@ $types = [
                href="transfers.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$e['id']) ?>">
               <div class="d-flex justify-content-between">
                 <div>
-                  <div class="fw-semibold">#<?= htmlspecialchars((string)$e['id']) ?> • PID <?= htmlspecialchars((string)$e['pid']) ?></div>
+                  <div class="fw-semibold">#<?= htmlspecialchars((string)$e['id']) ?> <?= oei_fmt_patient((int)($e['pid'] ?? 0), $_trPatientNames) ?></div>
                   <div class="small opacity-75"><?= htmlspecialchars((string)($e['chief_complaint'] ?? '')) ?></div>
                 </div>
                 <div class="text-end">
@@ -273,5 +287,9 @@ $types = [
 </div>
 </body>
 </html>
+
+
+
+
 
 

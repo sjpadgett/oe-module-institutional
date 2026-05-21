@@ -1,13 +1,30 @@
 <?php
 
+/**
+ * public/settings.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 ob_start();
 
 require_once __DIR__ . '/_bootstrap.php';
+require_once __DIR__ . '/../src/Core/Ui/partials/context_help.php';
 
 use OpenEMR\Common\Csrf\CsrfUtils;
+use OpenEMR\Modules\Institutional\Core\Domain\CareContext;
 use OpenEMR\Modules\Institutional\Core\Domain\TriageStandard;
 use OpenEMR\Modules\Institutional\Core\Service\AclGuard;
-use OpenEMR\Modules\Institutional\Submodule\Settings\Repository\SettingsRepository;
+use OpenEMR\Modules\Institutional\Core\Service\FacilityManifestService;
+use OpenEMR\Modules\Institutional\Core\Service\FacilityProfileService;
+use OpenEMR\Modules\Institutional\Core\Repository\FacilityProfileRepository;
+use OpenEMR\Modules\Institutional\Operations\Submodule\Settings\Repository\SettingsRepository;
 
 if (!$manifest->featureEnabled('settings')) {
     die(xlt('Settings is disabled by manifest'));
@@ -15,8 +32,14 @@ if (!$manifest->featureEnabled('settings')) {
 
 AclGuard::requireAdmin();
 
-$facilityId = (int)($_GET['facility_id'] ?? ($GLOBALS['facility_default_id'] ?? 1));
 $repo = new SettingsRepository();
+$facilityProfiles = new FacilityProfileService($repo);
+$facilityManifest = new FacilityManifestService($repo, dirname(__DIR__));
+$userId = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : 0;
+$facilityId = $facilityProfiles->resolveFacilityId(
+    isset($_GET['facility_id']) ? (int)$_GET['facility_id'] : (isset($_POST['facility_id']) ? (int)$_POST['facility_id'] : 0),
+    $userId
+);
 
 function oei_json_response(array $payload, int $code = 200): void
 {
@@ -71,16 +94,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ajax_action'] ?? '') === '
 }
 
 $saved = false;
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($_POST['ajax_action'])) {
     if (!CsrfUtils::verifyCsrfToken($_POST['csrf_token_form'] ?? '')) {
         die('CSRF validation failed');
     }
     $userId = isset($_SESSION['authUserID']) ? (int)$_SESSION['authUserID'] : null;
     $keys = array_keys(SettingsRepository::defaults());
     $values = [];
+    $selectedContexts = [];
+    foreach ((array)($_POST['facility_enabled_contexts'] ?? []) as $__ctxKey) {
+        $__ctxKey = trim((string)$__ctxKey);
+        if ($__ctxKey !== '' && CareContext::isValid($__ctxKey)) {
+            $selectedContexts[] = $__ctxKey;
+        }
+    }
+    $selectedContexts = array_values(array_unique($selectedContexts));
+
+    $installedPurpose = trim((string)($_POST['installed_purpose'] ?? FacilityProfileRepository::PURPOSE_FULL));
+    if (!FacilityProfileRepository::isValidPurpose($installedPurpose)) {
+        $installedPurpose = FacilityProfileRepository::PURPOSE_FULL;
+    }
+    $defaultContext = trim((string)($_POST['facility_default_context'] ?? ''));
+    if (!CareContext::isValid($defaultContext)) {
+        $defaultContext = $facilityProfiles->recommendedDefaultContext($installedPurpose);
+    }
+    if (empty($selectedContexts)) {
+        $selectedContexts = $facilityProfiles->recommendedContexts($installedPurpose, $defaultContext);
+    }
+    $homePage = trim((string)($_POST['facility_home_page'] ?? ''));
+    if ($homePage === '') {
+        $homePage = $facilityProfiles->recommendedHomePage($installedPurpose, $defaultContext);
+    }
+
+    $facilityProfiles->saveProfile($facilityId, [
+        'installed_purpose' => $installedPurpose,
+        'facility_name' => trim((string)($_POST['facility_name'] ?? '')),
+        'institutional_enabled' => isset($_POST['institutional_enabled']),
+        'default_context' => $defaultContext,
+        'home_page' => $homePage,
+        'enabled_contexts_json' => json_encode(array_values($selectedContexts)),
+        'setup_completed' => 1,
+        'setup_step' => 4,
+    ], $userId);
+
     foreach ($keys as $k) {
-        if ($k === 'hl7_enabled') {
+        if (in_array($k, ['hl7_enabled'], true)) {
             $values[$k] = isset($_POST[$k]) ? '1' : '0';
+        } elseif (in_array($k, ['institutional_enabled','facility_name','facility_operational_mode','facility_default_context','facility_home_page','facility_enabled_contexts_json'], true)) {
+            continue;
         } elseif (array_key_exists($k, $_POST)) {
             $values[$k] = trim((string)$_POST[$k]);
         }
@@ -90,6 +151,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $settings = $repo->all($facilityId);
+$profile = $facilityProfiles->getProfile($facilityId);
+$oeFacilityList = $facilityProfiles->listOpenEmrFacilities(true);
+$selectedFacility = $facilityProfiles->getOpenEmrFacility($facilityId);
+$facilityName = $facilityProfiles->getDisplayName($facilityId);
+$enabledContextsForSettings = $facilityProfiles->getEnabledContexts($facilityId);
+$facilityManifestProfile = (string)($profile['installed_purpose'] ?? $facilityManifest->getProfileKey($facilityId));
+$contextChoices = CareContext::all();
+$modeChoices = [
+    FacilityProfileRepository::PURPOSE_AL_ONLY => xlt('Assisted Living'),
+    FacilityProfileRepository::PURPOSE_INPATIENT => xlt('Inpatient'),
+    FacilityProfileRepository::PURPOSE_HOME_BASED_CARE => xlt('Home-Based Care'),
+    FacilityProfileRepository::PURPOSE_ED_OBS_BH => xlt('ED / OBS / BH'),
+    FacilityProfileRepository::PURPOSE_AL_INPATIENT => xlt('AL + Inpatient'),
+    FacilityProfileRepository::PURPOSE_FULL => xlt('Full Institutional'),
+];
+$homePageChoices = [
+    '' => xlt('Use recommended home page'),
+    'ed_board.php' => xlt('ED Board'),
+    'obs_episodes.php' => xlt('Observation Episodes'),
+    'bh_boarding.php' => xlt('BH Boarding'),
+    'ip/board.php' => xlt('Inpatient Board'),
+    'al/board.php' => xlt('Assisted Living Board'),
+    'hbc/board.php' => xlt('Home-Based Care Board'),
+    'multi_facility.php' => xlt('Multi-Facility Dashboard'),
+    'command_center.php' => xlt('Command Center'),
+];
 
 $activeStd = (string)($settings['triage_standard'] ?? 'ESI');
 $triageStandard = new TriageStandard($activeStd);
@@ -114,8 +201,9 @@ if (ob_get_level() > 0) {
     <?php if ($manifest->featureEnabled('mts_triage')) : ?>
         <style><?= $triageStandard->cssRules() ?></style>
     <?php endif; ?>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>" data-active-standard="<?= htmlspecialchars($activeStd) ?>">
     <div class="container py-4" style="max-width: 860px;">
 
@@ -127,50 +215,169 @@ if (ob_get_level() > 0) {
                         href="hl7_log.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('HL7 Log') ?></a>
                 <?php endif; ?>
                 <a class="btn btn-sm btn-outline-secondary"
-                    href="ed_board.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('ED Board') ?></a>
+                    href="facility_directory.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('Facility Directory') ?></a>
+                <a class="btn btn-sm btn-outline-secondary"
+                    href="<?= htmlspecialchars($facilityProfiles->getHomePage($facilityId)) ?>?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('Facility Home') ?></a>
+            </div>
+        </div>
+
+        <?php oei_render_context_help('settings', ['facility_name' => $facilityProfiles->getDisplayName($facilityId)]); ?>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold"><?= xlt('Select OpenEMR Facility') ?></div>
+            <div class="card-body">
+                <form method="get" class="row g-3 align-items-end">
+                    <div class="col-12 col-lg-8">
+                        <label class="form-label" for="facility_picker"><?= xlt('OpenEMR Facility') ?></label>
+                        <select class="form-select" id="facility_picker" name="facility_id" onchange="this.form.submit()">
+                            <?php foreach ($oeFacilityList as $__facility) : ?>
+                                <option value="<?= (int)$__facility['id'] ?>" <?= (int)$__facility['id'] === $facilityId ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars((string)($__facility['name'] ?? ('Facility ' . $__facility['id']))) ?>
+                                    <?= !empty($__facility['facility_code']) ? ' [' . htmlspecialchars((string)$__facility['facility_code']) . ']' : '' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="form-text">
+                            <?= xlt('Choose an internal OpenEMR facility, then edit its Institutional profile below. Logged-in users whose default facility matches a configured profile will land there automatically.') ?>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-4">
+                        <div class="small text-muted"><?= xlt('Selected') ?></div>
+                        <div class="fw-semibold">#<?= (int)$facilityId ?> — <?= htmlspecialchars($facilityName) ?></div>
+                        <?php if (!empty($selectedFacility['city']) || !empty($selectedFacility['state'])) : ?>
+                            <div class="text-muted small"><?= htmlspecialchars(trim((string)($selectedFacility['city'] ?? ''))) ?><?= (!empty($selectedFacility['city']) && !empty($selectedFacility['state'])) ? ', ' : '' ?><?= htmlspecialchars(trim((string)($selectedFacility['state'] ?? ''))) ?></div>
+                        <?php endif; ?>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header fw-semibold"><?= xlt('Facility Installed As') ?></div>
+            <div class="card-body d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                <div>
+                    <div class="small text-muted"><?= xlt('Facility-owned install state') ?></div>
+                    <div class="fw-semibold"><?= $facilityManifestProfile !== '' ? htmlspecialchars($facilityManifestProfile) : xlt('Not set — use Setup Wizard or this page to choose the facility installed-as profile') ?></div>
+                    <div class="text-muted small"><?= xlt('The facility profile is the main setup record. Use Advanced Feature Overrides only when you need to fine-tune features beyond the installed purpose.') ?></div>
+                </div>
+                <div>
+                    <a class="btn btn-sm btn-outline-primary" href="manifest_editor.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt('Advanced Feature Overrides') ?></a>
+                </div>
             </div>
         </div>
 
         <?php if ($saved) : ?>
-            <div class="alert alert-success py-2"><?= xlt('Settings saved.') ?></div>
+            <div class="alert alert-success py-2"><?= xlt('Facility profile and settings saved.') ?></div>
         <?php endif; ?>
 
         <form method="post" class="row g-0">
             <input type="hidden" name="csrf_token_form" value="<?= htmlspecialchars($csrf) ?>">
+            <input type="hidden" name="facility_id" value="<?= (int)$facilityId ?>">
 
             <!-- ── Facility Identity ──────────────────────────────────────────── -->
             <div class="col-12">
                 <div class="card shadow-sm mb-4">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <span class="fw-semibold"><?= xlt('Facility Identity') ?></span>
-                        <span class="badge text-bg-secondary"><?= xlt('Module-Managed') ?></span>
+                        <span class="badge text-bg-primary"><?= xlt('OpenEMR Internal Facility') ?></span>
                     </div>
                     <div class="card-body">
                         <div class="row g-3">
 
-                            <div class="col-12 col-md-8">
+                            <div class="col-12 col-md-7">
                                 <label class="form-label" for="facility_name">
-                                    <?= xlt('Facility Display Name') ?>
+                                    <?= xlt('Facility Display Name Override') ?>
                                 </label>
                                 <input type="text"
                                     id="facility_name"
                                     name="facility_name"
                                     class="form-control"
-                                    value="<?= htmlspecialchars((string)($settings['facility_name'] ?? '')) ?>"
-                                    placeholder="<?= xla('e.g. Memorial Hospital ED') ?>">
+                                    value="<?= htmlspecialchars((string)($profile['facility_name'] ?? '')) ?>"
+                                    placeholder="<?= xla('Leave blank to use the OpenEMR facility name') ?>">
                                 <div class="form-text">
-                                    <?= xlt('This name is displayed in the multi-facility dashboard and command center. Leave blank to fall back to the OpenEMR facility table name.') ?>
+                                    <?= xlt('This display name is used in Institutional dashboards. Leave blank to fall back to the OpenEMR facility table name.') ?>
                                 </div>
+                            </div>
+
+                            <div class="col-12 col-md-5">
+                                <label class="form-label"><?= xlt('OpenEMR Facility') ?></label>
+                                <div class="border rounded p-3 bg-light h-100">
+                                    <div class="fw-semibold mb-1">#<?= (int)$facilityId ?> — <?= htmlspecialchars((string)($selectedFacility['name'] ?? $facilityName)) ?></div>
+                                    <?php if (!empty($selectedFacility['facility_code'])) : ?>
+                                        <div class="small text-muted mb-1"><?= xlt('Code') ?>: <?= htmlspecialchars((string)$selectedFacility['facility_code']) ?></div>
+                                    <?php endif; ?>
+                                    <?php if (!empty($selectedFacility['city']) || !empty($selectedFacility['state'])) : ?>
+                                        <div class="small text-muted"><?= htmlspecialchars(trim((string)($selectedFacility['city'] ?? ''))) ?><?= (!empty($selectedFacility['city']) && !empty($selectedFacility['state'])) ? ', ' : '' ?><?= htmlspecialchars(trim((string)($selectedFacility['state'] ?? ''))) ?></div>
+                                    <?php endif; ?>
+                                    <div class="form-text mt-2"><?= xlt('Internal facilities are selected from OpenEMR. External destinations stay in Facility Directory.') ?></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header fw-semibold"><?= xlt('Institutional Facility Profile') ?></div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="institutional_enabled" name="institutional_enabled" value="1" <?= !empty($profile['institutional_enabled']) ? 'checked' : '' ?>>
+                                    <label class="form-check-label" for="institutional_enabled"><?= xlt('Enable this OpenEMR facility for Institutional workflows') ?></label>
+                                </div>
+                                <div class="form-text"><?= xlt('When enabled, users whose default OpenEMR facility matches this facility can automatically land in its configured Institutional view.') ?></div>
                             </div>
 
                             <div class="col-12 col-md-4">
-                                <label class="form-label"><?= xlt('Facility ID') ?></label>
-                                <div class="form-control-plaintext fw-semibold text-muted">
-                                    <?= htmlspecialchars((string)$facilityId) ?>
-                                </div>
-                                <div class="form-text"><?= xlt('Read-only. Set via URL parameter.') ?></div>
+                                <label class="form-label" for="installed_purpose"><?= xlt('Facility Installed As') ?></label>
+                                <select class="form-select" id="installed_purpose" name="installed_purpose">
+                                    <?php foreach ($modeChoices as $__modeKey => $__modeLabel) : ?>
+                                        <option value="<?= htmlspecialchars((string)$__modeKey) ?>" <?= (string)($profile['installed_purpose'] ?? '') === (string)$__modeKey ? 'selected' : '' ?>><?= htmlspecialchars((string)$__modeLabel) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text"><?= xlt('This is the main beta setup choice. It drives the recommended work mode, home page, and feature set for the facility.') ?></div>
                             </div>
 
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="facility_default_context"><?= xlt('Default Work Mode') ?></label>
+                                <select class="form-select" id="facility_default_context" name="facility_default_context">
+                                    <?php foreach ($contextChoices as $__ctxKey => $__ctxMeta) : ?>
+                                        <option value="<?= htmlspecialchars($__ctxKey) ?>" <?= (string)($profile['default_context'] ?? $facilityProfiles->getDefaultContext($facilityId)) === $__ctxKey ? 'selected' : '' ?>><?= htmlspecialchars((string)($__ctxMeta['label'] ?? $__ctxKey)) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text"><?= xlt('Used when the user has no saved work mode yet for this facility.') ?></div>
+                            </div>
+
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="facility_home_page"><?= xlt('Facility Home Page') ?></label>
+                                <select class="form-select" id="facility_home_page" name="facility_home_page">
+                                    <?php foreach ($homePageChoices as $__pageKey => $__pageLabel) : ?>
+                                        <option value="<?= htmlspecialchars((string)$__pageKey) ?>" <?= (string)($profile['home_page'] ?? '') === (string)$__pageKey ? 'selected' : '' ?>><?= htmlspecialchars((string)$__pageLabel) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <div class="form-text"><?= xlt('Leave on the recommended page unless this facility needs a different landing screen.') ?></div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label d-block"><?= xlt('Available Work Modes') ?></label>
+                                <div class="row g-2">
+                                    <?php foreach ($contextChoices as $__ctxKey => $__ctxMeta) : ?>
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <label class="border rounded p-2 d-flex align-items-start gap-2 h-100 bg-light">
+                                                <input class="form-check-input mt-1" type="checkbox" name="facility_enabled_contexts[]" value="<?= htmlspecialchars($__ctxKey) ?>" <?= in_array($__ctxKey, $enabledContextsForSettings, true) ? 'checked' : '' ?>>
+                                                <span>
+                                                    <span class="fw-semibold d-block"><?= htmlspecialchars((string)($__ctxMeta['label'] ?? $__ctxKey)) ?></span>
+                                                    <span class="small text-muted"><?= htmlspecialchars((string)($__ctxMeta['subtitle'] ?? '')) ?></span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                                <div class="form-text mt-2"><?= xlt('These are the contexts available in quick-switch and the context manager for this facility. User selections are still saved per user + facility.') ?></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -529,6 +736,239 @@ if (ob_get_level() > 0) {
             </div>
 
 
+            <!-- ── IP Clinical Defaults ─────────────────────────────────────────── -->
+            <?php if ($manifest->featureEnabled('ip_board')): ?>
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header fw-semibold">
+                        <?= xlt('Inpatient — Clinical Defaults') ?>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            <?= xlt('Default length-of-stay targets by service line. Used on the Floor Board when a per-patient expected LOS has not been set. The LOS warning turns the badge amber when actual LOS is within this many hours of the target.') ?>
+                        </p>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label"><?= xlt('Discharge Target Hour') ?> <span class="text-muted fw-normal small">(0–23)</span></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_discharge_target_hour" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_discharge_target_hour'] ?? '11')) ?>"
+                                        min="0" max="23">
+                                    <span class="input-group-text">h</span>
+                                </div>
+                                <div class="form-text"><?= xlt('Hour of day (24h) facilities aim to complete discharges. 11 = 11 AM.') ?></div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label"><?= xlt('LOS Warning Window') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_los_warning_hours" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_los_warning_hours'] ?? '24')) ?>"
+                                        min="1">
+                                    <span class="input-group-text">hours</span>
+                                </div>
+                                <div class="form-text"><?= xlt('Floor Board badge turns amber when actual LOS is within this many hours of the expected target.') ?></div>
+                            </div>
+                            <div class="col-12"><hr class="my-1"></div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('Med/Surg Default LOS') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_expected_los_medsurg" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_expected_los_medsurg'] ?? '4')) ?>"
+                                        min="1">
+                                    <span class="input-group-text"><?= xlt('days') ?></span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('Telemetry Default LOS') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_expected_los_telemetry" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_expected_los_telemetry'] ?? '3')) ?>"
+                                        min="1">
+                                    <span class="input-group-text"><?= xlt('days') ?></span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('ICU Default LOS') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_expected_los_icu" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_expected_los_icu'] ?? '7')) ?>"
+                                        min="1">
+                                    <span class="input-group-text"><?= xlt('days') ?></span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('Ortho Default LOS') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_expected_los_ortho" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_expected_los_ortho'] ?? '3')) ?>"
+                                        min="1">
+                                    <span class="input-group-text"><?= xlt('days') ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; // ip_board ?>
+
+            <!-- ── AL Vitals Alert Thresholds ──────────────────────────────────────── -->
+            <?php if ($manifest->featureEnabled('al_board')): ?>
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header fw-semibold">
+                        <?= xlt('Assisted Living — Vitals Alert Thresholds') ?>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            <?= xlt('Alert thresholds shown on the vitals entry form. Frail elderly residents may have normal baselines outside acute-care norms — adjust per your medical director\'s orders.') ?>
+                        </p>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('BP Systolic — High') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="al_bp_systolic_high" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['al_bp_systolic_high'] ?? '160')) ?>"
+                                        min="100" max="250">
+                                    <span class="input-group-text">mmHg</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('BP Systolic — Low') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="al_bp_systolic_low" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['al_bp_systolic_low'] ?? '90')) ?>"
+                                        min="60" max="120">
+                                    <span class="input-group-text">mmHg</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('Heart Rate — High') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="al_hr_high" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['al_hr_high'] ?? '110')) ?>"
+                                        min="80" max="180">
+                                    <span class="input-group-text">bpm</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('Heart Rate — Low') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="al_hr_low" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['al_hr_low'] ?? '50')) ?>"
+                                        min="30" max="70">
+                                    <span class="input-group-text">bpm</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('SpO₂ — Critical Alert') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="al_spo2_critical" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['al_spo2_critical'] ?? '93')) ?>"
+                                        min="80" max="95">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text"><?= xlt('Red alert below this value.') ?></div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('SpO₂ — Warning') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="al_spo2_low" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['al_spo2_low'] ?? '96')) ?>"
+                                        min="85" max="98">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text"><?= xlt('Yellow warning below this value.') ?></div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('Weight Gain Alert') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="al_weight_gain_alert_kg" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['al_weight_gain_alert_kg'] ?? '0.9')) ?>"
+                                        min="0.3" max="5" step="0.1">
+                                    <span class="input-group-text">kg</span>
+                                </div>
+                                <div class="form-text"><?= xlt('Alert when single-reading weight gain exceeds this amount (CHF fluid retention indicator).') ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; // al_board ?>
+
+            <!-- ── IP Vitals Alert Thresholds ──────────────────────────────────────── -->
+            <?php if ($manifest->featureEnabled('ip_board')): ?>
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header fw-semibold">
+                        <?= xlt('Inpatient — Vitals Alert Thresholds') ?>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            <?= xlt('Alert thresholds for inpatient vitals history colour coding. Acute inpatient norms are tighter than AL — adjust only with medical director approval.') ?>
+                        </p>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('BP Systolic — High') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_bp_systolic_high" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_bp_systolic_high'] ?? '180')) ?>"
+                                        min="120" max="260">
+                                    <span class="input-group-text">mmHg</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('BP Systolic — Low') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_bp_systolic_low" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_bp_systolic_low'] ?? '80')) ?>"
+                                        min="40" max="100">
+                                    <span class="input-group-text">mmHg</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('Heart Rate — High') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_hr_high" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_hr_high'] ?? '120')) ?>"
+                                        min="90" max="200">
+                                    <span class="input-group-text">bpm</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('Heart Rate — Low') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_hr_low" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_hr_low'] ?? '45')) ?>"
+                                        min="20" max="60">
+                                    <span class="input-group-text">bpm</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('SpO₂ — Critical Alert') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_spo2_critical" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_spo2_critical'] ?? '90')) ?>"
+                                        min="80" max="94">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text"><?= xlt('Red alert below this value.') ?></div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <label class="form-label"><?= xlt('SpO₂ — Warning') ?></label>
+                                <div class="input-group">
+                                    <input type="number" name="ip_spo2_low" class="form-control"
+                                        value="<?= htmlspecialchars((string)($settings['ip_spo2_low'] ?? '94')) ?>"
+                                        min="85" max="98">
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text"><?= xlt('Yellow warning below this value.') ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php endif; // ip_board ?>
+
             <div class="col-12">
                 <button class="btn btn-primary px-4"><?= xlt('Save Settings') ?></button>
             </div>
@@ -804,3 +1244,27 @@ if (ob_get_level() > 0) {
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

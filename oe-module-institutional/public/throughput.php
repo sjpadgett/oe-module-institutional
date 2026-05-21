@@ -1,14 +1,26 @@
 <?php
 
+/**
+ * public/throughput.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
 use OpenEMR\Modules\Institutional\Core\Ui\Flash;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\DispositionRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
-use OpenEMR\Modules\Institutional\Submodule\Throughput\Controller\ThroughputController;
-use OpenEMR\Modules\Institutional\Submodule\Throughput\Service\ThroughputService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\DispositionRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Throughput\Controller\ThroughputController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Throughput\Service\ThroughputService;
 
 if (!$manifest->featureEnabled('throughput')) {
     die(xlt('Institutional Throughput is disabled by manifest'));
@@ -44,6 +56,8 @@ if (is_string($data) && $data !== '') {
     }
 }
 
+$_tpPids = array_values(array_unique(array_filter(array_map(fn($r)=>(int)($r['pid']??0), $data['rows']??[]))));
+$_tpPatientNames = oei_patient_names($_tpPids);
 $href = institutional_bootstrap5_href($manifest);
 
 function fmt(?int $v): string
@@ -58,8 +72,9 @@ function fmt(?int $v): string
   <title><?= xlt('Throughput') ?></title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -117,7 +132,7 @@ function fmt(?int $v): string
         <thead class="table-light">
           <tr>
             <th><?= xlt('Episode') ?></th>
-            <th><?= xlt('PID') ?></th>
+            <th><?= xlt('Patient') ?></th>
             <th><?= xlt('Type') ?></th>
             <th><?= xlt('Arrival') ?></th>
             <th><?= xlt('Door→Room') ?></th>
@@ -135,7 +150,7 @@ function fmt(?int $v): string
                 <?= htmlspecialchars((string)$r['episode_id']) ?>
               </a>
             </td>
-            <td><?= htmlspecialchars((string)$r['pid']) ?></td>
+            <td><?= oei_fmt_patient((int)($r['pid']??0), $_tpPatientNames) ?></td>
             <td><span class="badge text-bg-secondary"><?= htmlspecialchars((string)$r['type']) ?></span></td>
             <td class="text-muted small"><?= htmlspecialchars((string)$r['arrival']) ?></td>
             <td><?= htmlspecialchars(fmt($r['door_to_room_min'])) ?></td>
@@ -164,3 +179,12 @@ function fmt(?int $v): string
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

@@ -1,12 +1,24 @@
 <?php
 
+/**
+ * public/locations.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 $pageTitle = xlt('Locations');
 require __DIR__ . '/../src/Core/Ui/partials/page_title.php';
-use OpenEMR\Modules\Institutional\Submodule\AdtLite\Repository\LocationRepository;
-use OpenEMR\Modules\Institutional\Submodule\AdtLite\Controller\LocationsController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\AdtLite\Repository\LocationRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\AdtLite\Controller\LocationsController;
 
 if (!$manifest->featureEnabled('adt_lite')) {
     die(xlt("Institutional Locations is disabled by manifest"));
@@ -44,8 +56,9 @@ $href = institutional_bootstrap5_href($manifest);
   <title>Institutional Locations</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container py-3">
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -125,3 +138,9 @@ $href = institutional_bootstrap5_href($manifest);
 </div>
 </body>
 </html>
+
+
+
+
+
+

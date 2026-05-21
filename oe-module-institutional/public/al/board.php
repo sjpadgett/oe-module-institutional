@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/board.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/board.php — Assisted Living Resident Board
  *
@@ -24,7 +37,7 @@ $units      = $data['units'];
 $counts     = $data['counts'];
 
 $pageTitle = xlt('AL Resident Board');
-$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
+$__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark';
 ?>
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="<?= $_oei_theme ?? 'light' ?>">
@@ -33,6 +46,7 @@ $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
   <title><?= htmlspecialchars($pageTitle) ?></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
   <style>
     .al-card { border-left: 4px solid #4a7c59; transition: box-shadow .15s; }
     .al-card:hover { box-shadow: 0 2px 10px rgba(0,0,0,.18); }
@@ -94,11 +108,11 @@ $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
 <!-- Unit summary pills -->
 <?php if (!empty($units)): ?>
 <div class="d-flex gap-2 flex-wrap mb-3">
-  <?php foreach ($units as $u): ?>
+    <?php foreach ($units as $u): ?>
   <span class="badge bg-secondary">
-    <?= htmlspecialchars($u['unit'] ?: xlt('Unassigned')) ?>:
-    <?= $u['total'] ?> <?= xlt('res') ?>
-    <?php if ($u['high_risk'] > 0): ?>
+        <?= htmlspecialchars($u['unit'] ?: xlt('Unassigned')) ?>:
+        <?= $u['total'] ?> <?= xlt('res') ?>
+        <?php if ($u['high_risk'] > 0): ?>
       &nbsp;<span class="text-warning fw-bold">⚠ <?= $u['high_risk'] ?></span>
     <?php endif; ?>
   </span>
@@ -111,13 +125,13 @@ $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
   <div class="alert alert-info"><?= xlt('No active residents found for this facility.') ?></div>
 <?php else: ?>
 <div class="row g-3">
-  <?php foreach ($residents as $r):
-    $eid      = (int)$r['episode_id'];
-    $pid      = (int)$r['pid'];
-    $adlDue   = $r['adl_due'] ?? false;
-    $qEpPid   = "episode_id=$eid&pid=$pid&facility_id=$facilityId";
-    $profileUrl = "profile.php?$qEpPid";
-  ?>
+    <?php foreach ($residents as $r):
+        $eid      = (int)$r['episode_id'];
+        $pid      = (int)$r['pid'];
+        $adlDue   = $r['adl_due'] ?? false;
+        $qEpPid   = "episode_id=$eid&pid=$pid&facility_id=$facilityId";
+        $profileUrl = "profile.php?$qEpPid";
+        ?>
   <div class="col-12 col-md-6 col-xl-4">
     <div class="card al-card h-100 risk-<?= htmlspecialchars($r['fall_risk_level']) ?><?= $adlDue ? ' adl-overdue' : '' ?>">
 
@@ -154,6 +168,13 @@ $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
             ADL <?= (int)$r['last_adl_score'] ?>
           </span>
           <?php endif; ?>
+          <?php if ($manifest->featureEnabled('observations') && !empty($r['obs_flagged_count'])): ?>
+          <a href="<?= htmlspecialchars('../shared/observations.php?episode_id=' . $eid . '&pid=' . $pid . '&facility_id=' . $facilityId) ?>"
+             class="badge bg-warning text-dark text-decoration-none"
+             title="<?= xlt('Flagged observations in last 24h') ?>">
+            &#128225;&#9888; <?= (int)$r['obs_flagged_count'] ?>
+          </a>
+          <?php endif; ?>
         </div>
 
         <!-- Care team -->
@@ -162,7 +183,7 @@ $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light';
             👨‍⚕️ <?= htmlspecialchars($r['primary_provider']) ?>
           <?php endif; ?>
           <?php if ($r['primary_nurse']): ?>
-            <?= $r['primary_provider'] ? ' · ' : '' ?>
+                <?= $r['primary_provider'] ? ' · ' : '' ?>
             👩‍⚕️ <?= htmlspecialchars($r['primary_nurse']) ?>
           <?php endif; ?>
         </div>
@@ -258,3 +279,12 @@ setTimeout(function () { location.reload(); }, 180000);
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

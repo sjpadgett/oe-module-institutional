@@ -1,12 +1,24 @@
 <?php
 
+/**
+ * public/obs_episodes.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Repository\ObsPlanRepository;
-use OpenEMR\Modules\Institutional\Submodule\ObsProtocols\Controller\ObsEpisodesController;
-use OpenEMR\Modules\Institutional\Submodule\Tasks\Repository\TaskRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Repository\ObsPlanRepository;
+use OpenEMR\Modules\Institutional\ObservationStay\Submodule\ObsProtocols\Controller\ObsEpisodesController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Tasks\Repository\TaskRepository;
 
 if (!($manifest->featureEnabled('obs_protocols') || $manifest->featureEnabled('obs_episodes'))) {
     die(xlt("Institutional Obs Episodes is disabled by manifest"));
@@ -37,6 +49,8 @@ if (is_string($data) && $data !== '') {
         }
     }
 }
+$_obePids = array_values(array_unique(array_filter(array_map(fn($r)=>(int)($r['pid']??0), $data['rows']??[]))));
+$_obePatientNames = oei_patient_names($_obePids);
 $href = institutional_bootstrap5_href($manifest);
 
 function obs_elapsed_hours(string $start): string {
@@ -53,8 +67,9 @@ function obs_elapsed_hours(string $start): string {
   <title>Obs Episodes</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -72,7 +87,7 @@ function obs_elapsed_hours(string $start): string {
         <thead class="table-light">
           <tr>
             <th><?= xlt("Episode") ?></th>
-            <th><?= xlt("PID") ?></th>
+            <th><?= xlt('Patient') ?></th>
             <th><?= xlt("Protocol") ?></th>
             <th><?= xlt("Start") ?></th>
             <th><?= xlt("Elapsed") ?></th>
@@ -85,7 +100,7 @@ function obs_elapsed_hours(string $start): string {
         <?php foreach ($data['rows'] as $r): ?>
           <tr>
             <td><a href="obs_episode.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$r['episode_id']) ?>"><?= htmlspecialchars((string)$r['episode_id']) ?></a></td>
-            <td><?= htmlspecialchars((string)$r['pid']) ?></td>
+            <td><?= oei_fmt_patient((int)($r['pid']??0), $_obePatientNames) ?></td>
             <td><span class="badge text-bg-info"><?= htmlspecialchars((string)$r['protocol_key']) ?></span></td>
             <td><?= htmlspecialchars((string)$r['start_datetime']) ?></td>
             <td><?= htmlspecialchars(obs_elapsed_hours((string)$r['start_datetime'])) ?></td>
@@ -115,3 +130,12 @@ function obs_elapsed_hours(string $start): string {
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+

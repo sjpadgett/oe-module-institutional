@@ -1,4 +1,17 @@
 <?php
+
+/**
+ * public/al/activity.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 /**
  * public/al/activity.php — Activity & Engagement Log
  *
@@ -67,6 +80,7 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
   <title><?= xlt('Activity & Engagement Log') ?></title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="<?= institutional_bootstrap5_href($manifest) ?>">
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
   <style>
     .activity-type-chip { display:inline-flex; align-items:center; gap:.3rem;
                           padding:.2rem .6rem; border-radius:999px;
@@ -97,7 +111,7 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
 <div class="container-fluid px-3 pt-2">
 
 <?php if ($mode === 'resident'): ?>
-  <?php require __DIR__ . '/../../src/Core/Ui/partials/al_resident_nav.php'; ?>
+    <?php require __DIR__ . '/../../src/AssistedLiving/Ui/partials/al_resident_nav.php'; ?>
 <?php endif; ?>
 
 <?php if ($data['flash'] ?? ''): ?>
@@ -139,19 +153,19 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
 </div>
 
 <!-- 7-day activity type summary pills -->
-<?php if (!empty($data['typeSummary'])): ?>
+    <?php if (!empty($data['typeSummary'])): ?>
 <div class="d-flex flex-wrap gap-2 mb-3 mx-1">
   <span class="text-muted small align-self-center">Last 7 days:</span>
-  <?php foreach ($data['typeSummary'] as $tKey => $tCnt): ?>
-    <?php $tInfo = $types[$tKey] ?? ['label' => $tKey, 'icon' => '📋']; ?>
+        <?php foreach ($data['typeSummary'] as $tKey => $tCnt): ?>
+            <?php $tInfo = $types[$tKey] ?? ['label' => $tKey, 'icon' => '📋']; ?>
     <span class="summary-pill">
-      <?= htmlspecialchars($tInfo['icon']) ?>
-      <?= htmlspecialchars(xlt($tInfo['label'])) ?>
+            <?= htmlspecialchars($tInfo['icon']) ?>
+            <?= htmlspecialchars(xlt($tInfo['label'])) ?>
       <strong><?= $tCnt ?></strong>
     </span>
   <?php endforeach; ?>
 </div>
-<?php endif; ?>
+    <?php endif; ?>
 
 <div class="row g-3 mx-0">
   <!-- Sessions column -->
@@ -163,13 +177,13 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
       <div class="small"><?= xlt('Use the form to log the first session.') ?></div>
     </div>
     <?php else: ?>
-    <?php foreach ($data['sessions'] as $sess): ?>
-      <?php
-        $tKey  = strtolower($sess['activity_type'] ?? '');
-        $tInfo = $types[strtoupper($tKey)] ?? ['label' => $tKey, 'icon' => '📋'];
-        $att   = $sess['attendance'] ?? [];
-        $cssClass = in_array($tKey, ['music','exercise','cognitive','dining_social']) ? $tKey : '';
-      ?>
+        <?php foreach ($data['sessions'] as $sess): ?>
+            <?php
+            $tKey  = strtolower($sess['activity_type'] ?? '');
+            $tInfo = $types[strtoupper($tKey)] ?? ['label' => $tKey, 'icon' => '📋'];
+            $att   = $sess['attendance'] ?? [];
+            $cssClass = in_array($tKey, ['music','exercise','cognitive','dining_social']) ? $tKey : '';
+            ?>
       <div class="card mb-3 session-card <?= $cssClass ?>">
         <div class="card-header d-flex align-items-center gap-2 py-2">
           <span class="fs-5"><?= htmlspecialchars($tInfo['icon']) ?></span>
@@ -186,9 +200,9 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
           <span class="badge bg-success">
             <?= (int)$sess['attendance_count'] ?> attended
           </span>
-          <?php if ($sess['led_by_name'] ?? ($sess['user_fname'] ?? '')): ?>
+            <?php if ($sess['led_by_name'] ?? ($sess['user_fname'] ?? '')): ?>
           <span class="text-muted small">
-            <?= htmlspecialchars($sess['led_by_name']
+                <?= htmlspecialchars($sess['led_by_name']
                 ?? trim(($sess['user_fname'] ?? '') . ' ' . ($sess['user_lname'] ?? ''))) ?>
           </span>
           <?php endif; ?>
@@ -218,14 +232,14 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
                         $notIn[$eid] = $r;
                     }
                 }
-              ?>
-              <?php foreach ($inAtt as $eid => $r): ?>
-                <?php
-                  $item  = $att[$eid];
-                  $level = strtoupper($item['level'] ?? 'ABSENT');
-                  $bg    = $levelBadge[$level] ?? 'secondary';
-                  $ico   = $levelIcon[$level] ?? '—';
                 ?>
+              <?php foreach ($inAtt as $eid => $r): ?>
+                    <?php
+                    $item  = $att[$eid];
+                    $level = strtoupper($item['level'] ?? 'ABSENT');
+                    $bg    = $levelBadge[$level] ?? 'secondary';
+                    $ico   = $levelIcon[$level] ?? '—';
+                    ?>
                 <tr>
                   <td><?= htmlspecialchars(trim($r['fname'] . ' ' . $r['lname'])) ?></td>
                   <td class="text-center text-muted"><?= htmlspecialchars($r['room'] ?? '') ?></td>
@@ -249,9 +263,9 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
             </tbody>
           </table>
 
-          <?php if ($sess['notes'] ?? ''): ?>
+            <?php if ($sess['notes'] ?? ''): ?>
           <div class="small text-muted p-2 rounded" style="background:var(--bs-tertiary-bg)">
-            <?= nl2br(htmlspecialchars($sess['notes'])) ?>
+                <?= nl2br(htmlspecialchars($sess['notes'])) ?>
           </div>
           <?php endif; ?>
         </div>
@@ -282,8 +296,8 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
               <label class="type-opt" data-type="<?= htmlspecialchars($tKey) ?>">
                 <input type="radio" name="activity_type" value="<?= htmlspecialchars($tKey) ?>"
                        class="d-none" required>
-                <?= htmlspecialchars($tInfo['icon']) ?>
-                <?= htmlspecialchars(xlt($tInfo['label'])) ?>
+                    <?= htmlspecialchars($tInfo['icon']) ?>
+                    <?= htmlspecialchars(xlt($tInfo['label'])) ?>
               </label>
               <?php endforeach; ?>
             </div>
@@ -333,7 +347,7 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
               <?= xlt('Attendance') ?>
             </label>
             <?php foreach ($data['residents'] as $r): ?>
-              <?php $eid = (string)$r['episode_id']; ?>
+                <?php $eid = (string)$r['episode_id']; ?>
               <div class="d-flex align-items-center gap-2 mb-1">
                 <div class="text-truncate small fw-semibold" style="width:110px">
                   <?= htmlspecialchars(trim($r['fname'] . ' ' . $r['lname'])) ?>
@@ -341,7 +355,7 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
                 <select name="level_<?= $eid ?>" class="form-select form-select-sm" style="flex:1">
                   <?php foreach ($levels as $lKey => $lInfo): ?>
                   <option value="<?= $lKey ?>" <?= $lKey === 'FULL' ? 'selected' : '' ?>>
-                    <?= $levelIcon[$lKey] ?> <?= xlt($lInfo['label']) ?>
+                        <?= $levelIcon[$lKey] ?> <?= xlt($lInfo['label']) ?>
                   </option>
                   <?php endforeach; ?>
                 </select>
@@ -372,7 +386,7 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
 
 </div><!-- /row -->
 
-<?php /* ═══════════════════════════════════════════════════════════════════════
+    <?php /* ═══════════════════════════════════════════════════════════════════════
        RESIDENT MODE — participation history from nav tab
        ═══════════════════════════════════════════════════════════════════════ */ ?>
 
@@ -381,13 +395,13 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
 <div class="container-fluid px-2 pt-1">
 
   <!-- Participation rate banner -->
-  <?php if ($data['participation'] !== null): ?>
+    <?php if ($data['participation'] !== null): ?>
   <div class="row g-2 mb-3 mx-0">
-    <?php
-      $s = $data['stats'];
-      $pct = $data['participation'];
-      $pBar = $pct >= 75 ? 'success' : ($pct >= 40 ? 'warning' : 'danger');
-    ?>
+        <?php
+        $s = $data['stats'];
+        $pct = $data['participation'];
+        $pBar = $pct >= 75 ? 'success' : ($pct >= 40 ? 'warning' : 'danger');
+        ?>
     <div class="col-6 col-md-3">
       <div class="card text-center py-2">
         <div class="fs-3 fw-bold text-<?= $pBar ?>"><?= $pct ?>%</div>
@@ -425,49 +439,49 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
   <?php endif; ?>
 
   <!-- Session history -->
-  <?php if (empty($data['sessions'])): ?>
+    <?php if (empty($data['sessions'])): ?>
   <div class="text-center text-muted py-5">
     <div style="font-size:2.5rem">🎭</div>
     <div class="mt-2"><?= xlt('No activity sessions recorded yet.') ?></div>
   </div>
   <?php else: ?>
 
-  <?php
-    $grouped = [];
-    foreach ($data['sessions'] as $sess) {
-        $grouped[$sess['activity_date']][] = $sess;
-    }
-  ?>
-  <?php foreach ($grouped as $gDate => $daySessions): ?>
+      <?php
+        $grouped = [];
+        foreach ($data['sessions'] as $sess) {
+            $grouped[$sess['activity_date']][] = $sess;
+        }
+        ?>
+      <?php foreach ($grouped as $gDate => $daySessions): ?>
     <div class="text-muted small fw-semibold mb-1 mt-3" style="letter-spacing:.05em">
-      <?= htmlspecialchars(date('l, F j, Y', strtotime($gDate))) ?>
+            <?= htmlspecialchars(date('l, F j, Y', strtotime($gDate))) ?>
     </div>
-    <?php foreach ($daySessions as $sess):
-        $tInfo = $types[$sess['activity_type']] ?? ['label' => $sess['activity_type'], 'icon' => '📋'];
-        $eid   = (string)$episodeId;
-        $item  = $sess['attendance'][$eid] ?? null;
-        $level = $item ? strtoupper($item['level'] ?? 'ABSENT') : null;
-        $note  = $item ? ($item['note'] ?? '') : '';
-        $bg    = $level ? ($levelBadge[$level] ?? 'secondary') : 'secondary';
-        $ico   = $level ? ($levelIcon[$level] ?? '—') : '—';
-    ?>
+            <?php foreach ($daySessions as $sess):
+                $tInfo = $types[$sess['activity_type']] ?? ['label' => $sess['activity_type'], 'icon' => '📋'];
+                $eid   = (string)$episodeId;
+                $item  = $sess['attendance'][$eid] ?? null;
+                $level = $item ? strtoupper($item['level'] ?? 'ABSENT') : null;
+                $note  = $item ? ($item['note'] ?? '') : '';
+                $bg    = $level ? ($levelBadge[$level] ?? 'secondary') : 'secondary';
+                $ico   = $level ? ($levelIcon[$level] ?? '—') : '—';
+                ?>
     <div class="card mb-2 session-card" style="border-left-color:<?= $level === 'FULL' ? '#4a7c59' : ($level === 'REFUSED' ? '#6c757d' : '#ffc107') ?>">
       <div class="card-body py-2 px-3 d-flex align-items-center gap-3">
         <span class="fs-5"><?= htmlspecialchars($tInfo['icon']) ?></span>
         <div class="flex-grow-1">
           <div class="fw-semibold small"><?= htmlspecialchars($sess['activity_name']) ?></div>
           <div class="text-muted" style="font-size:.72rem">
-            <?= htmlspecialchars(date('g:i A', strtotime($sess['start_time']))) ?>
+                <?= htmlspecialchars(date('g:i A', strtotime($sess['start_time']))) ?>
             · <?= (int)$sess['duration_minutes'] ?> min
-            <?php if ($sess['location'] ?? ''): ?>· <?= htmlspecialchars($sess['location']) ?><?php endif; ?>
+                <?php if ($sess['location'] ?? ''): ?>· <?= htmlspecialchars($sess['location']) ?><?php endif; ?>
           </div>
-          <?php if ($note): ?>
+                <?php if ($note): ?>
           <div class="small text-muted fst-italic mt-1">"<?= htmlspecialchars($note) ?>"</div>
           <?php endif; ?>
         </div>
-        <?php if ($level): ?>
+                <?php if ($level): ?>
         <span class="badge bg-<?= $bg ?> align-self-center">
-          <?= $ico ?> <?= xlt($levels[$level]['label'] ?? $level) ?>
+                    <?= $ico ?> <?= xlt($levels[$level]['label'] ?? $level) ?>
         </span>
         <?php endif; ?>
       </div>
@@ -476,7 +490,7 @@ $levelIcon  = ['FULL' => '✓', 'PARTIAL' => '½', 'REFUSED' => '✗', 'ABSENT' 
   <?php endforeach; ?>
 
   <div class="text-center text-muted small mt-3">
-    <?= xlt('Showing last 30 days') ?>
+      <?= xlt('Showing last 30 days') ?>
     · <a href="activity.php?facility_id=<?= $facilityId ?>"><?= xlt('Facility log') ?></a>
   </div>
   <?php endif; ?>
@@ -498,3 +512,9 @@ document.querySelectorAll('.type-opt').forEach(function(el) {
 </script>
 </body>
 </html>
+
+
+
+
+
+

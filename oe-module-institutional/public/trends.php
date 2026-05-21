@@ -1,10 +1,22 @@
 <?php
 
+/**
+ * public/trends.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
-use OpenEMR\Modules\Institutional\Submodule\Trends\Controller\TrendsController;
-use OpenEMR\Modules\Institutional\Submodule\Trends\Repository\TrendRepository;
-use OpenEMR\Modules\Institutional\Submodule\Trends\Service\TrendsService;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Trends\Controller\TrendsController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Trends\Repository\TrendRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Trends\Service\TrendsService;
 
 if (!$manifest->featureEnabled('trends')) {
     die(xlt('Operational Trends is disabled by manifest'));
@@ -62,8 +74,9 @@ function trend_val(mixed $v, string $suffix = ''): string
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
 
@@ -223,3 +236,9 @@ new Chart(document.getElementById('clinicalChart'), {
 </script>
 </body>
 </html>
+
+
+
+
+
+

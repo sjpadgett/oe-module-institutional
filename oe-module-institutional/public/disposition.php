@@ -1,13 +1,25 @@
 <?php
 
+/**
+ * public/disposition.php
+ *
+ * Part of the oe-module-institutional module.
+ *
+ * @package   Institutional
+ * @link      https://www.opensourcedemr.com
+ * @author    Jerry Padgett <sjpadgett@gmail.com>
+ * @copyright Copyright (c) 2026 Jerry Padgett <sjpadgett@gmail.com>
+ * @license   GNU General Public License 3
+ */
+
 require_once __DIR__ . '/_bootstrap.php';
 
 // Flash messages
 require __DIR__ . '/../src/Core/Ui/partials/flash.php';
 use OpenEMR\Modules\Institutional\Core\Repository\EpisodeRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\DispositionRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Repository\EpisodeEventRepository;
-use OpenEMR\Modules\Institutional\Submodule\Disposition\Controller\DispositionController;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\DispositionRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Repository\EpisodeEventRepository;
+use OpenEMR\Modules\Institutional\Shared\Submodule\Disposition\Controller\DispositionController;
 
 if (!$manifest->featureEnabled('disposition')) {
     die(xlt("Institutional Disposition is disabled by manifest"));
@@ -61,6 +73,8 @@ if (is_string($data) && $data !== '') {
         }
     }
 }
+$_dispPids = array_values(array_unique(array_filter(array_map(fn($e)=>(int)($e['pid']??0), $episodes??[]))));
+$_dispPatientNames = oei_patient_names($_dispPids);
 $href = institutional_bootstrap5_href($manifest);
 
 $disp = $data['disposition'] ?? [];
@@ -90,8 +104,9 @@ $codes = [
   <title>Disposition</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <?php if ($href): ?><link href="<?= htmlspecialchars($href) ?>" rel="stylesheet"><?php endif; ?>
+  <link rel="stylesheet" href="<?= institutional_theme_css_href() ?>">
 </head>
-<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark' : 'bg-light'; ?>
+<?php $__bgClass = ($_oei_theme ?? 'light') === 'dark' ? 'bg-dark text-light' : 'bg-light text-dark'; ?>
 <body class="<?= $__bgClass ?>">
 <div class="container-fluid py-3">
   <div class="d-flex align-items-center justify-content-between mb-3">
@@ -102,6 +117,23 @@ $codes = [
   <?php if (!empty($data['message'])): ?>
     <div class="alert alert-info"><?= htmlspecialchars((string)$data['message']) ?></div>
   <?php endif; ?>
+
+  <?php
+    $_dispCode = strtoupper((string)($disp['disposition_code'] ?? ''));
+    $_refCodes = ['DISCHARGE', 'TRANSFER', 'ADMIT'];
+    if (in_array($_dispCode, $_refCodes, true)):
+        ?>
+  <div class="alert alert-success d-flex align-items-center justify-content-between py-2 mb-3" role="alert">
+    <div>
+      <strong><?= xlt('Disposition set:') ?> <?= htmlspecialchars($_dispCode) ?></strong>
+      &mdash; <?= xlt('A discharge e-referral can now be generated for this episode.') ?>
+    </div>
+    <a class="btn btn-success btn-sm ms-3"
+       href="ereferral.php?facility_id=<?= urlencode((string)$facilityId) ?>&amp;episode_id=<?= urlencode((string)$episodeId) ?>">
+        <?= xlt('→ Generate E-Referral') ?>
+    </a>
+  </div>
+    <?php endif; ?>
 
   <div class="row g-3">
     <div class="col-12 col-lg-4">
@@ -114,7 +146,7 @@ $codes = [
                href="disposition.php?facility_id=<?= urlencode((string)$facilityId) ?>&episode_id=<?= urlencode((string)$e['id']) ?>">
               <div class="d-flex justify-content-between">
                 <div>
-                  <div class="fw-semibold">#<?= htmlspecialchars((string)$e['id']) ?> • PID <?= htmlspecialchars((string)$e['pid']) ?></div>
+                  <div class="fw-semibold">#<?= htmlspecialchars((string)$e['id']) ?> <?= oei_fmt_patient((int)($e['pid'] ?? 0), $_dispPatientNames) ?></div>
                   <div class="small opacity-75"><?= htmlspecialchars((string)($e['chief_complaint'] ?? '')) ?></div>
                 </div>
                 <div class="text-end">
@@ -179,6 +211,11 @@ $codes = [
             <div class="col-12 d-flex gap-2">
               <button class="btn btn-primary"><?= xlt("Save") ?></button>
               <a class="btn btn-outline-secondary" href="throughput.php?facility_id=<?= urlencode((string)$facilityId) ?>"><?= xlt("View Throughput") ?></a>
+              <?php if (!empty($disp['disposition_code']) && in_array(strtoupper((string)$disp['disposition_code']), ['DISCHARGE','TRANSFER','ADMIT'], true)): ?>
+              <a class="btn btn-outline-success" href="ereferral.php?facility_id=<?= urlencode((string)$facilityId) ?>&amp;episode_id=<?= urlencode((string)$episodeId) ?>">
+                    <?= xlt('E-Referral') ?>
+              </a>
+              <?php endif; ?>
             </div>
 
             <div class="col-12">
@@ -193,3 +230,15 @@ $codes = [
 </div>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
