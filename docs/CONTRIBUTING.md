@@ -45,3 +45,34 @@
 - Tasks: “episode view” filter + due-soon highlighting
 - Obs: protocol bundles + milestones view
 - BH: expand flags and checklist tasks
+
+## Releasing
+
+Releases are cut by pushing a version tag. The `Release` GitHub Action then
+builds the distributable archive (with `vendor/` bundled) and attaches it to a
+GitHub Release automatically — see `.github/workflows/release.yml`.
+
+1. Make sure `main` is green (the `CI` workflow passes) and working-tree clean.
+2. Bump the version in **both** `openemr-module.json` and `manifest.json` to the
+   new version (they must match).
+3. Move the `## [Unreleased]` entries in `CHANGELOG.md` under a new
+   `## [x.y.z]` heading, and update the compare/tag links at the bottom.
+4. If dependencies changed, refresh the lock so the release build is
+   reproducible: `composer update && git add composer.lock`.
+5. Commit the version bump and changelog:
+   ```bash
+   git commit -am "Release vX.Y.Z"
+   git push origin main
+   ```
+6. Tag and push the tag — this triggers the release build:
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+7. The Action produces `oe-module-institutional-X.Y.Z.zip` on the release page.
+   Confirm it unzips to a single `oe-module-institutional/` folder containing
+   `vendor/`.
+
+Use semantic versioning: patch for fixes, minor for backward-compatible
+features, major for breaking changes. The tag (`vX.Y.Z`) must match the version
+in the manifests.

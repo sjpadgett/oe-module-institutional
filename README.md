@@ -4,7 +4,7 @@
 
 - **Module name:** `oe-module-institutional`
 - **License:** GNU General Public License v3 (see [`LICENSE`](LICENSE))
-- **Requires:** OpenEMR 8.0+, PHP 8.1+
+- **Requires:** OpenEMR 8.0+, PHP 8.2+
 - **UI:** Bootstrap 5.3 (bundled locally — no CDN dependency)
 
 ---
@@ -42,7 +42,7 @@ The **Context Manager** (`public/context_manager.php`) is the recommended starti
 ## Requirements
 
 - **OpenEMR** 8.0.0 or newer
-- **PHP** 8.1.0 or newer
+- **PHP** 8.2.0 or newer
 - **MySQL / MariaDB** (as required by your OpenEMR install)
 - **Composer** (to install the Bootstrap dependency)
 
@@ -63,12 +63,15 @@ Clone (or copy) the module into the custom-modules directory so the path is:
 
 ```bash
 cd <openemr>/interface/modules/custom_modules/
-git clone <your-repo-url> oe-module-institutional
+git clone https://github.com/sjpadgett/oe-module-institutional.git
 ```
+
+The clone produces a correctly-named `oe-module-institutional/` directory — the
+exact path OpenEMR expects.
 
 ### 2. Install dependencies
 
-From the module directory, install the vendored front-end dependency:
+From the module directory, install the front-end dependency:
 
 ```bash
 cd oe-module-institutional
@@ -76,7 +79,10 @@ composer install
 ```
 
 This pulls Bootstrap 5.3 into `vendor/`. The module is configured for **local**
-Bootstrap (`bootstrap5_mode: local`), so no external CDN is contacted at runtime.
+Bootstrap (`bootstrap5_mode: local`) and several pages load the bundled CSS/JS
+directly, so the Bootstrap assets must be present under `vendor/` at runtime —
+no external CDN is contacted. If you installed from a packaged release archive
+that already includes `vendor/`, you can skip this step.
 
 ### 3. Register and enable the module in OpenEMR
 
@@ -88,30 +94,19 @@ On enable, OpenEMR runs the module's setup
 (`OpenEMR\Modules\Institutional\Bootstrap::subscribeToEvents`). This wires the
 module into OpenEMR's event and menu system and starts the schema installer.
 
-### 4. Install / upgrade the database schema
+### 4. Database schema (installed automatically)
 
-The module ships its schema as:
+You do not run any SQL by hand for a new install. When you enable the module in
+Module Manager (step 3), OpenEMR runs the module's install schema —
+**`table.sql`** — which creates the full set of `oei_*` tables in their current
+form. A fresh install is complete after this; no migrations are required.
 
-- **`table.sql`** — the full install schema (the manifest's `install_sql`)
-- **`sql/migrations/NNNN_description.sql`** — versioned, ordered upgrade steps
+The `sql/migrations/` directory exists only to upgrade **older installs** to the
+current schema. Each migration is guarded against re-running. New installs skip
+them entirely, because `table.sql` already reflects the final schema.
 
-On bootstrap, the built-in **`MigrationRunner`** applies any pending files from
-`sql/migrations/` in ascending filename order. Each migration is guarded by an
-`INSERT IGNORE` into `oei_schema_version`, so re-running is always a safe no-op.
-In most installs the schema therefore sets itself up the first time the module
-loads after enabling.
-
-If you prefer to apply SQL manually (or are scripting a deployment), run the
-install schema once and then the migrations in order:
-
-```bash
-# from the module directory, against your OpenEMR database
-mysql -u <user> -p <openemr_db> < table.sql
-for f in sql/migrations/*.sql; do
-  echo "Applying $f"
-  mysql -u <user> -p <openemr_db> < "$f"
-done
-```
+> If you are upgrading an existing pre-0.40 install rather than installing fresh,
+> see [`docs/UPGRADE.md`](docs/UPGRADE.md) for the migration path.
 
 ### 5. Verify the install
 
@@ -140,17 +135,26 @@ load the demo data below for a populated training instance.
 
 ## Demo data (training / evaluation)
 
-For demos, evaluation, and training, the module can be loaded with a demo seed
-that populates the boards across all clinical tracks with realistic episodes,
-care teams, vitals, MAR orders, care plans, and clinical notes — covering a set
-of representative clinical scenarios so every board renders with live-looking
-content.
+For demos, evaluation, and training, the module ships a set of SQL seed files
+under `sql/` that populate the boards across all clinical tracks with realistic
+fictional patients, episodes, care teams, vitals, MAR orders, observations,
+billing lines, care plans, and clinical notes — so every board renders with
+live-looking content.
 
-> **Confirm the seed entry point for your build.** The demo seed ships as a SQL
-> file under `sql/` (alongside the install schema and migrations). Depending on
-> how you package releases, this is typically a file such as
-> `sql/institutional-demo-seed-stable.sql` (or a dated equivalent). Set the path below to match the
-> seed file actually included in your repository.
+The seeds are split into one base file plus three companions:
+
+| Seed file | Populates | Prerequisite |
+|-----------|-----------|--------------|
+| `sql/institutional-demo-seed-stable.sql` | Base demo: facilities, patients, and ED/OBS/BH/AL/IP/HBC episodes across the core `oei_*` tables | A schema-complete install (`table.sql`) |
+| `sql/observations-demo-seed.sql` | 8 observation scenarios (CGM, CHF, INR, sepsis watch, COPD, home cardiac, etc.) that drive board badges and profile panels | `oei_observation` / `oei_obs_type` present (in `table.sql`) |
+| `sql/oei_billing_demo_seed_upsert.sql` | Institutional billing lines (`oei_billing_line`) | Billing tables present (in `table.sql`) |
+| `sql/institutional-demo-seed-hbc-upsert.sql` | Extra Home-Based Care cases: a queued referral, a scheduled first visit, and an active case with visit history | HBC tables present (in `table.sql`) |
+
+Because `table.sql` already creates every table these seeds touch, all four run
+cleanly against a fresh install — the companions' historical prerequisite on
+individual migrations no longer applies. The base seed uses `INSERT IGNORE` /
+upserts on OpenEMR core tables so it never overwrites existing production rows,
+and all four are safe to re-run.
 
 ### Loading the demo seed
 
@@ -158,22 +162,30 @@ content.
 > fictional patients and episodes. Use a fresh evaluation/training OpenEMR
 > instance only.
 
-1. Complete the standard install (steps 1–4 above) so the schema and migrations
-   are in place.
+1. Complete the standard install (steps 1–3 above) so the schema is in place.
 
-2. Apply the demo seed SQL against the same database:
+2. Apply the seeds against the same database, base first, then the companions:
 
    ```bash
-   # from the module directory — adjust the filename to your seed file
+   # from the module directory, against your OpenEMR database
    mysql -u <user> -p <openemr_db> < sql/institutional-demo-seed-stable.sql
+   mysql -u <user> -p <openemr_db> < sql/observations-demo-seed.sql
+   mysql -u <user> -p <openemr_db> < sql/oei_billing_demo_seed_upsert.sql
+   mysql -u <user> -p <openemr_db> < sql/institutional-demo-seed-hbc-upsert.sql
    ```
 
+   The base seed must run first; the three companions can run in any order after
+   it. For a minimal demo, the base seed alone is enough — add the companions to
+   showcase observations, billing, and the extended HBC cases.
+
 3. Open the **Smoke Tests** page (`public/smoke_test.php`). The DATA section
-   checks demo seed row counts against expected ranges; once the seed has run,
+   checks demo seed row counts against expected ranges; once the seeds have run,
    those rows report as present rather than "seed may not have run."
 
 4. Open the **Context Manager** (`public/context_manager.php`) and visit each
-   board — ED, AL, IP, HBC, BH, OBS — to confirm populated content.
+   board — ED, AL, IP, HBC, BH, OBS — to confirm populated content. A guided
+   tour of the seeded scenarios is in
+   [`docs/demo-walkthrough.md`](docs/demo-walkthrough.md).
 
 ### Removing demo data
 
@@ -208,10 +220,13 @@ oe-module-institutional/
 ├── composer.json           # PSR-4 autoload + Bootstrap 5.3 dependency
 ├── openemr.bootstrap.php    # Module bootstrap entry
 ├── LICENSE                 # GNU General Public License v3
-├── table.sql               # Install schema (oei_* tables)        [not in source dump]
+├── table.sql               # Install schema — all oei_* tables (run on enable)
 ├── sql/
-│   ├── migrations/         # NNNN_description.sql, applied in order
-│   └── ...                 # demo seed and supporting SQL
+│   ├── migrations/         # Upgrade-only steps for existing installs
+│   ├── institutional-demo-seed-stable.sql      # base demo seed
+│   ├── observations-demo-seed.sql              # observation scenarios
+│   ├── oei_billing_demo_seed_upsert.sql        # billing demo
+│   └── institutional-demo-seed-hbc-upsert.sql  # extra HBC cases
 ├── src/                    # PSR-4: OpenEMR\Modules\Institutional\
 │   ├── Core/               # Migration runner, repositories, resolvers
 │   ├── Shared/             # Canonical cross-track services/repositories
