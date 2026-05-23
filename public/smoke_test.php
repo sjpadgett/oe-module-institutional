@@ -401,9 +401,6 @@ $CLASSES = [
     $NS.'Core\\Service\\AuditService' => [
         'record','forEpisode','firstEventsByEpisode',
     ],
-    $NS.'Core\\Migration\\MigrationRunner' => [
-        'runPending','appliedVersions','currentVersion',
-    ],
 
     // ── AssistedLiving ────────────────────────────────────────────────────────
     $NS.'AssistedLiving\\Submodule\\ResidentBoard\\Repository\\ResidentBoardRepository' => [
@@ -753,11 +750,11 @@ foreach ($DATA_CHECKS as [$label, $sql, $min, $max]) {
     }
 }
 
-// oei_schema_version — must have at least the initial version applied
+// oei_schema_version — stamped by table.sql at install time
 $schemaVer = smoke_count("SELECT COUNT(*) FROM oei_schema_version");
 if ($schemaVer < 1) {
     smoke_fail('DATA', 'oei_schema_version populated',
-        "No versions recorded — run table.sql + migrations");
+        "No version recorded — enable the module in Module Manager (installs table.sql)");
 } else {
     // Show the most recently applied version
     if (function_exists('sqlQuery')) {
@@ -836,9 +833,7 @@ $PATHS = [
     'public/ereferral.php'                  => $moduleRoot . '/public/ereferral.php',
     'public/billing_workbench.php'           => $moduleRoot . '/public/billing_workbench.php',
     'table.sql'                             => $moduleRoot . '/table.sql',
-    'sql/migrations/ dir'                   => $moduleRoot . '/sql/migrations',
     'openemr-module.json'                   => $moduleRoot . '/openemr-module.json',
-    'src/Core/Migration/MigrationRunner'    => $moduleRoot . '/src/Core/Migration/MigrationRunner.php',
     // v0.16.0 EHR integration paths
     'src/Core/Service/EncounterResolver'    => $moduleRoot . '/src/Core/Service/EncounterResolver.php',
     'src/Core/Service/FormsRegistrar'       => $moduleRoot . '/src/Core/Service/FormsRegistrar.php',
@@ -861,7 +856,6 @@ $PATHS = [
     'public/hbc/profile.php'                => $moduleRoot . '/public/hbc/profile.php',
     'public/hbc/visit.php'                  => $moduleRoot . '/public/hbc/visit.php',
     'public/hbc/discharge.php'              => $moduleRoot . '/public/hbc/discharge.php',
-    'sql/migrations/0008_home_based_care'   => $moduleRoot . '/sql/migrations/0008_home_based_care.sql',
 ];
 
 foreach ($PATHS as $label => $path) {
@@ -872,11 +866,11 @@ foreach ($PATHS as $label => $path) {
     }
 }
 
-// src/Submodule/ — backward-compat stubs; warn but don't fail
+// src/Submodule/ — legacy domain location; canonical code lives under src/Shared/
 $oldStubDir = $moduleRoot . '/src/Submodule';
 if (is_dir($oldStubDir)) {
-    smoke_pass('PATHS', 'src/Submodule/ (stub)',
-        'Stub dir present — expected during migration; run composer dump-autoload if autoload issues occur');
+    smoke_pass('PATHS', 'src/Submodule/ (legacy)',
+        'Legacy dir present — run composer dump-autoload if autoload issues occur');
 } else {
     smoke_pass('PATHS', 'src/Submodule/ removed', 'Domain reorganisation fully clean');
 }
@@ -944,7 +938,7 @@ if (function_exists('sqlStatement')) {
         smoke_fail('EHR', 'care_plan forms registration',
             "{$_intFails}/{$_intTotal} episodes have unregistered rows "
             . "({$_unregistered} total form_care_plan rows missing from forms table). "
-            . "Run sql/migrations/0006_backfill_forms_registration.sql to fix.");
+            . "Open each affected episode's care plan and re-save to register the forms.");
     } elseif ($_intFails > 0) {
         // forms count matches globally but per-episode mismatch — data inconsistency
         smoke_fail('EHR', 'care_plan forms registration',
@@ -1192,6 +1186,9 @@ foreach ($groups as $g => $rows) {
 <?= institutional_bootstrap5_js_tag() ?>
 </body>
 </html>
+
+
+
 
 
 

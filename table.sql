@@ -991,6 +991,18 @@ CREATE TABLE IF NOT EXISTS `oei_user_context`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci COMMENT ='Per-user care context preference per facility';
 
+-- ─────────────────────────────────────────────────────────────────────
+-- Schema version stamp
+-- Records the schema version installed by this file. Replaces the row
+-- formerly written by the migration runner; fresh installs apply table.sql
+-- directly via Module Manager, so this is the single source of the version.
+-- ─────────────────────────────────────────────────────────────────────
+INSERT IGNORE INTO `oei_schema_version` (`version`, `applied_datetime`)
+VALUES ('0.40.0', NOW());
+
 /*!40101 SET CHARACTER_SET_CLIENT = @OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS = @OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION = @OLD_COLLATION_CONNECTION */;
+
+
+

@@ -12,7 +12,7 @@ A Level 2 implementer configures, onboards, and supports facilities using this m
 
 **Level 2** — Certified implementer. Configures the module for a new facility, validates the install, trains Level 1, handles configuration changes, escalates genuine bugs to Level 3.
 
-**Level 3** — Developer. Schema migrations, PHP code changes, new features.
+**Level 3** — Developer. Schema changes (`table.sql`), PHP code changes, new features.
 
 ---
 
@@ -100,8 +100,8 @@ Then open **Admin → Context Manager** and assign care contexts:
 Open **Admin → Onboarding**. All items should show PASS or WARN before go-live.
 
 **FAIL items must be resolved.**
-- *Missing tables* — run `table.sql` then all `sql/migrations/` files in order.
-- *AL/IP encounter linkage FAIL* — run `sql/migrations/0007_normalize_encounter_numbers.sql`.
+- *Missing tables* — the install schema (`table.sql`) was not applied; enable the module in Module Manager, or run `table.sql` manually.
+- *AL/IP encounter linkage FAIL* — re-link the affected episodes via the episode edit page.
 
 **WARN items that self-resolve after go-live:** No episodes yet · No context assignments · HL7 no messages in 24h.
 
@@ -135,7 +135,7 @@ Seeds 13 ED/OBS patients, 5 AL residents, 5 IP inpatients, full MAR history, car
 Check care context in Admin → Context Manager. AL nurses → `Assisted Living`. IP nurses → `Inpatient Stay`.
 
 **Care Plan tab is empty after admission.**
-Check PHP error log for `[OEI] form_encounter INSERT failed`. Run Admin → Onboarding — AL/IP encounter linkage will show FAIL. Fix: run `sql/migrations/0007_normalize_encounter_numbers.sql`.
+Check PHP error log for `[OEI] form_encounter INSERT failed`. Run Admin → Onboarding — AL/IP encounter linkage will show FAIL. Fix: re-link the affected episodes via the episode edit page.
 
 **Floor Board LOS badges all green for long-stay patients.**
 Per-episode `expected_los_days` not set at admission. Set service-line defaults in Settings → Inpatient Clinical Defaults.
@@ -168,7 +168,7 @@ Error log:     C:\xampp\apache\logs\error.log  (search [OEI])
 
 Escalate when:
 - A PHP Fatal Error is not resolved by the troubleshooting list above.
-- A schema migration is needed (new columns required).
+- A schema change is needed (new columns required in `table.sql`).
 - An OpenEMR core upgrade breaks a module page.
 
 Include with every escalation:
@@ -176,3 +176,6 @@ Include with every escalation:
 2. Output of Admin → Smoke Tests `?verbose=1`.
 3. Output of Admin → Onboarding.
 4. Feature list from Admin → Manifest Editor.
+
+
+

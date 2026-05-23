@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_Changes landed on `main` but not yet tagged go here. Move them under a new
-version heading when you cut a release (see "Releasing" in
+### Removed
+- Schema migration runner (`src/Core/Migration/MigrationRunner.php`) and the
+  `sql/migrations/` directory. Going forward the module installs via Module
+  Manager, which applies `table.sql` directly; `table.sql` now stamps the
+  installed version into `oei_schema_version`.
+
+_Other changes landed on `main` but not yet tagged go here. Move them under a
+new version heading when you cut a release (see "Releasing" in
 `docs/CONTRIBUTING.md`)._
 
 ## [0.40.0]
@@ -44,8 +50,11 @@ through OpenEMR's Module Manager.
 - Repository structure flattened so the module lives at the repository root.
 
 ### Notes
-- `sql/migrations/` is retained for upgrading existing pre-0.40 installs only;
-  new installs apply `table.sql` directly via Module Manager.
+- New installs apply `table.sql` directly via Module Manager; there is no
+  separate migration step.
 
 [Unreleased]: https://github.com/sjpadgett/oe-module-institutional/compare/v0.40.0...HEAD
 [0.40.0]: https://github.com/sjpadgett/oe-module-institutional/releases/tag/v0.40.0
+
+
+
