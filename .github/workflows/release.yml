@@ -1,0 +1,70 @@
+name: Release
+
+# Build a ready-to-install module archive whenever a version tag is pushed.
+# The archive bundles vendor/ (Bootstrap) so non-Composer users can drop it
+# straight into interface/modules/custom_modules/ and have a working module.
+
+on:
+  push:
+    tags:
+      - 'v*'          # e.g. v0.40.0
+  workflow_dispatch:   # allow manual runs from the Actions tab
+
+permissions:
+  contents: write      # required to create the GitHub Release and upload assets
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --strict
+
+      - name: Install production dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: Determine version
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Stage module into a correctly-named folder
+        run: |
+          MODULE_DIR="oe-module-institutional"
+          rm -rf build
+          mkdir -p "build/${MODULE_DIR}"
+          # Copy the module, excluding repo-only and build-only artifacts.
+          rsync -a ./ "build/${MODULE_DIR}/" \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude 'build' \
+            --exclude '*.zip' \
+            --exclude '*.tar.gz' \
+            --exclude 'institutional_all_source.txt'
+
+      - name: Create archive
+        id: archive
+        run: |
+          VERSION="${{ steps.ver.outputs.version }}"
+          NAME="oe-module-institutional-${VERSION}.zip"
+          ( cd build && zip -rq "../${NAME}" oe-module-institutional )
+          echo "name=${NAME}" >> "$GITHUB_OUTPUT"
+          echo "Built ${NAME}"
+          unzip -l "${NAME}" | tail -3
+
+      - name: Publish release with archive
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.archive.outputs.name }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true

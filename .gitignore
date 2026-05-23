@@ -1,0 +1,22 @@
+# Composer — dependencies are resolved at install time, never committed.
+/vendor/
+
+# Keep composer.lock committed: this module is an installed end-product, so the
+# lock pins the exact Bootstrap build that release archives are made from.
+# (Do NOT add composer.lock here.)
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+
+# Build output produced by the release workflow
+/build/
+*.zip
+*.tar.gz
+
+# Local source-of-truth dumps and scratch files (not part of the module)
+institutional_all_source.txt
