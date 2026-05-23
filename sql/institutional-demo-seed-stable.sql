@@ -2657,6 +2657,12 @@ WHERE `pid` IN (60, 61, 62)
   AND `encounter` IN (1000060, 1000061, 1000062)
   AND `formdir` IN ('newpatient', 'care_plan', 'clinical_notes');
 
+DELETE
+FROM `forms`
+WHERE `pid` IN (50, 51, 52, 53, 54)
+  AND `encounter` IN (1000050, 1000051, 1000052, 1000053, 1000054)
+  AND `formdir` = 'care_plan';
+
 INSERT INTO `forms`
 (`date`, `encounter`, `form_name`, `form_id`, `pid`,
  `user`, `groupname`, `authorized`, `deleted`, `formdir`, `therapy_group_id`)
@@ -2668,7 +2674,13 @@ VALUES (DATE_SUB(NOW(), INTERVAL 2 DAY), 1000060, 'New Patient Encounter', 307, 
        (DATE_SUB(NOW(), INTERVAL 14 DAY), 1000062, 'Care Plan', 6003, 62, 'admin', 'Default', 1, 0, 'care_plan', NULL),
        (DATE_SUB(NOW(), INTERVAL 1 DAY), 1000060, 'Clinical Notes', 6101, 60, 'admin', 'Default', 1, 0, 'clinical_notes', NULL),
        (DATE_SUB(NOW(), INTERVAL 4 HOUR), 1000061, 'Clinical Notes', 6102, 61, 'admin', 'Default', 1, 0, 'clinical_notes', NULL),
-       (DATE_SUB(NOW(), INTERVAL 20 HOUR), 1000062, 'Clinical Notes', 6103, 62, 'admin', 'Default', 1, 0, 'clinical_notes', NULL);
+       (DATE_SUB(NOW(), INTERVAL 20 HOUR), 1000062, 'Clinical Notes', 6103, 62, 'admin', 'Default', 1, 0, 'clinical_notes', NULL),
+       -- AL care plan registry rows (one per care_plan group id) — keeps form_care_plan visible to OE core/FHIR
+       ('2026-01-12 09:00:00', 1000050, 'Care Plan', 5001, 50, 'admin', 'Default', 1, 0, 'care_plan', NULL),
+       ('2026-01-28 09:00:00', 1000051, 'Care Plan', 5002, 51, 'admin', 'Default', 1, 0, 'care_plan', NULL),
+       ('2026-02-10 09:00:00', 1000052, 'Care Plan', 5003, 52, 'admin', 'Default', 1, 0, 'care_plan', NULL),
+       ('2025-12-28 09:00:00', 1000053, 'Care Plan', 5004, 53, 'admin', 'Default', 1, 0, 'care_plan', NULL),
+       ('2026-02-19 09:00:00', 1000054, 'Care Plan', 5005, 54, 'admin', 'Default', 1, 0, 'care_plan', NULL);
 
 -- -----------------------------------------------------------------------------
 -- Care team / care plan / clinical notes for HBC demo patients
@@ -3243,3 +3255,6 @@ ON DUPLICATE KEY UPDATE `episode_id`               = VALUES(`episode_id`),
                         `updated_datetime`         = VALUES(`updated_datetime`);
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+
+

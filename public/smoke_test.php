@@ -910,8 +910,11 @@ if (function_exists('sqlStatement')) {
     while ($_ae = sqlFetchArray($_alEpRes)) {
         $_pid = (int)$_ae['pid'];
         $_enc = (int)$_ae['encounter_id'];
+        // form_care_plan stores many goal/activity rows under one form id;
+        // OpenEMR registers ONE forms row per form id. Compare DISTINCT ids,
+        // not raw rows, or correctly-registered plans would look unregistered.
         $_cpCnt = smoke_count(
-            "SELECT COUNT(*) FROM form_care_plan WHERE pid = ? AND encounter = ? AND activity = 1",
+            "SELECT COUNT(DISTINCT id) FROM form_care_plan WHERE pid = ? AND encounter = ? AND activity = 1",
             [$_pid, $_enc]
         );
         if ($_cpCnt <= 0) continue;
@@ -924,7 +927,7 @@ if (function_exists('sqlStatement')) {
     }
     // Count unregistered form_care_plan rows across ALL encounters (not just per-episode)
     $_totalCpRows = smoke_count(
-        "SELECT COUNT(*) FROM form_care_plan WHERE activity = 1"
+        "SELECT COUNT(DISTINCT id) FROM form_care_plan WHERE activity = 1"
     );
     $_totalFormsRows = smoke_count(
         "SELECT COUNT(*) FROM forms WHERE formdir = 'care_plan' AND deleted = 0"
@@ -936,9 +939,9 @@ if (function_exists('sqlStatement')) {
             'No AL care plan entries to check (seed may not have run)');
     } elseif ($_intFails > 0 && $_unregistered > 0) {
         smoke_fail('EHR', 'care_plan forms registration',
-            "{$_intFails}/{$_intTotal} episodes have unregistered rows "
-            . "({$_unregistered} total form_care_plan rows missing from forms table). "
-            . "Open each affected episode's care plan and re-save to register the forms.");
+            "{$_intFails}/{$_intTotal} episodes have unregistered care plans "
+            . "({$_unregistered} form instance(s) missing a forms-table entry). "
+            . "Open each affected episode's care plan and re-save to register the form.");
     } elseif ($_intFails > 0) {
         // forms count matches globally but per-episode mismatch — data inconsistency
         smoke_fail('EHR', 'care_plan forms registration',
