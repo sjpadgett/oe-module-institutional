@@ -6,7 +6,7 @@
 ```
 oe-module-institutional/
 ├─ composer.json                          single PSR-4 entry: OpenEMR\Modules\Institutional\ → src/
-├─ manifest.json                          49 feature flags + menus + migration list
+├─ manifest.json                          feature flags + menus
 ├─ openemr-module.json                    module manager metadata (name, version, min_oe_version, etc.)
 ├─ openemr.bootstrap.php                  OE entry point — registers autoload, calls Bootstrap
 ├─ table.sql                              fresh-install schema (26 oei_* tables)
@@ -79,12 +79,6 @@ oe-module-institutional/
 │  └─ triage.php
 │
 ├─ sql/
-│  ├─ migrations/                         versioned ordered migrations (NEW v0.15.1)
-│  │  ├─ 0001_initial_schema.sql          marks v1.0.0 in oei_schema_version
-│  │  ├─ 0002_assisted_living.sql         v1.1.0: al_episode, adl_record, incident
-│  │  ├─ 0003_al_fall_risk.sql            v1.2.0: fall_risk_assessment
-│  │  └─ 0004_al_activity_log.sql         v1.3.0: activity_log
-│  │
 │  ├─ al_activity.sql                     legacy / dev reference only
 │  ├─ al_discharge_seed.sql
 │  ├─ al_phase2.sql
@@ -96,7 +90,7 @@ oe-module-institutional/
 │  └─ institutional-demo-seed.sql
 │
 └─ src/                                   PSR-4 root → OpenEMR\Modules\Institutional\
-   ├─ Bootstrap.php                        wires menu listener + MigrationRunner
+   ├─ Bootstrap.php                        wires menu listener
    │
    ├─ Core/                               shared foundation used by all domains
    │  ├─ Domain/
@@ -104,8 +98,6 @@ oe-module-institutional/
    │  │  ├─ Disposition.php
    │  │  ├─ EpisodeStatus.php
    │  │  └─ TriageStandard.php
-   │  ├─ Migration/
-   │  │  └─ MigrationRunner.php           NEW v0.15.1
    │  ├─ Repository/
    │  │  ├─ ContextRepository.php
    │  │  ├─ EpisodeRepository.php
@@ -325,6 +317,8 @@ oe-module-institutional/
 | src/ domains | 6 (Core, AssistedLiving, BehavioralHealth, EmergencyDepartment, ObservationStay, Operations, Shared) |
 | Shared submodules | 17 |
 | AL submodules | 12 |
-| Migration files | 4 (sql/migrations/) |
 | Feature flags | 49 (manifest.json) |
 | DB tables (oei_*) | 26 |
+
+
+

@@ -108,7 +108,7 @@ if (empty($missing)) {
 } else {
     obc('Schema', 'Missing tables', 'FAIL',
         'Missing: ' . implode(', ', $missing),
-        'Run the module install SQL (table.sql) and all migrations in sql/migrations/.');
+        'Enable the module in Module Manager so table.sql installs the schema, or run table.sql manually.');
 }
 
 // Schema version
@@ -118,7 +118,7 @@ $sv = function_exists('sqlQuery')
 $svVersion = (string)($sv['version'] ?? '—');
 obc('Schema', 'Schema version', $svVersion !== '—' ? 'PASS' : 'WARN',
     "Applied version: {$svVersion}",
-    $svVersion === '—' ? 'Run table.sql and all sql/migrations/ files.' : '');
+    $svVersion === '—' ? 'Enable the module in Module Manager (installs table.sql), or run table.sql manually.' : '');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. CONFIGURATION
@@ -286,7 +286,7 @@ if ($manifest->featureEnabled('al_board') && ob_table_exists('oei_al_episode')) 
         $pct = $alTotal > 0 ? round($alLinked / $alTotal * 100) : 0;
         obc('Clinical Data', 'AL encounter linkage', 'FAIL',
             "{$alLinked}/{$alTotal} ({$pct}%) AL episodes have a valid encounter number.",
-            'Run migration 0007_normalize_encounter_numbers.sql to repair legacy rows.');
+            'Legacy rows missing encounter numbers — re-link via the episode edit page.');
     }
 }
 
@@ -308,7 +308,7 @@ if ($manifest->featureEnabled('ip_board') && ob_table_exists('oei_ip_episode')) 
         $pct = $ipTotal > 0 ? round($ipLinked / $ipTotal * 100) : 0;
         obc('Clinical Data', 'IP encounter linkage', 'FAIL',
             "{$ipLinked}/{$ipTotal} ({$pct}%) IP episodes have a valid encounter number.",
-            'Run migration 0007_normalize_encounter_numbers.sql.');
+            'Legacy rows missing encounter numbers — re-link via the episode edit page.');
     }
 }
 
@@ -590,6 +590,9 @@ function ob_icon(string $status): string {
 <?php endif; ?>
 </body>
 </html>
+
+
+
 
 
 

@@ -17,7 +17,7 @@ from staff, adds rooms and users, resets care contexts.
 the install, trains Level 1 users, handles configuration changes, and escalates genuine
 bugs to Level 3.
 
-**Level 3** — Developer. Schema migrations, PHP code changes, new features.
+**Level 3** — Developer. Schema changes (`table.sql`), PHP code changes, new features.
 
 ---
 
@@ -145,10 +145,10 @@ Users without an assigned context default to Full Access.
 Open **Admin → Onboarding**. All items should show PASS or WARN before go-live.
 
 **FAIL items must be resolved.** Common causes:
-- *Missing tables* — the install SQL (table.sql) was not run, or a migration was skipped.
-  Run all files in `sql/migrations/` in order.
+- *Missing tables* — the install SQL (table.sql) was not run.
+  Enable the module in Module Manager, or run `table.sql` manually.
 - *AL/IP encounter linkage FAIL* — legacy rows have the wrong encounter_id value.
-  Run `sql/migrations/0007_normalize_encounter_numbers.sql`.
+  Re-link the affected episodes via the episode edit page.
 
 **WARN items** that self-resolve after go-live:
 - *No episodes yet* — normal on a fresh install.
@@ -195,7 +195,7 @@ To set up a populated training environment for staff education:
 → The encounter number was not created correctly. Check the PHP error log for
 `[OEI] IP form_encounter INSERT failed` or `encounter number is 0`. Run the
 Onboarding Checklist — the AL/IP encounter linkage check will show FAIL.
-Resolution: run `sql/migrations/0007_normalize_encounter_numbers.sql`.
+Resolution: re-link the affected episodes via the episode edit page.
 
 **The Floor Board LOS badges are all green even for long-stay patients.**
 → The per-episode `expected_los_days` was not set at admission. Either set service-line
@@ -233,7 +233,7 @@ Error log:     C:\xampp\apache\logs\error.log  (search for [OEI])
 Escalate to the developer (Level 3) when:
 - A PHP Fatal Error appears in the error log that is not resolved by the known-issues
   list above.
-- A schema migration is needed (new feature requiring new database columns).
+- A schema change is needed (new feature requiring new columns in `table.sql`).
 - An OpenEMR core upgrade breaks a module page.
 - A new facility profile or feature flag combination is needed.
 
@@ -242,3 +242,6 @@ When escalating, provide:
 2. The output of Admin → Smoke Tests with `?verbose=1`.
 3. The output of Admin → Onboarding.
 4. The manifest.json feature list (visible at the bottom of Admin → Manifest Editor).
+
+
+

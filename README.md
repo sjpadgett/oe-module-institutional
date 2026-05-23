@@ -99,14 +99,11 @@ module into OpenEMR's event and menu system and starts the schema installer.
 You do not run any SQL by hand for a new install. When you enable the module in
 Module Manager (step 3), OpenEMR runs the module's install schema —
 **`table.sql`** — which creates the full set of `oei_*` tables in their current
-form. A fresh install is complete after this; no migrations are required.
+form. A fresh install is complete after this — there is no separate migration
+step, because `table.sql` already reflects the final schema.
 
-The `sql/migrations/` directory exists only to upgrade **older installs** to the
-current schema. Each migration is guarded against re-running. New installs skip
-them entirely, because `table.sql` already reflects the final schema.
-
-> If you are upgrading an existing pre-0.40 install rather than installing fresh,
-> see [`docs/UPGRADE.md`](docs/UPGRADE.md) for the migration path.
+> If you installed an earlier build and your `oei_*` tables pre-date the current
+> schema, see [`docs/UPGRADE.md`](docs/UPGRADE.md) for upgrade options.
 
 ### 5. Verify the install
 
@@ -151,8 +148,7 @@ The seeds are split into one base file plus three companions:
 | `sql/institutional-demo-seed-hbc-upsert.sql` | Extra Home-Based Care cases: a queued referral, a scheduled first visit, and an active case with visit history | HBC tables present (in `table.sql`) |
 
 Because `table.sql` already creates every table these seeds touch, all four run
-cleanly against a fresh install — the companions' historical prerequisite on
-individual migrations no longer applies. The base seed uses `INSERT IGNORE` /
+cleanly against a fresh install. The base seed uses `INSERT IGNORE` /
 upserts on OpenEMR core tables so it never overwrites existing production rows,
 and all four are safe to re-run.
 
@@ -216,19 +212,18 @@ once the module is enabled.
 ```
 oe-module-institutional/
 ├── openemr-module.json     # OpenEMR module manifest (install_sql, setup class, versions)
-├── manifest.json           # Feature flags, menus, UI mode, migration list
+├── manifest.json           # Feature flags, menus, UI mode
 ├── composer.json           # PSR-4 autoload + Bootstrap 5.3 dependency
 ├── openemr.bootstrap.php    # Module bootstrap entry
 ├── LICENSE                 # GNU General Public License v3
 ├── table.sql               # Install schema — all oei_* tables (run on enable)
 ├── sql/
-│   ├── migrations/         # Upgrade-only steps for existing installs
 │   ├── institutional-demo-seed-stable.sql      # base demo seed
 │   ├── observations-demo-seed.sql              # observation scenarios
 │   ├── oei_billing_demo_seed_upsert.sql        # billing demo
 │   └── institutional-demo-seed-hbc-upsert.sql  # extra HBC cases
 ├── src/                    # PSR-4: OpenEMR\Modules\Institutional\
-│   ├── Core/               # Migration runner, repositories, resolvers
+│   ├── Core/               # Repositories, resolvers, services
 │   ├── Shared/             # Canonical cross-track services/repositories
 │   ├── EmergencyDepartment/
 │   ├── ObservationStay/
@@ -252,9 +247,9 @@ through PSR-4 under the `OpenEMR\Modules\Institutional\` namespace.
 
 This module follows OpenEMR's coding conventions: plain PHP, no added
 frameworks, minimal dependencies for long-term maintainability. Every source
-file carries a GPLv3 header. Schema changes are made as new
-`sql/migrations/NNNN_description.sql` files (never by editing applied
-migrations), so existing installs upgrade cleanly on the next bootstrap.
+file carries a GPLv3 header. Schema changes are made directly in `table.sql`
+(the single install schema), and the version stamp in `oei_schema_version`
+should be bumped to match.
 
 Before submitting changes, run the smoke tests (`public/smoke_test.php`) and the
 setup checklist (`public/onboarding.php`) to confirm no regressions in schema,
@@ -267,3 +262,6 @@ autoloading, or feature wiring.
 This project is released under the **GNU General Public License version 3**.
 See the [`LICENSE`](LICENSE) file for the full text. OpenEMR itself is GPL, and
 this module is offered freely to the OpenEMR community under the same terms.
+
+
+
